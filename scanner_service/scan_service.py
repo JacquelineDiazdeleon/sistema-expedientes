@@ -23,6 +23,8 @@ import requests
 import time
 import logging
 import threading
+import shutil
+from pathlib import Path
 from flask import Flask, request, jsonify
 from datetime import datetime
 
@@ -103,6 +105,15 @@ NAPS2_PROFILE = config.get("NAPS2_PROFILE", "HP_ADF_300")
 SCAN_TIMEOUT = int(config.get("SCAN_TIMEOUT", 180))
 UPLOAD_TIMEOUT = int(config.get("UPLOAD_TIMEOUT", 120))
 
+# Carpetas para guardar expedientes y respaldo
+CARPETA_PRINCIPAL = Path(config.get("CARPETA_PRINCIPAL", r"C:\servidor\Expedientes"))
+CARPETA_RESPALDO = Path(config.get("CARPETA_RESPALDO", r"D:\Resp\Respaldo_SistemaDigitalizacion"))
+MAX_ARCHIVOS_PRINCIPAL = int(config.get("MAX_ARCHIVOS_PRINCIPAL", 1000))  # Límite de archivos antes de limpiar
+
+# Crear carpetas si no existen
+CARPETA_PRINCIPAL.mkdir(parents=True, exist_ok=True)
+CARPETA_RESPALDO.mkdir(parents=True, exist_ok=True)
+
 # ===================================
 
 
@@ -114,6 +125,81 @@ def verificar_naps2():
             f"Verifica la instalación de NAPS2 o ajusta NAPS2_CLI en config.json."
         )
     logger.info(f"NAPS2 encontrado en: {NAPS2_CLI}")
+
+
+def guardar_archivo_local(archivo_origen, nombre_archivo, expediente_id=None):
+    """
+    Guarda el archivo escaneado en la carpeta principal y crea un respaldo.
+    
+    Args:
+        archivo_origen: Ruta del archivo escaneado
+        nombre_archivo: Nombre del archivo (sin extensión)
+        expediente_id: ID del expediente (opcional, para organizar por carpeta)
+    
+    Returns:
+        tuple: (ruta_principal, ruta_respaldo) o (None, None) si hay error
+    """
+    try:
+        # Generar nombre de archivo con timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        nombre_completo = f"{nombre_archivo}_{timestamp}.pdf"
+        
+        # Si hay expediente_id, crear subdirectorio por expediente
+        if expediente_id:
+            carpeta_expediente = CARPETA_PRINCIPAL / f"EXP-{expediente_id}"
+            carpeta_expediente.mkdir(parents=True, exist_ok=True)
+            ruta_principal = carpeta_expediente / nombre_completo
+        else:
+            ruta_principal = CARPETA_PRINCIPAL / nombre_completo
+        
+        # Copiar a carpeta principal
+        shutil.copy2(archivo_origen, ruta_principal)
+        logger.info(f"✓ Archivo guardado en carpeta principal: {ruta_principal}")
+        
+        # Crear respaldo
+        ruta_respaldo = CARPETA_RESPALDO / nombre_completo
+        shutil.copy2(archivo_origen, ruta_respaldo)
+        logger.info(f"✓ Respaldo creado: {ruta_respaldo}")
+        
+        # Limpiar archivos antiguos si hay demasiados
+        limpiar_archivos_antiguos(CARPETA_PRINCIPAL, MAX_ARCHIVOS_PRINCIPAL)
+        
+        return str(ruta_principal), str(ruta_respaldo)
+        
+    except Exception as e:
+        logger.error(f"Error al guardar archivo local: {str(e)}")
+        return None, None
+
+
+def limpiar_archivos_antiguos(carpeta, max_archivos):
+    """
+    Elimina los archivos más antiguos si hay más de max_archivos.
+    
+    Args:
+        carpeta: Path de la carpeta a limpiar
+        max_archivos: Número máximo de archivos permitidos
+    """
+    try:
+        # Obtener todos los archivos con su fecha de modificación
+        archivos = []
+        for archivo in carpeta.rglob("*.pdf"):
+            if archivo.is_file():
+                archivos.append((archivo.stat().st_mtime, archivo))
+        
+        # Si hay más archivos de los permitidos, eliminar los más antiguos
+        if len(archivos) > max_archivos:
+            archivos.sort()  # Ordenar por fecha (más antiguos primero)
+            archivos_a_eliminar = archivos[:len(archivos) - max_archivos]
+            
+            for _, archivo in archivos_a_eliminar:
+                try:
+                    archivo.unlink()
+                    logger.info(f"✓ Archivo antiguo eliminado: {archivo.name}")
+                except Exception as e:
+                    logger.warning(f"No se pudo eliminar {archivo}: {e}")
+                    
+    except Exception as e:
+        logger.warning(f"Error al limpiar archivos antiguos: {e}")
 
 
 def run_naps2_scan(output_path, duplex=False):
@@ -274,15 +360,31 @@ def scan_route():
                 # Intentar parsear JSON si la respuesta es JSON
                 try:
                     resp_json = resp.json()
-                    logger.info(f"Documento subido exitosamente: {resp_json}")
+                    logger.info(f"Documento subido exitosamente a Django: {resp_json}")
                 except:
                     resp_json = {"message": "Documento subido exitosamente"}
-                    logger.info("Documento subido exitosamente (respuesta no JSON)")
+                    logger.info("Documento subido exitosamente a Django (respuesta no JSON)")
+            
+            # 4) Guardar copia local y crear respaldo
+            logger.info("Guardando copia local y creando respaldo...")
+            ruta_principal, ruta_respaldo = guardar_archivo_local(
+                out_pdf,
+                nombre_documento,
+                expediente_id
+            )
+            
+            if ruta_principal:
+                logger.info(f"✓ Archivo guardado localmente: {ruta_principal}")
+                logger.info(f"✓ Respaldo creado: {ruta_respaldo}")
+            else:
+                logger.warning("⚠ No se pudo guardar copia local (el archivo ya está en Django)")
             
             return jsonify({
                 "status": "ok",
                 "django": resp_json,
-                "msg": "Escaneo completado y subido correctamente"
+                "ruta_local": ruta_principal,
+                "ruta_respaldo": ruta_respaldo,
+                "msg": "Escaneo completado, subido a Django y guardado localmente"
             }), 200
             
         except subprocess.CalledProcessError as cpe:
@@ -467,7 +569,19 @@ def procesar_solicitud_remota(solicitud):
                 
                 logger.info(f"[REMOTO] Documento subido exitosamente para solicitud #{solicitud_id}")
             
-            # 4) Marcar como completada
+            # 4) Guardar copia local y crear respaldo
+            logger.info(f"[REMOTO] Guardando copia local y creando respaldo...")
+            ruta_principal, ruta_respaldo = guardar_archivo_local(
+                out_pdf,
+                nombre_documento,
+                expediente_id
+            )
+            
+            if ruta_principal:
+                logger.info(f"[REMOTO] ✓ Archivo guardado localmente: {ruta_principal}")
+                logger.info(f"[REMOTO] ✓ Respaldo creado: {ruta_respaldo}")
+            
+            # 5) Marcar como completada
             resp_complete = requests.post(
                 f"{DJANGO_BASE_URL}/scanner/solicitud/{solicitud_id}/completado/",
                 headers=headers,

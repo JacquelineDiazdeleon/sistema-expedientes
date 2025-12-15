@@ -7,5 +7,8 @@
     "SCAN_TIMEOUT": 180,
     "UPLOAD_TIMEOUT": 120,
     "SCANNER_PORT": 5001,
-    "ALLOW_NETWORK_ACCESS": true
+    "ALLOW_NETWORK_ACCESS": true,
+    "CARPETA_PRINCIPAL": "C:\\servidor\\Expedientes",
+    "CARPETA_RESPALDO": "D:\\Resp\\Respaldo_SistemaDigitalizacion",
+    "MAX_ARCHIVOS_PRINCIPAL": 1000
 }
