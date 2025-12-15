@@ -758,3 +758,159 @@ class ComentarioArea(models.Model):
                 )
             except User.DoesNotExist:
                 continue
+
+
+class RolUsuario(models.Model):
+    """Modelo para roles de usuario en el sistema"""
+    ROLES_CHOICES = [
+        ('administrador', 'Administrador'),
+        ('editor', 'Editor'),
+        ('visualizador', 'Visualizador'),
+    ]
+    
+    nombre = models.CharField(max_length=20, choices=ROLES_CHOICES, unique=True)
+    descripcion = models.TextField(blank=True, default='')
+    puede_aprobar_usuarios = models.BooleanField(default=False)
+    puede_editar_expedientes = models.BooleanField(default=False)
+    puede_ver_expedientes = models.BooleanField(default=True)
+    puede_crear_expedientes = models.BooleanField(default=False)
+    puede_eliminar_expedientes = models.BooleanField(default=False)
+    puede_administrar_sistema = models.BooleanField(default=False)
+    
+    class Meta:
+        verbose_name = "Rol de Usuario"
+        verbose_name_plural = "Roles de Usuario"
+        ordering = ['nombre']
+    
+    def __str__(self):
+        return self.get_nombre_display()
+
+
+class PerfilUsuario(models.Model):
+    """Modelo extendido para perfiles de usuario"""
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    rol = models.ForeignKey(RolUsuario, on_delete=models.SET_NULL, null=True, blank=True)
+    departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True)
+    puesto = models.CharField(max_length=100, blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    extension = models.CharField(max_length=10, blank=True, null=True)
+    foto_perfil = models.ImageField(upload_to='perfiles/', blank=True, null=True)
+    activo = models.BooleanField(default=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    fecha_ultimo_acceso = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        verbose_name = "Perfil de Usuario"
+        verbose_name_plural = "Perfiles de Usuario"
+    
+    def __str__(self):
+        return f"{self.usuario.get_full_name()} - {self.rol.get_nombre_display() if self.rol else 'Sin rol'}"
+
+
+class SolicitudRegistro(models.Model):
+    """Modelo para solicitudes de registro de usuarios"""
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('aprobada', 'Aprobada'),
+        ('rechazada', 'Rechazada'),
+    ]
+    
+    # Información del solicitante
+    nombres = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100)
+    email_institucional = models.EmailField(unique=True)
+    departamento = models.ForeignKey(Departamento, on_delete=models.SET_NULL, null=True, blank=True)
+    puesto = models.CharField(max_length=100, blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    extension = models.CharField(max_length=10, blank=True, null=True)
+    
+    # Información de la solicitud
+    rol_solicitado = models.ForeignKey(RolUsuario, on_delete=models.CASCADE)
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    fecha_resolucion = models.DateTimeField(blank=True, null=True)
+    
+    # Contraseña del usuario (encriptada)
+    password_hash = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Usuario que aprobó/rechazó
+    resuelto_por = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='solicitudes_resueltas'
+    )
+    motivo_rechazo = models.TextField(blank=True, null=True)
+    
+    # Usuario creado (si fue aprobado)
+    usuario_creado = models.OneToOneField(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='solicitud_registro'
+    )
+    
+    class Meta:
+        verbose_name = "Solicitud de Registro"
+        verbose_name_plural = "Solicitudes de Registro"
+        ordering = ['-fecha_solicitud']
+    
+    def __str__(self):
+        return f"{self.nombres} {self.apellidos} - {self.estado}"
+    
+    @property
+    def nombre_completo(self):
+        return f"{self.nombres} {self.apellidos}"
+    
+    def aprobar(self, aprobado_por):
+        """Aprueba la solicitud y crea el usuario"""
+        from django.contrib.auth.hashers import make_password
+        
+        # Crear el usuario
+        usuario = User.objects.create(
+            username=self.email_institucional,
+            email=self.email_institucional,
+            first_name=self.nombres,
+            last_name=self.apellidos,
+            is_active=True
+        )
+        
+        # Establecer contraseña
+        if self.password_hash:
+            usuario.set_password(self.password_hash)
+        else:
+            # Generar contraseña temporal
+            import secrets
+            password = secrets.token_urlsafe(12)
+            usuario.set_password(password)
+        
+        usuario.save()
+        
+        # Crear perfil
+        PerfilUsuario.objects.create(
+            usuario=usuario,
+            rol=self.rol_solicitado,
+            departamento=self.departamento,
+            puesto=self.puesto,
+            telefono=self.telefono,
+            extension=self.extension
+        )
+        
+        # Actualizar solicitud
+        self.estado = 'aprobada'
+        self.fecha_resolucion = timezone.now()
+        self.resuelto_por = aprobado_por
+        self.usuario_creado = usuario
+        self.save()
+        
+        return usuario, self.password_hash or password
+    
+    def rechazar(self, rechazado_por, motivo):
+        """Rechaza la solicitud"""
+        self.estado = 'rechazada'
+        self.fecha_resolucion = timezone.now()
+        self.resuelto_por = rechazado_por
+        self.motivo_rechazo = motivo
+        self.save()

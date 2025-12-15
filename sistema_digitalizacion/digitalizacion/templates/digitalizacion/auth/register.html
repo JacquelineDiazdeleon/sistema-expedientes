@@ -1,21 +1,21 @@
 {% extends 'digitalizacion/base_auth.html' %}
+{% load static %}
 
-{% block title %}Crear Cuenta - Sistema de Digitalización{% endblock %}
+{% block title %}Crear Cuenta - Secretaría de Servicios Públicos{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card shadow-lg border-0">
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-zinc-950">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg border-0 bg-zinc-900 border-zinc-800">
                 <div class="card-body p-5">
-                    
                     <!-- Header -->
-                    <div class="text-center mb-4">
-                        <div class="mb-3">
-                            <i class="bi bi-person-plus-fill" style="font-size: 3rem; color: #10b981;"></i>
+                    <div class="text-center mb-5">
+                        <div class="auth-logo mb-4">
+                            <i class="bi bi-person-plus-fill text-emerald-400" style="font-size: 3rem;"></i>
                         </div>
-                        <h2 class="h4 mb-2 fw-bold">Crear Cuenta</h2>
-                        <p class="text-muted-custom small">Completa tus datos para acceder al sistema</p>
+                        <h2 class="h2 mb-2 text-zinc-100 fw-bold">Crear Cuenta</h2>
+                        <p class="text-zinc-400 mb-0">Completa tus datos para acceder al sistema</p>
                     </div>
 
                     <!-- Mensajes -->
@@ -29,74 +29,251 @@
                     {% endif %}
 
                     <!-- Formulario de registro -->
-                    <form method="post">
+                    <form method="post" class="auth-form" id="registerForm">
                         {% csrf_token %}
                         
-                        <!-- Usuario -->
-                        <div class="mb-3">
-                            <label for="id_username" class="form-label fw-semibold">
-                                <i class="bi bi-person me-1"></i> Nombre de usuario
-                            </label>
-                            <input type="text" name="username" id="id_username" class="form-control" 
-                                   placeholder="Elige un nombre de usuario" required autofocus
-                                   value="{{ form.username.value|default:'' }}">
-                            {% if form.username.errors %}
-                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
-                            {% endif %}
-                            <small class="text-muted">150 caracteres o menos. Letras, dígitos y @/./+/-/_ solamente.</small>
-                        </div>
+                        <div class="row g-4">
+                            <!-- Primera columna -->
+                            <div class="col-md-6">
+                                <!-- Nombres -->
+                                <div class="mb-3">
+                                    <label for="{{ form.nombres.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-person me-2"></i>{{ form.nombres.label }}
+                                    </label>
+                                    {{ form.nombres }}
+                                    {% if form.nombres.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.nombres.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
 
-                        <!-- Contraseña -->
-                        <div class="mb-3">
-                            <label for="id_password1" class="form-label fw-semibold">
-                                <i class="bi bi-lock me-1"></i> Contraseña
-                            </label>
-                            <input type="password" name="password1" id="id_password1" class="form-control" 
-                                   placeholder="Crea una contraseña" required>
-                            {% if form.password1.errors %}
-                                <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
-                            {% endif %}
-                            <small class="text-muted">Mínimo 8 caracteres, no puede ser solo números.</small>
-                        </div>
+                                <!-- Apellidos -->
+                                <div class="mb-3">
+                                    <label for="{{ form.apellidos.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.apellidos.label }}
+                                    </label>
+                                    {{ form.apellidos }}
+                                    {% if form.apellidos.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.apellidos.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
 
-                        <!-- Confirmar contraseña -->
-                        <div class="mb-4">
-                            <label for="id_password2" class="form-label fw-semibold">
-                                <i class="bi bi-lock-fill me-1"></i> Confirmar contraseña
-                            </label>
-                            <input type="password" name="password2" id="id_password2" class="form-control" 
-                                   placeholder="Repite la contraseña" required>
-                            {% if form.password2.errors %}
-                                <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Errores generales del formulario -->
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {% for error in form.non_field_errors %}
-                                    {{ error }}
-                                {% endfor %}
+                                <!-- Correo Electrónico Institucional -->
+                                <div class="mb-3">
+                                    <label for="{{ form.email_institucional.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-envelope me-2"></i>{{ form.email_institucional.label }}
+                                    </label>
+                                    {{ form.email_institucional }}
+                                    {% if form.email_institucional.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.email_institucional.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
                             </div>
-                        {% endif %}
 
-                        <!-- Botón de envío -->
-                        <button type="submit" class="btn btn-success-custom w-100 py-3 mb-3">
-                            <i class="bi bi-person-plus me-2"></i>Crear Cuenta
-                        </button>
+                            <!-- Segunda columna -->
+                            <div class="col-md-6">
+                                <!-- Departamento -->
+                                <div class="mb-3">
+                                    <label for="{{ form.departamento.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.departamento.label }}
+                                    </label>
+                                    {{ form.departamento }}
+                                    {% if form.departamento.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.departamento.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Puesto -->
+                                <div class="mb-3">
+                                    <label for="{{ form.puesto.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.puesto.label }}
+                                    </label>
+                                    {{ form.puesto }}
+                                    {% if form.puesto.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.puesto.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Rol Solicitado -->
+                                <div class="mb-3">
+                                    <label for="{{ form.rol_solicitado.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-shield me-2"></i>Rol Solicitado *
+                                    </label>
+                                    {{ form.rol_solicitado }}
+                                    {% if form.rol_solicitado.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.rol_solicitado.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Información de Roles -->
+                            <div class="col-12">
+                                <div class="alert alert-info border-info bg-zinc-800 border-zinc-700">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-info-circle text-info fs-4 me-3 mt-1"></i>
+                                        <div>
+                                            <h6 class="text-zinc-100 mb-2">Selecciona tu Rol en el Sistema</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-shield-fill text-danger me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Administrador</strong>
+                                                            <small class="text-zinc-400">Acceso completo y gestión de usuarios</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-pencil-square text-warning me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Editor</strong>
+                                                            <small class="text-zinc-400">Visualización y edición de expedientes</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-eye text-info me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Visualizador</strong>
+                                                            <small class="text-zinc-400">Solo consulta de expedientes</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contraseñas -->
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.password.id_for_label }}" class="form-label text-zinc-300">
+                                            <i class="bi bi-lock me-2"></i>{{ form.password.label }}
+                                        </label>
+                                        <div class="position-relative">
+                                            {{ form.password }}
+                                            <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 h-100" 
+                                                    onclick="togglePassword('id_password')" title="Mostrar/Ocultar contraseña">
+                                                <i class="bi bi-eye" id="id_passwordIcon"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-zinc-500">Mínimo 8 caracteres</div>
+                                        {% if form.password.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.password.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.confirm_password.id_for_label }}" class="form-label text-zinc-300">
+                                            <i class="bi bi-lock me-2"></i>{{ form.confirm_password.label }}
+                                        </label>
+                                        <div class="position-relative">
+                                            {{ form.confirm_password }}
+                                            <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 h-100" 
+                                                    onclick="togglePassword('id_confirm_password')" title="Mostrar/Ocultar confirmación">
+                                                <i class="bi bi-eye" id="id_confirm_passwordIcon"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.confirm_password.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.confirm_password.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Términos y condiciones -->
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terminosCheck" required>
+                                    <label class="form-check-label text-zinc-300" for="terminosCheck">
+                                        Acepto los <a href="#" class="text-emerald-400">términos y condiciones</a> y la 
+                                        <a href="#" class="text-emerald-400">política de privacidad</a> del sistema.
+                                    </label>
+                                </div>
+                                <small class="text-zinc-500 d-block mt-2">
+                                    Al registrarte, confirmas que eres empleado de la Secretaría de Servicios Públicos.
+                                </small>
+                            </div>
+
+                            <!-- Botón de envío -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-emerald-600 w-100 py-3 fw-bold" id="submitBtn">
+                                    <i class="bi bi-person-plus me-2"></i>
+                                    Crear Cuenta
+                                    <i class="bi bi-check2 ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
                     </form>
 
-                    <!-- Enlace a login -->
-                    <div class="text-center mt-3">
-                        <p class="text-muted-custom small mb-1">¿Ya tienes cuenta?</p>
-                        <a href="{% url 'digitalizacion:login' %}" class="text-decoration-none fw-semibold" style="color: #3b82f6;">
-                            <i class="bi bi-arrow-left me-1"></i>Iniciar sesión
+                    <!-- Enlaces adicionales -->
+                    <div class="text-center mt-4">
+                        <p class="text-zinc-400 mb-0">¿Ya tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:login' %}" class="text-emerald-400 text-decoration-none">
+                            <i class="bi bi-arrow-left me-2"></i>Iniciar sesión
                         </a>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    window.togglePassword = function(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = document.getElementById(fieldId + 'Icon');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    };
+    
+    // Form validation
+    const form = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const terminosCheck = document.getElementById('terminosCheck');
+    
+    form.addEventListener('submit', function(e) {
+        // Validar términos y condiciones
+        if (!terminosCheck.checked) {
+            e.preventDefault();
+            alert('Debes aceptar los términos y condiciones para continuar.');
+            return false;
+        }
+        
+        // Deshabilitar botón y mostrar spinner
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creando cuenta...';
+    });
+});
+</script>
 {% endblock %}

@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
-from .models import TipoDocumento, Departamento, Documento, HistorialDocumento, ConfiguracionSistema
+from .models import (
+    TipoDocumento, Departamento, Documento, HistorialDocumento, 
+    ConfiguracionSistema, RolUsuario, PerfilUsuario, SolicitudRegistro
+)
 
 
 @admin.register(TipoDocumento)
@@ -189,6 +192,42 @@ class ConfiguracionSistemaAdmin(admin.ModelAdmin):
             return obj.valor[:50] + "..."
         return obj.valor
     valor_truncado.short_description = "Valor"
+
+
+@admin.register(RolUsuario)
+class RolUsuarioAdmin(admin.ModelAdmin):
+    list_display = ['nombre', 'descripcion', 'puede_aprobar_usuarios', 'puede_administrar_sistema']
+    list_filter = ['puede_aprobar_usuarios', 'puede_administrar_sistema']
+    search_fields = ['nombre', 'descripcion']
+
+
+@admin.register(PerfilUsuario)
+class PerfilUsuarioAdmin(admin.ModelAdmin):
+    list_display = ['usuario', 'rol', 'departamento', 'puesto', 'activo', 'fecha_ultimo_acceso']
+    list_filter = ['rol', 'departamento', 'activo']
+    search_fields = ['usuario__username', 'usuario__email', 'puesto']
+    raw_id_fields = ['usuario']
+
+
+@admin.register(SolicitudRegistro)
+class SolicitudRegistroAdmin(admin.ModelAdmin):
+    list_display = ['nombres', 'apellidos', 'email_institucional', 'rol_solicitado', 'estado', 'fecha_solicitud']
+    list_filter = ['estado', 'rol_solicitado', 'fecha_solicitud']
+    search_fields = ['nombres', 'apellidos', 'email_institucional']
+    date_hierarchy = 'fecha_solicitud'
+    
+    actions = ['aprobar_solicitudes', 'rechazar_solicitudes']
+    
+    def aprobar_solicitudes(self, request, queryset):
+        for solicitud in queryset.filter(estado='pendiente'):
+            solicitud.aprobar(request.user)
+        self.message_user(request, f'{queryset.count()} solicitudes aprobadas.')
+    aprobar_solicitudes.short_description = "Aprobar solicitudes seleccionadas"
+    
+    def rechazar_solicitudes(self, request, queryset):
+        queryset.filter(estado='pendiente').update(estado='rechazada')
+        self.message_user(request, f'{queryset.count()} solicitudes rechazadas.')
+    rechazar_solicitudes.short_description = "Rechazar solicitudes seleccionadas"
 
 
 # Personalización del admin site

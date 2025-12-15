@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column, Field, HTML
 from crispy_forms.bootstrap import FormActions
-from .models import Documento, TipoDocumento, Departamento, Expediente
+from .models import Documento, TipoDocumento, Departamento, Expediente, SolicitudRegistro, RolUsuario
 
 
 class ExpedienteForm(forms.ModelForm):
@@ -395,4 +395,110 @@ class BusquedaAvanzadaForm(forms.Form):
         
         return cleaned_data
 
+
+class LoginForm(forms.Form):
+    """Formulario de login personalizado"""
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Usuario o correo electrónico',
+            'id': 'id_username'
+        }),
+        label='Usuario o Correo Electrónico'
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Contraseña',
+            'id': 'id_password'
+        }),
+        label='Contraseña'
+    )
+
+
+class SolicitudRegistroForm(forms.ModelForm):
+    """Formulario para solicitudes de registro"""
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Ingresa tu contraseña',
+            'id': 'id_password'
+        }),
+        label='Contraseña *',
+        help_text='Mínimo 8 caracteres'
+    )
+    confirm_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Confirma tu contraseña',
+            'id': 'id_confirm_password'
+        }),
+        label='Confirmar Contraseña *'
+    )
+    
+    class Meta:
+        model = SolicitudRegistro
+        fields = [
+            'nombres', 'apellidos', 'email_institucional', 
+            'departamento', 'puesto', 'rol_solicitado'
+        ]
+        widgets = {
+            'nombres': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ingresa tu(s) nombre(s)',
+                'id': 'id_nombres'
+            }),
+            'apellidos': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ingresa tus apellidos',
+                'id': 'id_apellidos'
+            }),
+            'email_institucional': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'correo@servicios.gob.mx',
+                'id': 'id_email_institucional'
+            }),
+            'departamento': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_departamento'
+            }),
+            'puesto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Tu puesto o cargo',
+                'id': 'id_puesto'
+            }),
+            'rol_solicitado': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_rol_solicitado'
+            })
+        }
+        labels = {
+            'nombres': 'Nombre(s) *',
+            'apellidos': 'Apellidos *',
+            'email_institucional': 'Correo Electrónico *',
+            'departamento': 'Departamento',
+            'puesto': 'Puesto',
+            'rol_solicitado': 'Rol Solicitado *'
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['rol_solicitado'].queryset = RolUsuario.objects.all()
+        self.fields['departamento'].queryset = Departamento.objects.filter(activo=True)
+        self.fields['departamento'].required = False
+        self.fields['puesto'].required = False
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        confirm_password = cleaned_data.get('confirm_password')
+        
+        if password and confirm_password:
+            if password != confirm_password:
+                raise forms.ValidationError("Las contraseñas no coinciden")
+            
+            if len(password) < 8:
+                raise forms.ValidationError("La contraseña debe tener al menos 8 caracteres")
+        
+        return cleaned_data
 

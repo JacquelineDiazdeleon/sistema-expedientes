@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_auth
 
 app_name = 'digitalizacion'
 
@@ -32,9 +33,11 @@ urlpatterns = [
     path('api/documentos/', views.api_documentos, name='api_documentos'),
     path('api/estadisticas/', views.api_estadisticas, name='api_estadisticas'),
     
-    # Autenticación simple
-    path('login/', views.user_login, name='login'),
-    path('register/', views.user_register, name='register'),
-    path('logout/', views.user_logout, name='logout'),
+    # Autenticación (usando views_auth)
+    path('login/', views_auth.login_view, name='login'),
+    path('register/', views_auth.register_view, name='register'),
+    path('registro/', views_auth.register_view, name='registro'),
+    path('logout/', views_auth.logout_view, name='logout'),
+    path('cambiar-password/', views_auth.cambiar_password, name='cambiar_password'),
     path('profile/', views.user_profile, name='profile'),
 ]
