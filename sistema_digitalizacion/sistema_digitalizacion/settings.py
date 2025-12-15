@@ -94,6 +94,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -186,3 +187,6 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# WhiteNoise para servir archivos estáticos en producción
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
