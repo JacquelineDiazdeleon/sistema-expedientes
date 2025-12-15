@@ -1876,5 +1876,92 @@ class ArchivoAdjunto(models.Model):
 
 # Fin de la clase ArchivoAdjunto
 
-# Asegurarse de que no haya líneas adicionales después de este punto
+
+class SolicitudEscaneo(models.Model):
+    """
+    Modelo para solicitudes de escaneo remoto.
+    Permite que cualquier dispositivo solicite un escaneo que será
+    procesado por el servicio de escaneo local.
+    """
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('procesando', 'Procesando'),
+        ('completado', 'Completado'),
+        ('error', 'Error'),
+        ('cancelado', 'Cancelado'),
+    ]
+    
+    # Información de la solicitud
+    expediente = models.ForeignKey(
+        'Expediente', 
+        on_delete=models.CASCADE, 
+        related_name='solicitudes_escaneo'
+    )
+    area_id = models.IntegerField(help_text="ID del área donde se guardará el documento")
+    nombre_documento = models.CharField(max_length=255)
+    descripcion = models.TextField(blank=True, null=True)
+    duplex = models.BooleanField(default=False, help_text="Escanear por ambos lados")
+    
+    # Estado de la solicitud
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente')
+    mensaje_error = models.TextField(blank=True, null=True)
+    
+    # Usuario que solicitó el escaneo
+    solicitado_por = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='solicitudes_escaneo'
+    )
+    
+    # Timestamps
+    fecha_solicitud = models.DateTimeField(auto_now_add=True)
+    fecha_procesamiento = models.DateTimeField(blank=True, null=True)
+    fecha_completado = models.DateTimeField(blank=True, null=True)
+    
+    # Documento resultante (si se completó exitosamente)
+    documento_creado = models.ForeignKey(
+        'DocumentoExpediente',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='solicitud_escaneo'
+    )
+    
+    class Meta:
+        verbose_name = "Solicitud de Escaneo"
+        verbose_name_plural = "Solicitudes de Escaneo"
+        ordering = ['-fecha_solicitud']
+    
+    def __str__(self):
+        return f"Escaneo: {self.nombre_documento} - {self.estado}"
+    
+    def marcar_procesando(self):
+        """Marca la solicitud como en proceso"""
+        self.estado = 'procesando'
+        self.fecha_procesamiento = timezone.now()
+        self.save()
+    
+    def marcar_completado(self, documento=None):
+        """Marca la solicitud como completada"""
+        self.estado = 'completado'
+        self.fecha_completado = timezone.now()
+        if documento:
+            self.documento_creado = documento
+        self.save()
+    
+    def marcar_error(self, mensaje):
+        """Marca la solicitud con error"""
+        self.estado = 'error'
+        self.mensaje_error = mensaje
+        self.fecha_completado = timezone.now()
+        self.save()
+    
+    def cancelar(self):
+        """Cancela la solicitud"""
+        if self.estado == 'pendiente':
+            self.estado = 'cancelado'
+            self.save()
+            return True
+        return False
 

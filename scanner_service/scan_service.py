@@ -22,6 +22,7 @@ import subprocess
 import requests
 import time
 import logging
+import threading
 from flask import Flask, request, jsonify
 from datetime import datetime
 
@@ -358,7 +359,7 @@ def index():
     """Página de información del servicio"""
     return jsonify({
         "service": "Scanner Service",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "endpoints": {
             "/scan": "POST - Escanear documento y subir a Django",
             "/health": "GET - Verificar estado del servicio"
@@ -367,8 +368,204 @@ def index():
             "naps2_profile": NAPS2_PROFILE,
             "django_url": DJANGO_BASE_URL,
             "archivo_field": ARCHIVO_FIELD_NAME
-        }
+        },
+        "remote_scanning": "enabled"
     }), 200
+
+
+# ========== ESCANEO REMOTO (POLLING) ==========
+
+# Control del hilo de polling
+polling_active = True
+polling_interval = 5  # segundos entre cada consulta
+is_scanning = False  # Flag para evitar escaneos simultáneos
+
+
+def procesar_solicitud_remota(solicitud):
+    """
+    Procesa una solicitud de escaneo remota.
+    
+    Args:
+        solicitud: dict con los datos de la solicitud
+    """
+    global is_scanning
+    
+    solicitud_id = solicitud.get('id')
+    expediente_id = solicitud.get('expediente_id')
+    area_id = solicitud.get('area_id')
+    nombre_documento = solicitud.get('nombre_documento', f"scan_{int(time.time())}")
+    descripcion = solicitud.get('descripcion', '')
+    duplex = solicitud.get('duplex', False)
+    
+    logger.info(f"[REMOTO] Procesando solicitud #{solicitud_id}: {nombre_documento}")
+    
+    headers = {
+        "Authorization": f"Bearer {AUTH_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        # 1) Marcar como "procesando"
+        resp = requests.post(
+            f"{DJANGO_BASE_URL}/scanner/solicitud/{solicitud_id}/procesando/",
+            headers=headers,
+            timeout=30
+        )
+        resp.raise_for_status()
+        logger.info(f"[REMOTO] Solicitud #{solicitud_id} marcada como procesando")
+        
+        # 2) Crear directorio temporal y escanear
+        tmpdir = tempfile.mkdtemp(prefix="scan_remote_")
+        out_pdf = os.path.join(tmpdir, "scanned.pdf")
+        
+        try:
+            is_scanning = True
+            logger.info(f"[REMOTO] Iniciando escaneo para solicitud #{solicitud_id}...")
+            run_naps2_scan(out_pdf, duplex=duplex)
+            
+            # 3) Subir el documento a Django
+            # Usamos el endpoint normal de subir documento por etapa
+            # Pero primero necesitamos obtener la etapa del expediente
+            # Por simplicidad, usamos el endpoint que ya conocemos
+            
+            django_url = f"{DJANGO_BASE_URL}/expedientes/{expediente_id}/etapa/inicial/subir-documento/"
+            logger.info(f"[REMOTO] Subiendo PDF a Django: {django_url}")
+            
+            with open(out_pdf, "rb") as f:
+                files = {
+                    ARCHIVO_FIELD_NAME: (f"{nombre_documento}.pdf", f, "application/pdf")
+                }
+                
+                data_post = {
+                    "area_id": str(area_id),
+                    "nombre_documento": nombre_documento,
+                    "descripcion": descripcion
+                }
+                
+                upload_headers = {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                    "X-Scanner-Service": "true",
+                    "X-Remote-Scan": "true"
+                }
+                
+                resp_upload = requests.post(
+                    django_url,
+                    files=files,
+                    data=data_post,
+                    headers=upload_headers,
+                    timeout=UPLOAD_TIMEOUT
+                )
+                
+                resp_upload.raise_for_status()
+                
+                try:
+                    resp_json = resp_upload.json()
+                    documento_id = resp_json.get('documento_id')
+                except:
+                    resp_json = {}
+                    documento_id = None
+                
+                logger.info(f"[REMOTO] Documento subido exitosamente para solicitud #{solicitud_id}")
+            
+            # 4) Marcar como completada
+            resp_complete = requests.post(
+                f"{DJANGO_BASE_URL}/scanner/solicitud/{solicitud_id}/completado/",
+                headers=headers,
+                json={"documento_id": documento_id},
+                timeout=30
+            )
+            resp_complete.raise_for_status()
+            logger.info(f"[REMOTO] ✓ Solicitud #{solicitud_id} completada exitosamente")
+            
+        except Exception as scan_error:
+            # Marcar como error
+            logger.error(f"[REMOTO] Error en solicitud #{solicitud_id}: {str(scan_error)}")
+            try:
+                requests.post(
+                    f"{DJANGO_BASE_URL}/scanner/solicitud/{solicitud_id}/error/",
+                    headers=headers,
+                    json={"error": str(scan_error)},
+                    timeout=30
+                )
+            except:
+                pass
+                
+        finally:
+            is_scanning = False
+            # Limpiar archivos temporales
+            try:
+                if os.path.exists(out_pdf):
+                    os.remove(out_pdf)
+                if os.path.exists(tmpdir):
+                    os.rmdir(tmpdir)
+            except:
+                pass
+                
+    except Exception as e:
+        is_scanning = False
+        logger.error(f"[REMOTO] Error al procesar solicitud #{solicitud_id}: {str(e)}")
+
+
+def polling_solicitudes():
+    """
+    Hilo que consulta periódicamente las solicitudes pendientes en Render.
+    """
+    global polling_active, is_scanning
+    
+    logger.info("[POLLING] Iniciando servicio de polling para solicitudes remotas...")
+    logger.info(f"[POLLING] Intervalo: {polling_interval} segundos")
+    logger.info(f"[POLLING] Servidor: {DJANGO_BASE_URL}")
+    
+    while polling_active:
+        try:
+            # No consultar si ya estamos escaneando
+            if is_scanning:
+                time.sleep(polling_interval)
+                continue
+            
+            # Consultar solicitudes pendientes
+            headers = {
+                "Authorization": f"Bearer {AUTH_TOKEN}"
+            }
+            
+            resp = requests.get(
+                f"{DJANGO_BASE_URL}/scanner/solicitudes-pendientes/",
+                headers=headers,
+                timeout=30
+            )
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                solicitudes = data.get('solicitudes', [])
+                
+                if solicitudes:
+                    logger.info(f"[POLLING] Encontradas {len(solicitudes)} solicitudes pendientes")
+                    
+                    # Procesar la primera solicitud (una a la vez)
+                    solicitud = solicitudes[0]
+                    procesar_solicitud_remota(solicitud)
+            else:
+                # Solo loggear errores importantes, no cada polling
+                if resp.status_code != 401:  # 401 es normal si no hay token
+                    logger.debug(f"[POLLING] Respuesta del servidor: {resp.status_code}")
+                    
+        except requests.exceptions.ConnectionError:
+            logger.debug("[POLLING] No hay conexión con el servidor. Reintentando...")
+        except Exception as e:
+            logger.debug(f"[POLLING] Error en polling: {str(e)}")
+        
+        # Esperar antes de la siguiente consulta
+        time.sleep(polling_interval)
+    
+    logger.info("[POLLING] Servicio de polling detenido")
+
+
+def iniciar_polling():
+    """Inicia el hilo de polling en segundo plano"""
+    thread = threading.Thread(target=polling_solicitudes, daemon=True)
+    thread.start()
+    logger.info("[POLLING] Hilo de polling iniciado")
+    return thread
 
 
 if __name__ == "__main__":
@@ -391,11 +588,19 @@ if __name__ == "__main__":
         logger.info(f"  - Red local: http://{local_ip}:5001")
         logger.info(f"=" * 50)
         logger.info(f"Otros dispositivos pueden escanear usando: http://{local_ip}:5001")
+        logger.info(f"")
+        logger.info(f"[ESCANEO REMOTO HABILITADO]")
+        logger.info(f"Otros dispositivos pueden solicitar escaneos desde la web.")
+        logger.info(f"El servicio consultará {DJANGO_BASE_URL} cada {polling_interval} segundos.")
+        logger.info(f"=" * 50)
         
     except FileNotFoundError as e:
         logger.error(f"Error de configuración: {e}")
         logger.error("Por favor, verifica la instalación de NAPS2 o ajusta NAPS2_CLI en config.json")
         exit(1)
+    
+    # Iniciar el servicio de polling para solicitudes remotas
+    iniciar_polling()
     
     # Iniciar servidor Flask en todas las interfaces (accesible desde la red)
     app.run(host='0.0.0.0', port=5001, debug=False)

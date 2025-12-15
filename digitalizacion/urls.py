@@ -5,6 +5,7 @@ from . import views_auth
 from . import views_admin
 from . import views_areas
 from . import views_documentos
+from . import views_escaneo
 
 app_name = 'digitalizacion'
 
@@ -76,6 +77,20 @@ urlpatterns = [
             path('expedientes-mensuales/', views.api_expedientes_mensuales, name='api_expedientes_mensuales'),
         ])),
         path('expedientes-por-tipo/', views.api_expedientes_por_tipo, name='api_expedientes_por_tipo'),
+        # API de escaneo remoto (para usuarios autenticados)
+        path('escaneo/', include([
+            path('solicitar/', views_escaneo.crear_solicitud_escaneo, name='api_solicitar_escaneo'),
+            path('<int:solicitud_id>/estado/', views_escaneo.estado_solicitud_escaneo, name='api_estado_escaneo'),
+            path('<int:solicitud_id>/cancelar/', views_escaneo.cancelar_solicitud_escaneo, name='api_cancelar_escaneo'),
+        ])),
+    ])),
+    
+    # API para el servicio de escaneo local (requiere token)
+    path('scanner/', include([
+        path('solicitudes-pendientes/', views_escaneo.obtener_solicitudes_pendientes, name='scanner_solicitudes_pendientes'),
+        path('solicitud/<int:solicitud_id>/procesando/', views_escaneo.marcar_solicitud_procesando, name='scanner_marcar_procesando'),
+        path('solicitud/<int:solicitud_id>/completado/', views_escaneo.marcar_solicitud_completada, name='scanner_marcar_completado'),
+        path('solicitud/<int:solicitud_id>/error/', views_escaneo.marcar_solicitud_error, name='scanner_marcar_error'),
     ])),
     
     # Módulos principales (incluidos desde archivos separados)

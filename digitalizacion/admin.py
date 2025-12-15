@@ -13,7 +13,9 @@ from .models import (
     # Modelos de colaboración en expedientes
     MensajeExpediente,
     # Modelos de mensajería
-    Chat, Mensaje, ArchivoAdjunto
+    Chat, Mensaje, ArchivoAdjunto,
+    # Modelo de escaneo remoto
+    SolicitudEscaneo
 )
 
 
@@ -486,6 +488,43 @@ class ArchivoAdjuntoAdmin(admin.ModelAdmin):
     def get_tamano_formateado(self, obj):
         return obj.get_tamano_formateado()
     get_tamano_formateado.short_description = 'Tamaño'
+
+
+# ============================================
+# ADMIN PARA SOLICITUDES DE ESCANEO
+# ============================================
+
+@admin.register(SolicitudEscaneo)
+class SolicitudEscaneoAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'nombre_documento', 'expediente', 'estado', 
+        'solicitado_por', 'fecha_solicitud', 'fecha_completado'
+    ]
+    list_filter = ['estado', 'fecha_solicitud', 'duplex']
+    search_fields = ['nombre_documento', 'descripcion', 'expediente__numero']
+    readonly_fields = ['fecha_solicitud', 'fecha_procesamiento', 'fecha_completado']
+    ordering = ['-fecha_solicitud']
+    
+    fieldsets = (
+        ('Información de la Solicitud', {
+            'fields': ('expediente', 'area_id', 'nombre_documento', 'descripcion', 'duplex')
+        }),
+        ('Estado', {
+            'fields': ('estado', 'mensaje_error', 'documento_creado')
+        }),
+        ('Usuario', {
+            'fields': ('solicitado_por',)
+        }),
+        ('Fechas', {
+            'fields': ('fecha_solicitud', 'fecha_procesamiento', 'fecha_completado'),
+            'classes': ('collapse',)
+        })
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'expediente', 'solicitado_por', 'documento_creado'
+        )
 
 
 # ============================================
