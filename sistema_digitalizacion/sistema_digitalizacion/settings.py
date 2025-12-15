@@ -24,7 +24,8 @@ import os
 SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-e2_9lv0y^6gp6xxzn03va)aw#i!uugs3sufuyky9nl-n#vya2c")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
+# Temporalmente True para ver errores en Render
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "sistema-expedientes-u2em.onrender.com",
