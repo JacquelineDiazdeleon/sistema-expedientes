@@ -1,0 +1,111 @@
+{% extends 'digitalizacion/base.html' %}
+
+{% block title %}Mi Perfil - Sistema de Digitalización{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm border-0 glassmorphism">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-circle me-2 text-primary"></i>
+                        Mi Perfil
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Información del usuario -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <label class="form-label fw-semibold text-muted">
+                                    <i class="fas fa-user me-2"></i>Nombre de usuario
+                                </label>
+                                <p class="form-control-plaintext">{{ user.username }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <label class="form-label fw-semibold text-muted">
+                                    <i class="fas fa-envelope me-2"></i>Correo electrónico
+                                </label>
+                                <p class="form-control-plaintext">{{ user.email|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <label class="form-label fw-semibold text-muted">
+                                    <i class="fas fa-id-card me-2"></i>Nombre completo
+                                </label>
+                                <p class="form-control-plaintext">{{ user.get_full_name|default:"No especificado" }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item mb-3">
+                                <label class="form-label fw-semibold text-muted">
+                                    <i class="fas fa-calendar me-2"></i>Fecha de registro
+                                </label>
+                                <p class="form-control-plaintext">{{ user.date_joined|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Estadísticas del usuario -->
+                    <hr class="my-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-bar me-2 text-primary"></i>
+                        Estadísticas de Expedientes
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stat-card bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded p-3 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="fas fa-folder-open fa-2x text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="mb-0 text-primary">{{ total_expedientes }}</h3>
+                                        <p class="text-muted mb-0">Expedientes creados</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card bg-success bg-opacity-10 border border-success border-opacity-25 rounded p-3 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="stat-icon me-3">
+                                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="mb-0 text-success">{{ expedientes_completados }}</h3>
+                                        <p class="text-muted mb-0">Expedientes completados</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="d-flex gap-3 mt-4">
+                        <a href="{% url 'expedientes:dashboard' %}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt me-2"></i>Ir al Dashboard
+                        </a>
+                        <a href="{% url 'expedientes:lista' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list me-2"></i>Ver mis Expedientes
+                        </a>
+                        <div class="ms-auto">
+                            <a href="{% url 'digitalizacion:logout' %}" class="btn btn-outline-danger">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

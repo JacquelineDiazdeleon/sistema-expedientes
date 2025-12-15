@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Documentos - {{ expediente.numero_expediente }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header principal */
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px 30px;
+            text-align: center;
+            margin: 20px 30px;
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .btn-volver {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+        
+        .btn-volver:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #64748b;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+        
+        .contador {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        /* Contenedor principal */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px 40px;
+        }
+        
+        /* Tarjeta de documento */
+        .documento {
+            background: rgba(255, 255, 255, 0.95);
+            margin-bottom: 30px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+        
+        .documento-header {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .documento-nombre {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .documento-info {
+            font-size: 0.95em;
+            opacity: 0.9;
+            color: #e2e8f0;
+            margin-top: 5px;
+        }
+        
+        .documento-content {
+            padding: 30px;
+        }
+        
+        /* Visualizador de documentos */
+        .documento-iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Visualizador directo */
+        .visualizador-directo {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .documento-iframe-container {
+            background: #ffffff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Contenedor de opciones */
+        .opciones-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .opciones-titulo {
+            font-size: 1.2em;
+            color: #3b82f6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .opciones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn-opcion {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 15px 20px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            text-align: center;
+        }
+        
+        .btn-opcion:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        /* Mensaje sin documentos */
+        .sin-documentos {
+            text-align: center;
+            padding: 100px 20px;
+            color: #64748b;
+        }
+        
+        .sin-documentos h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #3b82f6;
+        }
+        
+        .sin-documentos p {
+            font-size: 1.3em;
+            opacity: 0.8;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 0 20px 30px;
+            }
+            
+            .documento-content {
+                padding: 20px;
+            }
+            
+            .documento-iframe {
+                height: 500px;
+            }
+            
+            .opciones-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-volver {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .documento {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .btn-volver, .btn-opcion {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header principal -->
+    <div class="header">
+        <a href="{% url 'expedientes:detalle' expediente.pk %}" class="btn-volver">
+            <i class="bi bi-arrow-left"></i>
+            Volver al Expediente
+        </a>
+        <h1>{{ expediente.numero_expediente }}</h1>
+        <p>Visualizador de Documentos</p>
+        <div class="contador">{{ documentos.count }} documento{{ documentos.count|pluralize }}</div>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="container">
+        {% if documentos %}
+            {% for documento in documentos %}
+            <div class="documento">
+                <div class="documento-header">
+                    <div>
+                        <div class="documento-nombre">{{ documento.nombre_archivo }}</div>
+                        <div class="documento-info">
+                            <i class="bi bi-clock"></i> Subido: {{ documento.fecha_subida|date:"d/m/Y H:i" }}
+                            {% if documento.subido_por %}
+                                <i class="bi bi-person"></i> por {{ documento.subido_por.get_full_name|default:documento.subido_por.username }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="documento-content">
+                    {% if documento.archivo.name|lower|slice:"-4:" == '.pdf' %}
+                        <!-- PDF -->
+                        <iframe src="{{ documento.archivo.url }}" class="documento-iframe" title="Visualizador PDF"></iframe>
+                    {% elif documento.archivo.name|lower|slice:"-5:" == '.docx' or documento.archivo.name|lower|slice:"-4:" == '.doc' %}
+                        <!-- Word -->
+                        <div class="opciones-container">
+                            <div class="opciones-titulo">
+                                <i class="bi bi-file-earmark-word"></i> 
+                                Archivo Word: {{ documento.nombre_archivo }}
+                            </div>
+                            <div class="opciones-grid">
+                                <a href="{{ documento.archivo.url }}" download class="btn-opcion">
+                                    <i class="bi bi-download"></i>
+                                    Descargar Archivo
+                                </a>
+                                <a href="{{ documento.archivo.url }}" target="_blank" class="btn-opcion">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    Abrir en Nueva Pestaña
+                                </a>
+                                <a href="https://www.office.com/launch/word" target="_blank" rel="noopener noreferrer" class="btn-opcion">
+                                    <i class="bi bi-microsoft"></i>
+                                    Abrir con Office Online
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- VISUALIZADOR DIRECTO DEL DOCUMENTO -->
+                        <div class="visualizador-directo">
+                            <h4 style="color: #3b82f6; margin: 20px 0 15px 0; text-align: center;">
+                                <i class="bi bi-eye"></i> Vista Previa del Documento
+                            </h4>
+                            <div class="documento-iframe-container">
+                                <iframe src="https://docs.google.com/viewer?url={{ request.scheme }}://{{ request.get_host }}{{ documento.archivo.url }}&embedded=true" 
+                                        class="documento-iframe" 
+                                        frameborder="0"
+                                        title="Visualizador Word">
+                                </iframe>
+                            </div>
+                        </div>
+                    {% elif documento.archivo.name|lower|slice:"-5:" == '.xlsx' or documento.archivo.name|lower|slice:"-4:" == '.xls' %}
+                        <!-- Excel -->
+                        <div class="opciones-container">
+                            <div class="opciones-titulo">
+                                <i class="bi bi-file-earmark-excel"></i> 
+                                Archivo Excel: {{ documento.nombre_archivo }}
+                            </div>
+                            <div class="opciones-grid">
+                                <a href="{{ documento.archivo.url }}" download class="btn-opcion">
+                                    <i class="bi bi-download"></i>
+                                    Descargar Archivo
+                                </a>
+                                <a href="{{ documento.archivo.url }}" target="_blank" class="btn-opcion">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    Abrir en Nueva Pestaña
+                                </a>
+                                <a href="https://www.office.com/launch/excel" target="_blank" rel="noopener noreferrer" class="btn-opcion">
+                                    <i class="bi bi-microsoft"></i>
+                                    Abrir con Office Online
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- VISUALIZADOR DIRECTO DEL DOCUMENTO -->
+                        <div class="visualizador-directo">
+                            <h4 style="color: #3b82f6; margin: 20px 0 15px 0; text-align: center;">
+                                <i class="bi bi-eye"></i> Vista Previa del Documento
+                            </h4>
+                            <div class="documento-iframe-container">
+                                <iframe src="https://docs.google.com/viewer?url={{ request.scheme }}://{{ request.get_host }}{{ documento.archivo.url }}&embedded=true" 
+                                        class="documento-iframe" 
+                                        frameborder="0"
+                                        title="Visualizador Excel">
+                                </iframe>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Otros tipos de archivo -->
+                        <div class="opciones-container">
+                            <div class="opciones-titulo">
+                                <i class="bi bi-file-earmark"></i> 
+                                Archivo: {{ documento.nombre_archivo }}
+                            </div>
+                            <div class="opciones-grid">
+                                <a href="{{ documento.archivo.url }}" download class="btn-opcion">
+                                    <i class="bi bi-download"></i>
+                                    Descargar Archivo
+                                </a>
+                                <a href="{{ documento.archivo.url }}" target="_blank" class="btn-opcion">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                    Abrir en Nueva Pestaña
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="sin-documentos">
+                <h2><i class="bi bi-folder-x"></i></h2>
+                <h2>No hay documentos subidos</h2>
+                <p>Este expediente aún no tiene documentos cargados.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>

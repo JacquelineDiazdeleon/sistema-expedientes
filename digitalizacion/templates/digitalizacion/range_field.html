@@ -1,0 +1,25 @@
+{% load crispy_forms_field %}
+
+<div class="mb-3">
+    <label for="{{ field.id_for_label }}" class="form-label">
+        {{ field.label }}
+        {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+        {% endif %}
+    </label>
+    <div class="d-flex align-items-center">
+        <span class="me-2" style="min-width: 30px;">-1000</span>
+        {{ field }}
+        <span class="ms-2" style="min-width: 30px;">1000</span>
+        <span id="{{ field.name }}Valor" class="ms-3 fw-bold" style="min-width: 40px; text-align: center;">
+            {{ field.value|default:0 }}
+        </span>
+    </div>
+    {% if field.errors %}
+        <div class="invalid-feedback d-block">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

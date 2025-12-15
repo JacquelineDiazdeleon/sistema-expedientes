@@ -1,0 +1,148 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }} - Sistema de Digitalización{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ titulo }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Complete la información requerida para cada área del expediente. Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5>Expediente: {{ expediente.numero_expediente }} - {{ expediente.titulo }}</h5>
+                        <a href="{% url 'expedientes:detalle' expediente.id %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Volver al detalle
+                        </a>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" id="formAreas">
+                        {% csrf_token %}
+                        
+                        <div class="accordion" id="areasAccordion">
+                            {% for area in areas %}
+                            <div class="accordion-item mb-3 border rounded">
+                                <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                            type="button" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#collapse{{ forloop.counter }}" 
+                                            aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                            aria-controls="collapse{{ forloop.counter }}">
+                                        <strong>{{ area.titulo }}</strong>
+                                        {% if area.obligatoria %}<span class="text-danger ms-2">*</span>{% endif %}
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ forloop.counter }}" 
+                                     class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                     aria-labelledby="heading{{ forloop.counter }}" 
+                                     data-bs-parent="#areasAccordion">
+                                    <div class="accordion-body">
+                                        {% if area.descripcion %}
+                                        <div class="alert alert-light mb-3">
+                                            <small>{{ area.descripcion }}</small>
+                                        </div>
+                                        {% endif %}
+
+                                        <!-- Campo de texto (si es necesario) -->
+                                        {% if area.tipo_area == 'texto' or area.tipo_area == 'mixto' %}
+                                        <div class="mb-3">
+                                            <label for="texto_{{ area.id }}" class="form-label">
+                                                Descripción o notas
+                                                {% if area.obligatoria and area.tipo_area == 'texto' %}
+                                                <span class="text-danger">*</span>
+                                                {% endif %}
+                                            </label>
+                                            <textarea class="form-control" id="texto_{{ area.id }}" 
+                                                      name="texto_{{ area.id }}" 
+                                                      rows="3"
+                                                      {% if area.obligatoria and area.tipo_area == 'texto' %}required{% endif %}></textarea>
+                                        </div>
+                                        {% endif %}
+
+                                        <!-- Campo de archivo (si es necesario) -->
+                                        {% if area.tipo_area == 'archivo' or area.tipo_area == 'mixto' %}
+                                        <div class="mb-3">
+                                            <label for="archivo_{{ area.id }}" class="form-label">
+                                                {% if area.tipo_area == 'archivo' %}Subir archivo{% else %}Archivo adjunto{% endif %}
+                                                {% if area.obligatoria and area.tipo_area == 'archivo' %}
+                                                <span class="text-danger">*</span>
+                                                {% endif %}
+                                            </label>
+                                            <input class="form-control" 
+                                                   type="file" 
+                                                   id="archivo_{{ area.id }}" 
+                                                   name="archivo_{{ area.id }}"
+                                                   {% if area.obligatoria and area.tipo_area == 'archivo' %}required{% endif %}>
+                                            
+                                            {% if area.tipos_archivo_permitidos %}
+                                            <div class="form-text">
+                                                Formatos permitidos: {{ area.tipos_archivo_permitidos|upper }}
+                                            </div>
+                                            {% endif %}
+                                            
+                                            {% if area.tamaño_max_archivo %}
+                                            <div class="form-text">
+                                                Tamaño máximo: {{ area.tamaño_max_archivo }} MB
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="alert alert-warning">
+                                No se han definido áreas para este tipo de expediente.
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'expedientes:detalle' expediente.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i> Guardar Documentos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Validación del formulario antes de enviar
+    document.getElementById('formAreas').addEventListener('submit', function(e) {
+        let isValid = true;
+        const requiredFields = this.querySelectorAll('[required]');
+        
+        // Validar campos obligatorios
+        requiredFields.forEach(function(field) {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Por favor complete todos los campos obligatorios.');
+        }
+    });
+</script>
+{% endblock %}

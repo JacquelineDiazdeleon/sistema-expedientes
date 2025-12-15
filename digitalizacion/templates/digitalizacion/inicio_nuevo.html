@@ -1,0 +1,210 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Sistema de Digitalización - Secretaría de Servicios Públicos{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Estilos personalizados */
+.hero-section {
+    background: linear-gradient(135deg, #1a1f2e 0%, #2d3748 100%);
+    color: white;
+    padding: 100px 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+    max-width: 600px;
+}
+
+.feature-card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    padding: 2rem;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: #059669;
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    position: relative;
+    display: inline-block;
+}
+
+.section-title:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -10px;
+    width: 60px;
+    height: 4px;
+    background: #059669;
+    border-radius: 2px;
+}
+
+.cta-section {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.btn-custom {
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary-custom {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.btn-primary-custom:hover {
+    background-color: #047857;
+    border-color: #047857;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 hero-content">
+                <h1 class="hero-title">Sistema de Gestión Documental</h1>
+                <p class="hero-subtitle">Solución integral para la digitalización y gestión de expedientes de la Secretaría de Servicios Públicos.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'digitalizacion:login' %}" class="btn btn-light btn-custom me-2">
+                        <i class="bi bi-box-arrow-in-right me-2"></i> Iniciar Sesión
+                    </a>
+                    <a href="#caracteristicas" class="btn btn-outline-light btn-custom">
+                        <i class="bi bi-info-circle me-2"></i> Conocer más
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block">
+                <img src="{% static 'img/document-management.svg' %}" alt="Gestión Documental" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Características -->
+<section id="caracteristicas" class="py-5 bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 class="section-title">Nuestras Soluciones</h2>
+            <p class="text-muted">Descubre cómo podemos optimizar tus procesos documentales</p>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-folder2-open"></i>
+                    </div>
+                    <h3>Gestión de Expedientes</h3>
+                    <p class="text-muted">Organiza y gestiona todos tus expedientes de manera eficiente y segura en un solo lugar.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h3>Búsqueda Avanzada</h3>
+                    <p class="text-muted">Encuentra cualquier documento en segundos con nuestro potente motor de búsqueda.</p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h3>Seguridad Garantizada</h3>
+                    <p class="text-muted">Tus documentos están protegidos con los más altos estándares de seguridad.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Llamado a la acción -->
+<section class="cta-section">
+    <div class="container">
+        <h2 class="text-white mb-4">¿Listo para comenzar?</h2>
+        <p class="lead text-white mb-4">Únete a nuestra plataforma y lleva la gestión de tus documentos al siguiente nivel.</p>
+        <a href="{% url 'digitalizacion:login' %}" class="btn btn-light btn-lg px-5">
+            <i class="bi bi-box-arrow-in-right me-2"></i> Acceder al Sistema
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Efecto de desplazamiento suave para los enlaces internos
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            window.scrollTo({
+                top: target.offsetTop - 80,
+                behavior: 'smooth'
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{
+  "include": [
+    "digitalizacion",
+    "sistema_digitalizacion",
+    "scanner_service"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/node_modules",
+    "**/.*"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": false,
+  "reportMissingModuleSource": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportGeneralTypeIssues": "warning",
+  "reportUnboundVariable": "warning",
+  "reportOptionalCall": "none",
+  "pythonVersion": "3.10",
+  "pythonPlatform": "Windows",
+  "typeCheckingMode": "basic",
+  "venvPath": ".",
+  "venv": "venv",
+  "stubPath": "."
+}
+

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Simple de Chart.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            background: #374151;
+            border-radius: 8px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba Simple de Chart.js con Datos Reales</h1>
+    
+    <div class="chart-container">
+        <canvas id="testChart"></canvas>
+    </div>
+
+    <script>
+        // Datos reales de la base de datos (según la verificación)
+        const datosReales = {
+            expedientesPorMes: [
+                {mes: '2024-09', total: 0},
+                {mes: '2024-10', total: 0},
+                {mes: '2024-11', total: 0},
+                {mes: '2024-12', total: 0},
+                {mes: '2025-01', total: 0},
+                {mes: '2025-02', total: 0},
+                {mes: '2025-03', total: 0},
+                {mes: '2025-04', total: 0},
+                {mes: '2025-05', total: 0},
+                {mes: '2025-06', total: 0},
+                {mes: '2025-07', total: 0},
+                {mes: '2025-08', total: 94}
+            ],
+            expedientesPorTipo: [
+                {tipo_expediente: 'monto', total: 31},
+                {tipo_expediente: 'tipo_adquisicion', total: 30},
+                {tipo_expediente: 'fuente', total: 19},
+                {tipo_expediente: 'giro', total: 14}
+            ]
+        };
+
+        console.log('Datos reales:', datosReales);
+        console.log('Chart.js disponible:', typeof Chart !== 'undefined');
+
+        // Crear gráfico simple
+        if (typeof Chart !== 'undefined') {
+            new Chart(document.getElementById('testChart'), {
+                type: 'line',
+                data: {
+                    labels: datosReales.expedientesPorMes.map(item => item.mes),
+                    datasets: [{
+                        label: 'Expedientes por Mes',
+                        data: datosReales.expedientesPorMes.map(item => item.total),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#f4f4f5' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                        },
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                        }
+                    }
+                }
+            });
+            console.log('✅ Gráfico creado exitosamente');
+        } else {
+            console.error('❌ Chart.js no está disponible');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+Se necesitan hacer los siguientes cambios en el archivo detalle_expediente.html:
+
+1. Reemplazar el botón de descarga ZIP con el siguiente código:
+
+```html
+<button class="btn btn-azul-oscuro" id="btn-descargar-zip" onclick="descargarZip()">
+    <i class="bi bi-file-earmark-zip-fill"></i> Descargar ZIP
+</button>
+{% if expediente.numero_sima %}
+<button class="btn btn-azul-oscuro" id="btn-copiar-sima" onclick="copiarNumeroSima('{{ expediente.numero_sima }}')" title="Copiar número SIMA">
+    <i class="bi bi-clipboard-check"></i> SIMA: {{ expediente.numero_sima }}
+</button>
+{% else %}
+<button class="btn btn-azul-oscuro" data-bs-toggle="modal" data-bs-target="#agregarSimaModal" title="Agregar número SIMA">
+    <i class="bi bi-plus-circle"></i> Agregar SIMA
+</button>
+{% endif %}
+```
+
+2. Agregar el siguiente modal justo después del botón (antes del cierre del div contenedor):
+
+```html
+<!-- Modal para agregar número SIMA -->
+<div class="modal fade" id="agregarSimaModal" tabindex="-1" aria-labelledby="agregarSimaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="agregarSimaModalLabel">Agregar Número SIMA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formAgregarSima" method="post" action="{% url 'expedientes:agregar_sima' expediente.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="numero_sima" class="form-label">Número SIMA</label>
+                        <input type="text" class="form-control" id="numero_sima" name="numero_sima" required>
+                        <div class="form-text">Ingrese el número SIMA asignado a este expediente.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+```
+
+3. Agregar la siguiente función JavaScript al final del archivo, justo antes de la etiqueta de cierre `</script>`:
+
+```javascript
+// Función para copiar el número SIMA al portapapeles
+function copiarNumeroSima(numeroSima) {
+    navigator.clipboard.writeText(numeroSima).then(function() {
+        // Mostrar notificación de éxito
+        const notificacion = document.createElement('div');
+        notificacion.className = 'position-fixed top-0 end-0 m-3 alert alert-success';
+        notificacion.style.zIndex = '1100';
+        notificacion.textContent = 'Número SIMA copiado al portapapeles: ' + numeroSima;
+        document.body.appendChild(notificacion);
+        
+        // Ocultar notificación después de 3 segundos
+        setTimeout(function() {
+            notificacion.style.transition = 'opacity 0.5s';
+            notificacion.style.opacity = '0';
+            setTimeout(function() {
+                document.body.removeChild(notificacion);
+            }, 500);
+        }, 3000);
+        
+        // Cambiar temporalmente el ícono del botón
+        const boton = document.getElementById('btn-copiar-sima');
+        const iconoOriginal = boton.querySelector('i').className;
+        boton.querySelector('i').className = 'bi bi-check2';
+        boton.setAttribute('title', '¡Copiado!');
+        
+        // Restaurar el ícono después de 2 segundos
+        setTimeout(function() {
+            boton.querySelector('i').className = iconoOriginal;
+            boton.setAttribute('title', 'Copiar número SIMA');
+        }, 2000);
+        
+    }).catch(function(err) {
+        console.error('Error al copiar el número SIMA: ', err);
+        showAlert('Error al copiar el número SIMA', 'danger');
+    });
+}
+```
+
+4. Asegurarse de que la URL 'expedientes:agregar_sima' esté definida en el archivo de URLs correspondiente.
+
+Estos cambios agregarán un botón para copiar el número SIMA si ya existe, o un botón para agregar un nuevo número SIMA si no existe. También incluye un modal para ingresar el número SIMA y la funcionalidad para copiarlo al portapapeles con retroalimentación visual.

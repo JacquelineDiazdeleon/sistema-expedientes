@@ -1,0 +1,554 @@
+{% extends 'digitalizacion/admin/areas/base_sin_nav.html' %}
+{% load static %}
+
+{% block title %}Panel de Administración - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <!-- Botón de regreso -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="{% url 'digitalizacion:dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item active">Panel de Administración</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold mb-1">Panel de Administración</h1>
+                    <p class="mb-0">Gestiona grupos, departamentos, formularios y configuración del sistema</p>
+                </div>
+                <div class="d-flex align-items-center rounded px-3 py-2">
+                    <i class="bi bi-shield-check text-emerald-400 me-2"></i>
+                    <small>Acceso Administrativo</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas Rápidas -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-blue-600">
+                                    <i class="bi bi-people text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Total Usuarios</h6>
+                                <h3 class="fw-bold mb-0">{{ total_usuarios }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+                         <div class="col-md-3">
+                 <div class="card h-100">
+                     <div class="card-body">
+                         <div class="d-flex align-items-center">
+                             <div class="flex-shrink-0">
+                                 <div class="stats-icon bg-emerald-600">
+                                     <i class="bi bi-file-earmark-text text-white"></i>
+                                 </div>
+                             </div>
+                             <div class="flex-grow-1 ms-3">
+                                 <h6 class="mb-1">Total Expedientes</h6>
+                                 <h3 class="fw-bold mb-0">{{ total_expedientes }}</h3>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+            
+            <div class="col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="stats-icon bg-purple-600">
+                                    <i class="bi bi-building text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">Departamentos</h6>
+                                <h3 class="fw-bold mb-0">{{ total_departamentos }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+        </div>
+
+        <!-- Secciones de Administración -->
+        <div class="row g-4">
+            <!-- Reportes de Expedientes -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-file-earmark-text me-2"></i>Reportes de Expedientes
+                            </h5>
+                            <a href="{% url 'expedientes:lista_expedientes' %}" class="btn btn-sm btn-emerald-600">
+                                <i class="bi bi-arrow-right me-1"></i>Ver Todos
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            Estadísticas detalladas de expedientes por usuario, tipo y departamento.
+                        </p>
+                        
+                        <!-- Total de expedientes -->
+                        <div class="text-center mb-4">
+                            <div class="p-3 border rounded bg-light">
+                                <i class="bi bi-files fs-2 text-primary d-block mb-2"></i>
+                                <h4 class="mb-1">{{ total_expedientes }}</h4>
+                                <small class="text-muted">Total de Expedientes</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Usuarios con más expedientes -->
+                        <h6 class="mb-3">
+                            <i class="bi bi-trophy me-2 text-warning"></i>Top Usuarios
+                        </h6>
+                        {% if usuarios_top_expedientes %}
+                            <div class="list-group list-group-flush mb-3">
+                                {% for usuario in usuarios_top_expedientes %}
+                                <div class="list-group-item bg-transparent px-0 py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ usuario.get_full_name|default:usuario.username }}</h6>
+                                            <small class="text-muted">{{ usuario.username }}</small>
+                                        </div>
+                                        <span class="badge bg-primary">{{ usuario.total_expedientes }} expedientes</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted small">No hay expedientes registrados</p>
+                        {% endif %}
+                        
+                        <!-- Tipos de Contratación -->
+                        <h6 class="mb-3">
+                            <i class="bi bi-pie-chart me-2 text-info"></i>Tipos de Contratación
+                        </h6>
+                        {% if expedientes_por_tipo %}
+                            <div class="list-group list-group-flush">
+                                {% for tipo in expedientes_por_tipo %}
+                                <div class="list-group-item bg-transparent px-0 py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>
+                                            {% if tipo.tipo_expediente == 'licitacion' and tipo.subtipo_licitacion == 'recurso_propio' %}
+                                                Licitación (Recurso Propio)
+                                            {% elif tipo.tipo_expediente == 'licitacion' and tipo.subtipo_licitacion == 'fondo_federal' %}
+                                                Licitación (Fondo Federal)
+                                            {% elif tipo.tipo_expediente == 'concurso_invitacion' %}
+                                                Concurso por Invitación
+                                            {% elif tipo.tipo_expediente == 'compra_directa' %}
+                                                Compra Directa
+                                            {% elif tipo.tipo_expediente == 'adjudicacion_directa' %}
+                                                Adjudicación Directa
+                                            {% else %}
+                                                {{ tipo.tipo_expediente|title }}
+                                            {% endif %}
+                                        </span>
+                                        <span class="badge bg-primary">{{ tipo.count }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted small">No hay expedientes registrados</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración del Sistema -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-gear me-2"></i>Configuración del Sistema
+                            </h5>
+                            <a href="{% url 'digitalizacion:configuracion_sistema' %}" class="btn btn-sm btn-emerald-600">
+                                <i class="bi bi-arrow-right me-1"></i>Gestionar
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            Configura parámetros del sistema, información de desarrollo y configuraciones generales.
+                        </p>
+                        
+                        {% if configuraciones %}
+                            <div class="list-group list-group-flush">
+                                {% for config in configuraciones %}
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ config.clave }}</h6>
+                                            <small>{{ config.valor|truncatechars:50 }}</small>
+                                        </div>
+                                        <span class="badge bg-success">Activo</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-gear fs-1"></i>
+                                <p class="mt-3 mb-2">No hay configuraciones</p>
+                                <a href="{% url 'digitalizacion:configuracion_sistema' %}" class="btn btn-emerald-600">
+                                    <i class="bi bi-plus-circle me-1"></i>Agregar Configuración
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expedientes por Departamento -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-building me-2"></i>Expedientes por Departamento
+                            </h5>
+                            <a href="{% url 'digitalizacion:gestionar_departamentos' %}" class="btn btn-sm btn-emerald-600">
+                                <i class="bi bi-arrow-right me-1"></i>Ver Departamentos
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            Distribución de expedientes por departamento de la organización.
+                        </p>
+                        
+                        {% if expedientes_por_departamento %}
+                            <div class="list-group list-group-flush">
+                                {% for depto in expedientes_por_departamento %}
+                                <div class="list-group-item bg-transparent px-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ depto.nombre }}</h6>
+                                            <small class="text-muted">{{ depto.descripcion|truncatechars:30 }}</small>
+                                        </div>
+                                        <span class="badge bg-success">{{ depto.total_expedientes }} expedientes</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-building fs-1 text-muted"></i>
+                                <p class="mt-3 mb-2">No hay expedientes por departamento</p>
+                                <small class="text-muted">Los expedientes aparecerán aquí cuando se asignen departamentos</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gestión de Áreas por Tipo de Expediente -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-kanban me-2"></i>Gestión de Áreas de Expedientes
+                            </h5>
+                            <a href="{% url 'digitalizacion:admin_areas' %}" class="btn btn-sm btn-emerald-600">
+                                <i class="bi bi-arrow-right me-1"></i>Gestionar
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">
+                            Configura las áreas/etapas personalizables para cada tipo de expediente (Licitación (Recurso Propio), Licitación (Fondo Federal), Concurso por Invitación, Compra Directa, Adjudicación Directa).
+                        </p>
+                        
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="p-3 border rounded">
+                                    <i class="bi bi-grid-3x3-gap fs-4 text-primary d-block mb-2"></i>
+                                    <small>Licitación</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="p-3 border rounded">
+                                    <i class="bi bi-bank fs-4 text-success d-block mb-2"></i>
+                                    <small>Concurso por invitación</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 border rounded">
+                                    <i class="bi bi-basket fs-4 text-warning d-block mb-2"></i>
+                                    <small>Compra directa</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3 border rounded">
+                                    <i class="bi bi-currency-dollar fs-4 text-info d-block mb-2"></i>
+                                    <small>Adjudicación directa</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Información del Sistema -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle me-2"></i>Información del Sistema
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Sistema de Digitalización</h6>
+                                <p>
+                                    Desarrollado para la <strong>Secretaría de Servicios Públicos</strong> con el objetivo de 
+                                    digitalizar y gestionar expedientes municipales de manera eficiente y segura.
+                                </p>
+                                <ul>
+                                    <li>Gestión completa de expedientes</li>
+                                    <li>Sistema de roles y permisos</li>
+                                    <li>Colaboración en grupos</li>
+                
+                                    <li>Notificaciones en tiempo real</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">Características Técnicas</h6>
+                                <ul>
+                                    <li><strong>Framework:</strong> Django 5.0</li>
+                                    <li><strong>Base de Datos:</strong> SQLite</li>
+                                    <li><strong>Frontend:</strong> Bootstrap 5</li>
+                                    <li><strong>Iconos:</strong> Bootstrap Icons</li>
+                                    <li><strong>Tema:</strong> Light Mode</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==================== VARIABLES Y CONFIGURACIÓN GLOBAL ==================== */
+    :root {
+        /* Tema claro */
+        --light-bg-primary: #ffffff;
+        --light-bg-secondary: #f8fafc;
+        --light-border: #e2e8f0;
+        --light-text-primary: #1a202c;
+        --light-text-secondary: #4a5568;
+        --light-text-muted: #718096;
+        --light-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --light-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+        
+        /* Colores de acento */
+        --accent-blue: #3182ce;
+        --accent-blue-light: #4299e1;
+        --accent-green: #38a169;
+        --accent-orange: #dd6b20;
+        --accent-red: #e53e3e;
+        --accent-purple: #805ad5;
+        --accent-emerald: #10b981;
+    }
+
+    /* ==================== ESTILOS BASE PARA TEMA CLARO ==================== */
+    body {
+        background: var(--light-bg-secondary);
+        margin: 0;
+        padding: 0;
+        color: var(--light-text-primary);
+    }
+
+    .min-h-screen {
+        min-height: 100vh;
+        background: var(--light-bg-secondary);
+        padding: 20px;
+    }
+
+    .container {
+        background: var(--light-bg-primary);
+        border-radius: 12px;
+        box-shadow: var(--light-shadow);
+        padding: 30px;
+    }
+
+    /* Cards */
+    .card {
+        background: var(--light-bg-primary);
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        box-shadow: var(--light-shadow);
+        transition: all 0.2s ease;
+    }
+
+    .card:hover {
+        box-shadow: var(--light-shadow-lg);
+        transform: translateY(-1px);
+    }
+
+    .card-header {
+        background: var(--light-bg-primary);
+        border-bottom: 1px solid var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .card-body {
+        background: var(--light-bg-primary);
+        color: var(--light-text-primary);
+    }
+
+    /* Estadísticas */
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .bg-blue-600 {
+        background: var(--accent-blue) !important;
+    }
+
+    .bg-emerald-600 {
+        background: var(--accent-emerald) !important;
+    }
+
+    .bg-purple-600 {
+        background: var(--accent-purple) !important;
+    }
+
+    /* Botones */
+    .btn-emerald-600 {
+        background: var(--accent-emerald);
+        border: none;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .btn-emerald-600:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: var(--light-shadow-lg);
+    }
+
+    .btn-primary {
+        background: var(--accent-blue);
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background: var(--accent-blue-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background: var(--light-bg-secondary);
+        border: 1px solid var(--light-border);
+        border-radius: 8px;
+        padding: 12px 16px;
+    }
+
+    .breadcrumb-item a {
+        color: var(--accent-emerald) !important;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--light-text-muted);
+    }
+
+    /* Textos */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--light-text-primary);
+    }
+
+    p, small {
+        color: var(--light-text-secondary);
+    }
+
+    .text-muted {
+        color: var(--light-text-muted) !important;
+    }
+
+    /* Listas */
+    .list-group-item {
+        background: var(--light-bg-primary);
+        border-color: var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .list-group-item.bg-transparent {
+        background: transparent !important;
+    }
+
+    /* Badges */
+    .badge.bg-success {
+        background: var(--accent-green) !important;
+    }
+
+    /* Iconos */
+    .bi {
+        color: inherit;
+    }
+
+    .text-emerald-400 {
+        color: var(--accent-emerald) !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px;
+        }
+        
+        .min-h-screen {
+            padding: 10px;
+        }
+    }
+</style>
+{% endblock %}

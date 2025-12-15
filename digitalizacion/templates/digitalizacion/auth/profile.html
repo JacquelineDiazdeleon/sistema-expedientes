@@ -1,0 +1,321 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-zinc-100 fw-bold mb-1">Mi Perfil</h1>
+                    <p class="text-zinc-400 mb-0">Información de tu cuenta y estadísticas</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'digitalizacion:dashboard' %}" class="btn btn-outline-emerald-600">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Información del Usuario -->
+        <div class="col-lg-4">
+            <div class="card bg-zinc-900 border-zinc-800 h-100">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h5 class="text-zinc-100 mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Información Personal
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="profile-avatar mb-3">
+                            {% if user.perfil.foto_perfil %}
+                                <img src="{{ user.perfil.foto_perfil.url }}" 
+                                     alt="Foto de perfil" 
+                                     class="profile-photo">
+                            {% else %}
+                                <i class="bi bi-person-circle text-emerald-400" style="font-size: 4rem;"></i>
+                            {% endif %}
+                        </div>
+                        <h4 class="text-zinc-100 fw-bold">{{ user.get_full_name|default:user.username }}</h4>
+                        <p class="text-zinc-400 mb-0">{{ user.email }}</p>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-flex gap-2 justify-content-center mt-3">
+                            <a href="{% url 'digitalizacion:editar_perfil' %}" class="btn btn-sm btn-outline-emerald-600">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+                            <a href="{% url 'digitalizacion:cambiar_password' %}" class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-key me-1"></i>Contraseña
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-info">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-zinc-500">Usuario</small>
+                                <p class="text-zinc-100 mb-0">{{ user.username }}</p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-zinc-500">Estado</small>
+                                <p class="mb-0">
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactivo</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <small class="text-zinc-500">Rol</small>
+                                <p class="text-zinc-100 mb-0">
+                                    {% if user.perfil.rol %}
+                                        <span class="badge bg-info">{{ user.perfil.rol.nombre }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Sin rol</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-zinc-500">Fecha de registro</small>
+                                <p class="text-zinc-100 mb-0">{{ user.date_joined|date:"d/m/Y" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if user.perfil.puesto %}
+                        <div class="mb-3">
+                            <small class="text-zinc-500">Puesto</small>
+                            <p class="text-zinc-100 mb-0">{{ user.perfil.puesto }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas del Usuario -->
+        <div class="col-lg-8">
+            <div class="card bg-zinc-900 border-zinc-800 h-100">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h5 class="text-zinc-100 mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Mis Estadísticas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-4">
+                            <div class="stats-card bg-zinc-800 border-zinc-700 p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stats-icon bg-emerald-600 me-3">
+                                        <i class="bi bi-folder2 text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-zinc-100 fw-bold mb-0">{{ total_expedientes }}</h4>
+                                        <small class="text-zinc-400">Expedientes Creados</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card bg-zinc-800 border-zinc-700 p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stats-icon bg-success me-3">
+                                        <i class="bi bi-check-circle text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-zinc-100 fw-bold mb-0">{{ expedientes_completados }}</h4>
+                                        <small class="text-zinc-400">Completados</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stats-card bg-zinc-800 border-zinc-700 p-3 rounded">
+                                <div class="d-flex align-items-center">
+                                    <div class="stats-icon bg-blue-600 me-3">
+                                        <i class="bi bi-clock text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-zinc-100 fw-bold mb-0">{{ expedientes_activos }}</h4>
+                                        <small class="text-zinc-400">En Proceso</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expedientes Recientes del Usuario -->
+                    <div class="mt-4">
+                        <h6 class="text-zinc-100 mb-3">
+                            <i class="bi bi-clock-history me-2"></i>Mis Expedientes Recientes
+                        </h6>
+                        {% if expedientes_recientes %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th class="text-zinc-300">Número</th>
+                                            <th class="text-zinc-300">Título</th>
+                                            <th class="text-zinc-300">Estado</th>
+                                            <th class="text-zinc-300">Fecha</th>
+                                            <th class="text-zinc-300">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for expediente in expedientes_recientes %}
+                                        <tr>
+                                            <td class="text-zinc-100">{{ expediente.numero_expediente }}</td>
+                                            <td class="text-zinc-100">{{ expediente.titulo|truncatechars:30 }}</td>
+                                            <td>
+                                                {% if expediente.estado_actual == 'activo' %}
+                                                    <span class="badge bg-blue-600">En Proceso</span>
+                                                {% elif expediente.estado_actual == 'completado' %}
+                                                    <span class="badge bg-success">Completado</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ expediente.estado_actual|title }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-zinc-400">{{ expediente.fecha_creacion|date:"d/m/Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'expedientes:detalle' expediente.pk %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-folder2 text-zinc-600 fs-1 mb-3"></i>
+                                <p class="text-zinc-400 mb-3">No has creado expedientes aún</p>
+                                <a href="{% url 'expedientes:seleccionar_tipo' %}" class="btn btn-emerald-600">
+                                    <i class="bi bi-plus-circle me-2"></i>Crear Primer Expediente
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permisos y Roles -->
+    {% if user.perfil.rol %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h5 class="text-zinc-100 mb-0">
+                        <i class="bi bi-shield-check me-2"></i>Permisos y Roles
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-zinc-100 mb-3">Información del Rol</h6>
+                            <div class="role-info">
+                                <p class="text-zinc-400 mb-2">
+                                    <strong class="text-zinc-100">Rol:</strong> {{ user.perfil.rol.nombre }}
+                                </p>
+                                <p class="text-zinc-400 mb-2">
+                                    <strong class="text-zinc-100">Descripción:</strong> {{ user.perfil.rol.descripcion }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-zinc-100 mb-3">Permisos Disponibles</h6>
+                            <div class="permissions-list">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <span class="text-zinc-300">Crear expedientes</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <span class="text-zinc-300">Ver expedientes</span>
+                                </div>
+                                {% if user.perfil.rol.puede_aprobar_usuarios %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <span class="text-zinc-300">Aprobar solicitudes de registro</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <span class="text-zinc-300">Gestionar usuarios</span>
+                                </div>
+                                {% endif %}
+                                {% if user.is_staff %}
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-check-circle text-success me-2"></i>
+                                    <span class="text-zinc-300">Acceso a administración</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-avatar {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-photo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #10b981;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stats-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.role-info p {
+    margin-bottom: 0.5rem;
+}
+
+.permissions-list .d-flex {
+    padding: 0.5rem 0;
+}
+</style>
+{% endblock %}

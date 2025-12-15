@@ -1,0 +1,9 @@
+/* Estilos para la barra de progreso */
+.progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+/* Establecer el ancho usando la variable CSS personalizada */
+.progress-bar[style*="--progress-width"] {
+    width: var(--progress-width);
+}

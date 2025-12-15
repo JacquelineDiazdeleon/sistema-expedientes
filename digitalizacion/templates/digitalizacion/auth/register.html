@@ -1,0 +1,395 @@
+{% extends 'digitalizacion/base_auth.html' %}
+{% load static %}
+
+{% block title %}Crear Cuenta - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-zinc-950">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg border-0 bg-zinc-900 border-zinc-800">
+                <div class="card-body p-5">
+                    <!-- Header -->
+                    <div class="text-center mb-5">
+                        <div class="auth-logo mb-4">
+                            <i class="bi bi-person-plus-fill text-emerald-400" style="font-size: 3rem;"></i>
+                        </div>
+                        <h2 class="h2 mb-2 text-zinc-100 fw-bold">Crear Cuenta</h2>
+                        <p class="text-zinc-400 mb-0">Completa tus datos para acceder al sistema</p>
+                    </div>
+
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Formulario de registro -->
+                    <form method="post" class="auth-form" id="registerForm">
+                        {% csrf_token %}
+                        
+                        <div class="row g-4">
+                            <!-- Primera columna -->
+                            <div class="col-md-6">
+                                <!-- Nombres -->
+                                <div class="mb-3">
+                                    <label for="{{ form.nombres.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-person-outline me-2"></i>{{ form.nombres.label }}
+                                    </label>
+                                    {{ form.nombres }}
+                                    {% if form.nombres.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.nombres.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Apellidos -->
+                                <div class="mb-3">
+                                    <label for="{{ form.apellidos.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.apellidos.label }}
+                                    </label>
+                                    {{ form.apellidos }}
+                                    {% if form.apellidos.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.apellidos.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Correo Electrónico Institucional -->
+                                <div class="mb-3">
+                                    <label for="{{ form.email_institucional.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-envelope-outline me-2"></i>{{ form.email_institucional.label }}
+                                    </label>
+                                    {{ form.email_institucional }}
+                                    {% if form.email_institucional.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.email_institucional.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Segunda columna -->
+                            <div class="col-md-6">
+                                <!-- Departamento -->
+                                <div class="mb-3">
+                                    <label for="{{ form.departamento.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.departamento.label }}
+                                    </label>
+                                    {{ form.departamento }}
+                                    {% if form.departamento.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.departamento.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Puesto -->
+                                <div class="mb-3">
+                                    <label for="{{ form.puesto.id_for_label }}" class="form-label text-zinc-300">
+                                        {{ form.puesto.label }}
+                                    </label>
+                                    {{ form.puesto }}
+                                    {% if form.puesto.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.puesto.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Rol Solicitado -->
+                                <div class="mb-3">
+                                    <label for="{{ form.rol_solicitado.id_for_label }}" class="form-label text-zinc-300">
+                                        <i class="bi bi-shield-outline me-2"></i>Rol Solicitado *
+                                    </label>
+                                    {{ form.rol_solicitado }}
+                                    {% if form.rol_solicitado.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.rol_solicitado.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Información de Roles -->
+                            <div class="col-12">
+                                <div class="alert alert-info border-info bg-zinc-800 border-zinc-700">
+                                    <div class="d-flex align-items-start">
+                                        <i class="bi bi-info-circle text-info fs-4 me-3 mt-1"></i>
+                                        <div>
+                                            <h6 class="text-zinc-100 mb-2">Selecciona tu Rol en el Sistema</h6>
+                                            <div class="row g-3">
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-shield-fill text-danger me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Administrador</strong>
+                                                            <small class="text-zinc-400">Acceso completo y gestión de usuarios</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-pencil-square text-warning me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Editor</strong>
+                                                            <small class="text-zinc-400">Visualización y edición de expedientes</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-eye text-info me-2 fs-5"></i>
+                                                        <div>
+                                                            <strong class="text-zinc-100 d-block">Visualizador</strong>
+                                                            <small class="text-zinc-400">Solo consulta de expedientes</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            </div>
+
+
+
+                            <!-- Contraseñas -->
+                            <div class="col-12">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.password.id_for_label }}" class="form-label text-zinc-300">
+                                            <i class="bi bi-lock-outline me-2"></i>{{ form.password.label }}
+                                        </label>
+                                        <div class="position-relative">
+                                            {{ form.password }}
+                                            <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 h-100" 
+                                                    onclick="togglePassword('password')" title="Mostrar/Ocultar contraseña">
+                                                <i class="bi bi-eye-outline" id="passwordIcon"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text text-zinc-500">{{ form.password.help_text }}</div>
+                                        {% if form.password.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.password.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.confirm_password.id_for_label }}" class="form-label text-zinc-300">
+                                            <i class="bi bi-lock-outline me-2"></i>{{ form.confirm_password.label }}
+                                        </label>
+                                        <div class="position-relative">
+                                            {{ form.confirm_password }}
+                                            <button type="button" class="btn btn-outline-secondary position-absolute end-0 top-0 h-100" 
+                                                    onclick="togglePassword('confirmPassword')" title="Mostrar/Ocultar confirmación de contraseña">
+                                                <i class="bi bi-eye-outline" id="confirmPasswordIcon"></i>
+                                            </button>
+                                        </div>
+                                        {% if form.confirm_password.errors %}
+                                            <div class="text-danger small mt-1">
+                                                {{ form.confirm_password.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Términos y condiciones -->
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="terminosCheck" required>
+                                    <label class="form-check-label text-zinc-300" for="terminosCheck">
+                                        Acepto los <a href="{% url 'digitalizacion:terminos_condiciones' %}" target="_blank" class="text-emerald-400">términos y condiciones</a> y la 
+                                        <a href="{% url 'digitalizacion:politica_privacidad' %}" target="_blank" class="text-emerald-400">política de privacidad</a> del sistema.
+                                    </label>
+                                </div>
+                                <small class="text-zinc-500 d-block mt-2">
+                                    Al registrarte, confirmas que eres empleado de la Secretaría de Servicios Públicos.
+                                </small>
+                            </div>
+
+                            <!-- Botón de envío -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-emerald-600 w-100 py-3 fw-bold" id="submitBtn">
+                                    <i class="bi bi-person-plus me-2"></i>
+                                    Crear Cuenta
+                                    <i class="bi bi-check2 ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Enlaces adicionales -->
+                    <div class="text-center mt-4">
+                        <p class="text-zinc-400 mb-0">¿Ya tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:login' %}" class="text-emerald-400 text-decoration-none">
+                            <i class="bi bi-arrow-left me-2"></i>Iniciar sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle password visibility
+    window.togglePassword = function(fieldId) {
+        const field = document.getElementById(fieldId);
+        const icon = document.getElementById(fieldId + 'Icon');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye-outline');
+            icon.classList.add('bi-eye-slash-outline');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye-slash-outline');
+            icon.classList.add('bi-eye-outline');
+        }
+    };
+    
+    // Form validation
+    const form = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const terminosCheck = document.getElementById('terminosCheck');
+    const password = document.getElementById('{{ form.password.id_for_label }}');
+    const confirmPassword = document.getElementById('{{ form.confirm_password.id_for_label }}');
+    
+    form.addEventListener('submit', function(e) {
+        // Limpiar mensajes de error previos
+        const existingAlerts = form.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Validar términos y condiciones
+        if (!terminosCheck.checked) {
+            e.preventDefault();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-warning mt-3';
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Debes aceptar los términos y condiciones para continuar.';
+            form.insertBefore(alertDiv, form.firstChild);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        
+        // Validar contraseñas
+        if (!validatePasswords()) {
+            e.preventDefault();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Por favor, verifica que las contraseñas coincidan.';
+            form.insertBefore(alertDiv, form.firstChild);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        
+        // Validar campos requeridos
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                const fieldLabel = form.querySelector(`label[for="${field.id}"]`);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback d-block';
+                errorMsg.textContent = 'Este campo es obligatorio.';
+                
+                if (!field.nextElementSibling || !field.nextElementSibling.classList.contains('invalid-feedback')) {
+                    field.classList.add('is-invalid');
+                    field.parentNode.insertBefore(errorMsg, field.nextSibling);
+                }
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger mt-3';
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Por favor, completa todos los campos requeridos.';
+            form.insertBefore(alertDiv, form.firstChild);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return false;
+        }
+        
+        // Deshabilitar botón y mostrar spinner
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creando cuenta...';
+    });
+    
+    // Validar campos al perder el foco
+    form.querySelectorAll('input[required], select[required]').forEach(field => {
+        field.addEventListener('blur', function() {
+            if (!this.value.trim()) {
+                this.classList.add('is-invalid');
+                if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'invalid-feedback';
+                    errorMsg.textContent = 'Este campo es obligatorio.';
+                    this.parentNode.insertBefore(errorMsg, this.nextSibling);
+                }
+            } else {
+                this.classList.remove('is-invalid');
+                if (this.nextElementSibling && this.nextElementSibling.classList.contains('invalid-feedback')) {
+                    this.nextElementSibling.remove();
+                }
+            }
+        });
+    });
+    
+    // Password validation
+    function validatePasswords() {
+        const passwordValue = password.value;
+        const confirmPasswordValue = confirmPassword.value;
+        
+        // Limpiar mensajes de error previos
+        const existingFeedback = password.nextElementSibling;
+        if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
+            existingFeedback.remove();
+        }
+        
+        // Validar longitud mínima
+        if (passwordValue.length > 0 && passwordValue.length < 8) {
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'invalid-feedback d-block';
+            errorMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+            password.classList.add('is-invalid');
+            password.parentNode.insertBefore(errorMsg, password.nextSibling);
+            return false;
+        }
+        
+        // Validar coincidencia
+        if (passwordValue !== confirmPasswordValue) {
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'invalid-feedback d-block';
+            errorMsg.textContent = 'Las contraseñas no coinciden.';
+            confirmPassword.classList.add('is-invalid');
+            confirmPassword.parentNode.insertBefore(errorMsg, confirmPassword.nextSibling);
+            return false;
+        }
+        
+        // Si todo está bien, limpiar errores
+        password.classList.remove('is-invalid');
+        confirmPassword.classList.remove('is-invalid');
+        return true;
+    }
+    
+    password.addEventListener('change', validatePasswords);
+    confirmPassword.addEventListener('keyup', validatePasswords);
+});
+</script>
+{% endblock %}

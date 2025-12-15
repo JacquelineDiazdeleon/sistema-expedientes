@@ -1,0 +1,403 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema de Digitalización{% endblock %}
+{% block description %}Panel principal con estadísticas y gestión moderna de expedientes{% endblock %}
+
+{% block page_title %}Dashboard Principal{% endblock %}
+{% block page_subtitle %}Bienvenido al sistema de gestión de expedientes digitales{% endblock %}
+
+{% block content %}
+<!-- Grid de estadísticas principales -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-folder-check"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ total_documentos|default:"0" }}</div>
+        <div class="stat-label">Total de Expedientes</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-clock"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ documentos_pendientes|default:"0" }}</div>
+        <div class="stat-label">Pendientes</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-file-earmark-check"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ documentos_digitalizados|default:"0" }}</div>
+        <div class="stat-label">Digitalizados</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-header">
+            <div class="stat-icon">
+                <i class="bi bi-shield-check"></i>
+            </div>
+        </div>
+        <div class="stat-number">{{ documentos_verificados|default:"0" }}</div>
+        <div class="stat-label">Verificados</div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="quick-actions">
+    <div class="action-card">
+        <div class="action-icon">
+            <i class="bi bi-plus-circle"></i>
+        </div>
+        <div class="action-content">
+            <h4>Crear Nuevo Expediente</h4>
+            <p>Inicia el proceso de digitalización de un nuevo expediente con todas las etapas necesarias.</p>
+            <a href="{% url 'expedientes:seleccionar_tipo' %}" class="action-btn">
+                Crear Ahora
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    
+    <div class="action-card">
+        <div class="action-icon">
+            <i class="bi bi-search"></i>
+        </div>
+        <div class="action-content">
+            <h4>Buscar Expedientes</h4>
+            <p>Encuentra rápidamente expedientes por título, tipo, departamento o usuario.</p>
+            <a href="{% url 'digitalizacion:buscar_documentos' %}" class="action-btn">
+                Buscar
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+    
+    <div class="action-card">
+        <div class="action-icon">
+            <i class="bi bi-bar-chart"></i>
+        </div>
+        <div class="action-content">
+            <h4>Ver Reportes</h4>
+            <p>Analiza el progreso y estadísticas de todos los expedientes del sistema.</p>
+            <a href="{% url 'digitalizacion:reportes' %}" class="action-btn">
+                Ver Reportes
+                <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de expedientes recientes -->
+<div class="expedientes-section">
+    <div class="section-header">
+        <div>
+            <h2 class="section-title">Expedientes Recientes</h2>
+            <p class="section-subtitle">Continúa trabajando en tus expedientes activos</p>
+        </div>
+        <a href="{% url 'expedientes:lista' %}" class="btn btn-primary">
+            Ver Todos
+            <i class="bi bi-arrow-right ms-2"></i>
+        </a>
+    </div>
+    
+    <!-- Búsqueda rápida -->
+    <div class="search-container">
+        <i class="bi bi-search search-icon"></i>
+        <input type="text" class="search-input" id="searchInput" placeholder="Buscar expedientes por título, tipo o usuario...">
+    </div>
+    
+    <!-- Grid de expedientes -->
+    <div class="expedientes-grid" id="expedientesGrid">
+        {% for documento in documentos_recientes %}
+        <div class="expediente-card" 
+             data-titulo="{{ documento.titulo|lower }}" 
+             data-fuente="{{ documento.tipo_documento.nombre|lower }}"
+             data-usuario="{{ documento.creado_por.get_full_name|default:documento.creado_por.username|lower }}">
+            
+            <div class="expediente-header">
+                <h3 class="expediente-title">{{ documento.titulo }}</h3>
+                <div class="expediente-meta">
+                    <i class="bi bi-tag"></i>
+                    <span>{{ documento.tipo_documento.nombre }}</span>
+                    <i class="bi bi-building ms-2"></i>
+                    <span>{{ documento.departamento.nombre }}</span>
+                </div>
+            </div>
+            
+            <div class="expediente-body">
+                <!-- Barra de progreso -->
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {% if documento.estado == 'verificado' %}100{% elif documento.estado == 'digitalizado' %}75{% elif documento.estado == 'en_proceso' %}50{% else %}25{% endif %}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Estado del expediente -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge {% if documento.estado == 'verificado' %}badge-success{% elif documento.estado == 'digitalizado' %}badge-info{% else %}badge-warning{% endif %}">
+                        {% if documento.estado == 'verificado' %}Completo
+                        {% elif documento.estado == 'digitalizado' %}Digitalizado
+                        {% elif documento.estado == 'en_proceso' %}En Proceso
+                        {% else %}Iniciado{% endif %}
+                    </span>
+                    <small class="text-muted">{{ documento.fecha_creacion|timesince }} atrás</small>
+                </div>
+            </div>
+            
+            <div class="expediente-footer">
+                <div class="expediente-author">
+                    <i class="bi bi-person me-1"></i>
+                    {{ documento.creado_por.get_full_name|default:documento.creado_por.username }}
+                </div>
+                <a href="{% url 'digitalizacion:detalle_documento' documento.pk %}" class="expediente-link">
+                    Abrir
+                    <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="empty-state">
+                <i class="bi bi-folder-x" style="font-size: 4rem; color: var(--secondary-400);"></i>
+                <h3 class="mt-3" style="color: var(--secondary-600);">No hay expedientes aún</h3>
+                <p style="color: var(--secondary-500);">Comienza creando tu primer expediente para digitalizar documentos</p>
+                <a href="{% url 'expedientes:seleccionar_tipo' %}" class="btn btn-primary btn-lg mt-3">
+                    <i class="bi bi-plus-circle me-2"></i>Crear Primer Expediente
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Información del sistema -->
+<div class="expedientes-section">
+    <div class="section-header">
+        <h2 class="section-title">Sobre el Sistema</h2>
+        <p class="section-subtitle">Características y funcionalidades disponibles</p>
+    </div>
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="bi bi-diagram-3"></i>
+                </div>
+                <h4>17 Etapas Completas</h4>
+                <p>Flujo completo desde la solicitud hasta el pago, incluyendo validaciones y aprobaciones.</p>
+                <ul class="info-list">
+                    <li>INICIO y SOLICITUD DEL ÁREA</li>
+                    <li>COTIZACIÓN y REQUISICIÓN SIMA</li>
+                    <li>SUFICIENCIA PRESUPUESTAL</li>
+                    <li>Aprobaciones (Director y Secretario)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="info-card">
+                <div class="info-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h4>Validaciones por Modalidad</h4>
+                <p>Sistema de validaciones automáticas según el tipo de expediente y monto.</p>
+                <ul class="info-list">
+                    <li>Control de versiones automático</li>
+                    <li>Auditoría completa de cambios</li>
+                    <li>Comentarios y colaboración</li>
+                    <li>Dashboard en tiempo real</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Búsqueda en tiempo real
+    const searchInput = document.getElementById('searchInput');
+    const expedientesCards = document.querySelectorAll('.expediente-card');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            
+            expedientesCards.forEach(card => {
+                const titulo = card.dataset.titulo || '';
+                const fuente = card.dataset.fuente || '';
+                const usuario = card.dataset.usuario || '';
+                
+                const matches = titulo.includes(query) || 
+                               fuente.includes(query) || 
+                               usuario.includes(query);
+                
+                card.style.display = matches ? 'block' : 'none';
+            });
+        });
+    }
+    
+    // Animaciones de entrada escalonadas
+    const animatedElements = document.querySelectorAll('.stat-card, .action-card, .expediente-card');
+    animatedElements.forEach((element, index) => {
+        element.style.animationDelay = `${index * 0.1}s`;
+        element.classList.add('fade-in');
+    });
+    
+    // Efectos hover en las tarjetas
+    const cards = document.querySelectorAll('.stat-card, .action-card, .expediente-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Contador animado para las estadísticas
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        if (!isNaN(finalValue)) {
+            animateCounter(stat, 0, finalValue, 2000);
+        }
+    });
+});
+
+// Función para animar contadores
+function animateCounter(element, start, end, duration) {
+    const startTime = performance.now();
+    const difference = end - start;
+    
+    function updateCounter(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const current = Math.floor(start + (difference * progress));
+        element.textContent = current;
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateCounter);
+        }
+    }
+    
+    requestAnimationFrame(updateCounter);
+}
+</script>
+
+<style>
+/* Estilos adicionales específicos del dashboard */
+.info-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    border: 1px solid var(--secondary-200);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+    height: 100%;
+}
+
+.info-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.info-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    background: var(--gradient-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-lg);
+}
+
+.info-card h4 {
+    color: var(--secondary-900);
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.info-card p {
+    color: var(--secondary-600);
+    margin-bottom: var(--space-lg);
+    line-height: 1.6;
+}
+
+.info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-list li {
+    color: var(--secondary-600);
+    padding: var(--space-xs) 0;
+    position: relative;
+    padding-left: var(--space-lg);
+}
+
+.info-list li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent-500);
+    font-weight: bold;
+}
+
+.empty-state {
+    padding: var(--space-3xl) var(--space-xl);
+}
+
+.messages-container {
+    margin-bottom: var(--space-xl);
+}
+
+.alert {
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-success {
+    background: var(--success-50);
+    color: var(--success-700);
+    border-left: 4px solid var(--success-500);
+}
+
+.alert-warning {
+    background: var(--warning-50);
+    color: var(--warning-700);
+    border-left: 4px solid var(--warning-500);
+}
+
+.alert-danger {
+    background: var(--danger-50);
+    color: var(--danger-700);
+    border-left: 4px solid var(--danger-500);
+}
+
+.alert-info {
+    background: var(--info-50);
+    color: var(--info-700);
+    border-left: 4px solid var(--info-500);
+}
+</style>
+{% endblock %}
+

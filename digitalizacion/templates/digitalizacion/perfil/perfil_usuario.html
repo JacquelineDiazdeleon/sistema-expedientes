@@ -1,0 +1,113 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - {{ usuario.get_full_name|default:usuario.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Mi Perfil</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'digitalizacion:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Mi Perfil</li>
+    </ol>
+
+    <div class="row">
+        <!-- Información del Usuario -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-user me-1"></i>
+                    Información Personal
+                </div>
+                <div class="card-body text-center">
+                    <img src="{% static 'img/avatar.png' %}" alt="Avatar" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    <h4>{{ usuario.get_full_name|default:usuario.username }}</h4>
+                    <p class="text-muted mb-1">{{ usuario.email }}</p>
+                    <p class="text-muted mb-4">
+                        {% if usuario.perfil.rol %}
+                            <span class="badge bg-primary">{{ usuario.perfil.rol.nombre }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Sin rol asignado</span>
+                        {% endif %}
+                    </p>
+                    <div class="d-flex justify-content-center mb-2">
+                        <a href="{% url 'digitalizacion:editar_perfil' %}" class="btn btn-primary me-1">Editar Perfil</a>
+                        <a href="{% url 'digitalizacion:cambiar_password' %}" class="btn btn-outline-primary ms-1">Cambiar Contraseña</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="col-lg-8">
+            <div class="row">
+                <!-- Documentos Subidos -->
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="small mb-1">Documentos Subidos</p>
+                                    <h2 class="mb-0">{{ documentos_subidos }}</h2>
+                                </div>
+                                <i class="fas fa-file-upload fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <a class="small text-white stretched-link" href="#">Ver detalles</a>
+                            <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expedientes Creados -->
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="small mb-1">Expedientes Creados</p>
+                                    <h2 class="mb-0">{{ expedientes_creados }}</h2>
+                                </div>
+                                <i class="fas fa-folder-open fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                        <div class="card-footer d-flex align-items-center justify-content-between">
+                            <a class="small text-white stretched-link" href="#">Ver detalles</a>
+                            <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actividad Reciente -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bell me-1"></i>
+                    Notificaciones Recientes
+                </div>
+                <div class="card-body">
+                    {% if notificaciones %}
+                        <div class="list-group list-group-flush">
+                            {% for notificacion in notificaciones %}
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ notificacion.titulo }}</h6>
+                                    <small>{{ notificacion.fecha_creacion|timesince }} atrás</small>
+                                </div>
+                                <p class="mb-1">{{ notificacion.mensaje|truncatechars:100 }}</p>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center my-4">No hay notificaciones recientes.</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-end">
+                    <a href="#" class="btn btn-sm btn-outline-primary">Ver todas las notificaciones</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

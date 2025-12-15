@@ -1,0 +1,60 @@
+/* Login Page Specific Styles */
+.auth-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    padding: 0.8rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Transparent Navbar */
+.navbar {
+    background-color: rgba(13, 110, 253, 0.7) !important;
+    backdrop-filter: blur(10px);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.navbar:hover {
+    background-color: rgba(13, 110, 253, 0.85) !important;
+}
+
+.auth-header .navbar-brand {
+    display: flex;
+    align-items: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.auth-header .navbar-brand img {
+    height: 40px;
+    margin-right: 12px;
+}
+
+.auth-header .auth-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.auth-header .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.auth-header .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
+}
+
+/* Adjust main content to account for fixed header */
+.auth-content {
+    margin-top: 80px;
+}

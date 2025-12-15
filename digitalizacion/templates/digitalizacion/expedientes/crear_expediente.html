@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crear {{ tipo_info.title }} - Sistema de Digitalización - Secretaría de Servicios Públicos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Estilos base para tema oscuro */
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #2a2f38 0%, #f9f2d6 100%);
+      color: #ffffff;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Estilos para tema claro */
+    [data-theme="light"] body {
+      background: #ffffff;
+      color: #333333;
+    }
+
+    [data-theme="light"] .left-panel {
+      background-color: #f8f9fa !important;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    [data-theme="light"] .center-main {
+      background-color: #ffffff;
+    }
+
+    [data-theme="light"] .main-content-header {
+      background-color: #f8f9fa !important;
+      border: 1px solid #e0e0e0;
+      color: #333333;
+    }
+
+    [data-theme="light"] .form-container {
+      background-color: #ffffff !important;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      color: #333333;
+    }
+
+    [data-theme="light"] .info-panel {
+      background-color: #f8f9fa !important;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      color: #333333;
+    }
+
+    [data-theme="light"] .info-card {
+      background-color: #ffffff !important;
+      border: 1px solid #e0e0e0;
+      color: #333333;
+    }
+
+    [data-theme="light"] .form-control,
+    [data-theme="light"] .form-select,
+    [data-theme="light"] .form-textarea {
+      background-color: #ffffff !important;
+      border: 1px solid #ced4da !important;
+      color: #333333 !important;
+    }
+
+    [data-theme="light"] .form-control:focus,
+    [data-theme="light"] .form-select:focus,
+    [data-theme="light"] .form-textarea:focus {
+      border-color: #80bdff !important;
+      box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+
+    /* Estilos para tema oscuro */
+    .left-panel {
+      background-color: #252525 !important;
+      border-right: 1px solid #3a3a3a;
+    }
+
+    .center-main {
+      background-color: transparent;
+    }
+
+    .main-content-header {
+      background-color: #252525 !important;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .form-container {
+      background-color: #252525 !important;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-panel {
+      background-color: #252525 !important;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-card {
+      background-color: #2a2a2a !important;
+      border: 1px solid #4a4a4a;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .form-control,
+    .form-select,
+    .form-textarea {
+      background-color: #333333 !important;
+      border: 1px solid #4a4a4a !important;
+      color: #ffffff !important;
+    }
+
+    .form-control:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+    }
+
+    /* Asegurar que el contenedor principal sea transparente */
+    .container {
+      background-color: transparent !important;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 1fr;
+      width: 100%;
+      height: 100vh;
+      color: #ffffff;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+
+    /* Header con botón del tema */
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 100%;
+    }
+    
+    .header-text {
+      flex: 1;
+    }
+    
+    /* Botón de cambio de tema */
+    .theme-toggle-btn {
+      background: #1a1a1a;
+      border: 1px solid rgba(75, 85, 99, 0.4);
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      margin-left: 20px;
+    }
+    
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
+    }
+    
+    .theme-toggle-btn .theme-icon {
+      width: 22px;
+      height: 22px;
+      stroke: #ffffff;
+      fill: none;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .sun-icon,
+    .theme-toggle-btn .sun-rays {
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .moon-icon {
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos para tema claro */
+    [data-theme="light"] .theme-toggle-btn .sun-icon,
+    [data-theme="light"] .theme-toggle-btn .sun-rays {
+      display: none;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      display: block !important;
+    }
+    
+    /* Estilos para tema oscuro */
+    [data-theme="dark"] .theme-toggle-btn .sun-icon,
+    [data-theme="dark"] .theme-toggle-btn .sun-rays {
+      display: block;
+    }
+    
+    [data-theme="dark"] .theme-toggle-btn .moon-icon {
+      display: none !important;
+    }
+    
+    /* Asegurar que el encabezado tenga prioridad absoluta - SOLO TEMA OSCURO */
+    [data-theme="dark"] .main-content-header h2,
+    [data-theme="dark"] .main-content-header p {
+      color: #ffffff !important;
+    }
+
+    /* Reglas adicionales para forzar el color blanco - SOLO TEMA OSCURO */
+    [data-theme="dark"] .main-content-header h2 {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .main-content-header p {
+      color: #ffffff !important;
+    }
+
+    /* Panel izquierdo */
+    .left-panel {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      background: #20252d;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 20px 25px;
+      gap: 25px;
+      position: relative;
+      box-shadow: inset -40px 0 60px -30px #000000cc;
+    }
+    .logo-text {
+      font-weight: 300;
+      font-size: 1.4em;
+      font-family: 'Roboto', sans-serif;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+      margin: 0;
+    }
+    .logo-subtext {
+      font-weight: 300;
+      font-size: 0.8em;
+      padding-left: 5px;
+      margin-top: 5px;
+      opacity: 0.7;
+      letter-spacing: 0.02em;
+    }
+
+    /* Menu */
+    .menu {
+      margin-top: 20px;
+      width: 100%;
+      border-top: 1px solid rgba(255 255 255 / 0.2);
+      border-bottom: 1px solid rgba(255 255 255 / 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255 255 255 / 0.7);
+      padding: 10px 12px;
+      font-weight: 400;
+      font-size: 0.9em;
+      border-bottom: 1px solid rgba(255 255 255 / 0.1);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      text-decoration: none;
+    }
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    .menu-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: rgba(255 255 255 / 0.7);
+      stroke-width: 2;
+      fill: none;
+    }
+    .menu-item:hover {
+      color: white;
+      background: rgba(255 255 255 / 0.15);
+      text-decoration: none;
+    }
+    .menu-item.active {
+      background: #1e3a8a;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      position: relative;
+      box-shadow: 3px 0 8px rgba(0, 0, 0, 0.3) inset;
+    }
+    .menu-item.active:hover {
+      color: white;
+      background: #1e3a8a;
+      text-decoration: none;
+    }
+    .menu-item.active::after {
+      content: "";
+      position: absolute;
+      right: -12px;
+      width: 0; 
+      height: 0; 
+      border-top: 20px solid transparent;
+      border-bottom: 20px solid transparent; 
+      border-left: 12px solid #1e3a8a;
+      top: 50%;
+      transform: translateY(-50%);
+      filter: drop-shadow(-2px 0 1px #0008);
+    }
+
+    /* Contenido principal */
+    .center-main {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      padding: 30px;
+      color: #ffffff;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    /* Header principal */
+    .main-content-header {
+      text-align: center;
+      margin-bottom: 30px;
+      background: #1a1a1a;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(75, 85, 99, 0.4);
+    }
+
+    .main-content-header h2 {
+      margin: 0 0 8px 0;
+      font-size: 1.8em;
+      color: #ffffff !important;
+      color: white !important;
+      font-weight: 300;
+    }
+
+    .main-content-header p {
+      margin: 0;
+      font-size: 0.95em;
+      color: #ffffff !important;
+      color: white !important;
+      font-weight: 300;
+    }
+
+    /* Reglas adicionales para asegurar que se apliquen - SOLO TEMA OSCURO */
+    [data-theme="dark"] .center-main .main-content-header h2 {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .center-main .main-content-header p {
+      color: #ffffff !important;
+    }
+
+    /* Reglas con máxima especificidad - SOLO TEMA OSCURO */
+    [data-theme="dark"] div.center-main div.main-content-header h2 {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] div.center-main div.main-content-header p {
+      color: #ffffff !important;
+    }
+
+    .stages-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 85, 175, 0.3);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-top: 10px;
+      font-size: 0.85em;
+      color: #a8c7ff;
+    }
+
+    /* Contenedor principal del formulario */
+    .form-container {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Formulario principal */
+    .main-form {
+      background-color: #252525 !important;
+      border: 1px solid #3a3a3a;
+      border-radius: 8px;
+      padding: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      margin-bottom: 2rem;
+    }
+
+    .form-title {
+      font-size: 1.4em;
+      font-weight: 600;
+      color: #e5e7eb;
+      margin-bottom: 1rem;
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    /* Tema claro - título del formulario */
+    [data-theme="light"] .form-title {
+      color: #1f2937 !important;
+      font-weight: 600 !important;
+    }
+
+    .form-subtitle {
+      color: #c2d1ff;
+      font-size: 0.9em;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      color: #e6f0ff;
+      font-size: 0.95em;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: rgba(13, 29, 61, 0.7);
+      border: 1px solid rgba(30, 85, 175, 0.6);
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      font-family: 'Roboto', sans-serif;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: rgba(59, 130, 246, 0.8);
+      box-shadow: 0 0 0 3px rgba(30, 85, 175, 0.3);
+      background: rgba(13, 29, 61, 0.9);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-help {
+      color: #a8c7ff;
+      font-size: 0.85em;
+      margin-top: 6px;
+      font-style: italic;
+      font-family: 'Roboto', sans-serif;
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] body {
+      background: linear-gradient(160deg, #f8f9fa 10%, #ffffff 90%) !important;
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .container {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .center-main {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .main-content-header h2 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .main-content-header p {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .left-panel {
+      background: #f8f9fa !important;
+      box-shadow: inset -40px 0 60px -30px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .logo-text {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .logo-subtext {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .menu {
+      border-top: 1px solid #dee2e6 !important;
+      border-bottom: 1px solid #dee2e6 !important;
+    }
+    
+    [data-theme="light"] .menu-item {
+      color: #495057 !important;
+      border-bottom: 1px solid #e9ecef !important;
+    }
+    
+    [data-theme="light"] .menu-item svg {
+      stroke: #495057 !important;
+    }
+    
+    [data-theme="light"] .menu-item:hover {
+      color: #212529 !important;
+      background: #f8f9fa !important;
+    }
+    
+    [data-theme="light"] .menu-item.active {
+      background: #001f66  !important;
+      color: #ffffff !important;
+    }
+    
+    [data-theme="light"] .menu-item.active:hover {
+      background: #5a67d8 !important;
+      color: #ffffff !important;
+    }
+    
+    [data-theme="light"] .main-form {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .form-title {
+      color: #000000 !important;
+    }
+    
+    [data-theme="light"] .form-subtitle {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] .form-label {
+      color: #212529 !important;
+      font-family: 'Roboto', sans-serif !important;
+      font-weight: 500 !important;
+    }
+    
+    [data-theme="light"] .form-input,
+    [data-theme="light"] .form-select,
+    [data-theme="light"] .form-textarea {
+      background: #ffffff !important;
+      border: 1px solid #ced4da !important;
+      color: #212529 !important;
+      font-family: 'Roboto', sans-serif !important;
+      font-weight: 400 !important;
+    }
+    
+    [data-theme="light"] .form-input::placeholder,
+    [data-theme="light"] .form-select::placeholder,
+    [data-theme="light"] .form-textarea::placeholder {
+      color: #6c757d !important;
+      font-family: 'Roboto', sans-serif !important;
+      font-weight: 300 !important;
+      font-style: italic !important;
+    }
+    
+    [data-theme="light"] .form-help {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] .info-panel {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .info-panel h3 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .info-panel p,
+    [data-theme="light"] .info-panel li {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn {
+      background: #ffffff !important;
+      border: 2px solid #001f66  !important;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn:hover {
+      background: #f8f9fa !important;
+      border-color: #001f66  !important;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .theme-icon {
+      stroke: #667eea !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      stroke: #001f66  !important;
+    }
+    
+    /* Corregir elementos que siguen negros en tema claro */
+    [data-theme="light"] .stages-badge {
+      background: rgba(102, 126, 234, 0.1) !important;
+      border: 1px solid rgba(102, 126, 234, 0.3) !important;
+      color: #667eea !important;
+    }
+    
+    [data-theme="light"] .info-card {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .info-card h4 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .info-list li {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .info-list li:before {
+      background: rgba(102, 126, 234, 0.1) !important;
+      color: #001f66  !important;
+    }
+    
+    [data-theme="light"] .help-text {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] .btn-guide {
+      background: rgba(102, 126, 234, 0.1) !important;
+      color: #001f66  !important;
+      border: 1px solid rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    [data-theme="light"] .btn-guide:hover {
+      background: rgba(102, 126, 234, 0.2) !important;
+      color: #5a67d8 !important;
+    }
+    
+    [data-theme="light"] .btn-back {
+      background: #f8f9fa !important;
+      color: #495057 !important;
+      border: 1px solid #dee2e6 !important;
+    }
+    
+    [data-theme="light"] .btn-back:hover {
+      background: #e9ecef !important;
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .btn-create {
+      background: #001f66 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    [data-theme="light"] .btn-create:hover {
+      background: #0c1220 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    [data-theme="light"] .btn-create:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25) !important;
+      background: #0a0f1a !important;
+    }
+    
+    [data-theme="light"] .main-content-header {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .stages-badge svg {
+      fill: #667eea !important;
+    }
+    
+    /* Estilos específicos para tema oscuro - SOLO para tema oscuro */
+    [data-theme="dark"] .logo-text {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .logo-subtext {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu {
+      border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    [data-theme="dark"] .menu-item {
+      color: #ffffff !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    [data-theme="dark"] .menu-item svg {
+      stroke: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item:hover {
+      color: #ffffff !important;
+      background: rgba(255, 255, 255, 0.15) !important;
+    }
+    
+    [data-theme="dark"] .menu-item.active {
+      color: #ffffff !important;
+      background: #1e3a8a !important;
+    }
+    
+    [data-theme="dark"] .menu-item.active svg {
+      stroke: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item.active::after {
+      border-left: 12px solid #1e3a8a !important;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Botones del formulario */
+    .form-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 30px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(75, 85, 99, 0.3);
+    }
+
+    .btn-back {
+      background: rgba(75, 85, 99, 0.3);
+      color: #d1d5db;
+      border: 1px solid rgba(75, 85, 99, 0.4);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .btn-back:hover {
+      background: rgba(75, 85, 99, 0.5);
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .btn-create {
+      background: #0f172a;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    }
+
+    .btn-create:hover {
+      background: #0c1220;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-create:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+      background: #0a0f1a;
+    }
+
+    /* Panel derecho de información */
+    .info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .info-card {
+      background: #1a1a1a;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 25px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(75, 85, 99, 0.4);
+    }
+
+    .info-card h4 {
+      color: #ffffff;
+      font-size: 1.2em;
+      font-weight: 600;
+      margin-bottom: 15px;
+    }
+
+    .info-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .info-list li {
+      color: #d1d5db;
+      font-size: 0.9em;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .info-list li:before {
+      content: counter(list-counter);
+      counter-increment: list-counter;
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: rgba(59, 130, 246, 0.2);
+      color: #001f66 ;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8em;
+      font-weight: 600;
+    }
+
+    .info-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-text {
+      color: #9ca3af;
+      font-size: 0.9em;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .btn-guide {
+      background: rgba(59, 130, 246, 0.2);
+      color: #001f66 ;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      text-align: center;
+      display: inline-block;
+    }
+
+    .btn-guide:hover {
+      background: rgba(59, 130, 246, 0.3);
+      color: #001f66 ;
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 250px 1fr;
+      }
+      
+      .form-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .info-panel {
+        order: -1;
+      }
+    }
+    
+    @media (max-width: 992px) {
+      .container {
+        grid-template-columns: 220px 1fr;
+      }
+      
+      .center-main {
+        padding: 20px;
+      }
+      
+      .main-form {
+        padding: 25px;
+      }
+      
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      
+      .left-panel {
+        grid-column: 1;
+        grid-row: 1;
+        position: fixed;
+        top: 0;
+        left: -280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+      }
+      
+      .left-panel.open {
+        left: 0;
+      }
+      
+      .center-main {
+        grid-column: 1;
+        grid-row: 2;
+        padding: 15px;
+      }
+      
+      .main-content-header h2 {
+        font-size: 1.6em;
+      }
+      
+      .main-form {
+        padding: 20px;
+      }
+      
+      .form-buttons {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+      }
+      
+             .btn-back,
+       .btn-create {
+         text-align: center;
+         justify-content: center;
+       }
+     }
+
+         /* REGLAS FINALES PARA FORZAR COLOR BLANCO EN ENCABEZADO - SOLO TEMA OSCURO */
+    [data-theme="dark"] .main-content-header h2,
+    [data-theme="dark"] .main-content-header p {
+      color: #ffffff !important;
+    }
+
+    /* Reglas con máxima especificidad - SOLO TEMA OSCURO */
+    [data-theme="dark"] div.center-main div.main-content-header h2,
+    [data-theme="dark"] div.center-main div.main-content-header p {
+      color: #ffffff !important;
+    }
+
+    /* Reglas para cualquier elemento dentro del encabezado - SOLO TEMA OSCURO */
+    [data-theme="dark"] .main-content-header * {
+      color: #ffffff !important;
+    }
+   </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel" aria-label="Menú del sistema">
+      <div>
+        <h1 class="logo-text" aria-label="Nombre del sistema">
+          Secretaría de Servicios Públicos<br />
+          <span class="logo-subtext"><br />Digitalización de archivos</span>
+        </h1>
+      </div>
+      <nav aria-label="Menú principal del sistema" class="menu" role="menu">
+        <a href="{% url 'digitalizacion:dashboard' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M9 21v-6h6v6"/></svg>
+          Dashboard
+        </a>
+        <a href="{% url 'expedientes:lista_expedientes' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/></svg>
+          Expedientes
+        </a>
+        <a href="{% url 'expedientes:seleccionar_tipo' %}" role="menuitem" class="menu-item active" tabindex="0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 7h3l3-4h8l3 4h3v10H2V7z"/></svg>
+          Crear
+        </a>
+        <a href="{% url 'digitalizacion:reportes' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7v14"/></svg>
+          Reportes
+        </a>
+        <a href="{% url 'digitalizacion:panel_administracion' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Configuración
+        </a>
+      </nav>
+    </div>
+
+    <div class="center-main">
+      <div class="main-content-header">
+        <div class="header-content">
+          <div class="header-text">
+                         <h2>{{ tipo_info.title }}</h2>
+             <p>Completa la información para iniciar el expediente</p>
+          </div>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar Tema" id="themeToggle">
+            <svg class="theme-icon sun-icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="theme-icon moon-icon" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-container">
+        <!-- Mensajes de error -->
+        {% if messages %}
+        <div class="messages-container" style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}" role="alert" style="padding: 10px 15px; margin-bottom: 10px; border-radius: 4px;">
+                {% if message.tags == 'error' %}
+                    <i class="fas fa-exclamation-circle"></i>
+                {% elif message.tags == 'success' %}
+                    <i class="fas fa-check-circle"></i>
+                {% elif message.tags == 'warning' %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                    <i class="fas fa-info-circle"></i>
+                {% endif %}
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Formulario principal -->
+        <div class="main-form">
+          <h3 class="form-title">Información del Expediente</h3>
+          <p class="form-subtitle">Los campos marcados con * son obligatorios</p>
+          
+          <form method="post" action="{% url 'expedientes:crear' tipo_id=tipo %}" class="needs-validation" novalidate enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="tipo_expediente" value="{{ tipo }}">
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              <strong>Error:</strong>
+              {% for error in form.non_field_errors %}
+                {{ error }}
+              {% endfor %}
+            </div>
+            {% endif %}
+            {% if form.errors %}
+            <div class="alert alert-warning">
+              <strong>Por favor corrige los siguientes errores:</strong>
+              <ul>
+                {% for field in form %}
+                  {% if field.errors %}
+                    <li>{{ field.label }}: {{ field.errors|striptags }}</li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+            {% if subtipo %}
+            <input type="hidden" name="subtipo" value="{{ subtipo }}">
+            {% endif %}
+            
+            <!-- Información básica -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Título del Expediente *</label>
+                <input type="text" 
+                       name="titulo" 
+                       class="form-input" 
+                       placeholder="Ej: Adquisición de mobiliario oficina"
+                       required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Departamento *</label>
+                <select name="departamento" class="form-select" required>
+                  <option value="">Selecciona un departamento</option>
+                  {% for departamento in departamentos %}
+                  <option value="{{ departamento.id }}">{{ departamento.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Descripción</label>
+              <textarea name="descripcion" 
+                        class="form-textarea" 
+                        placeholder="Describe brevemente el objeto del expediente..."></textarea>
+            </div>
+
+            <!-- Fila para Fuente de Financiamiento y Giro -->
+            <div class="form-row">
+              {% if mostrar_fuente_financiamiento %}
+              <div class="form-group" style="flex: 1; margin-right: 15px;">
+                <label class="form-label">Fuente de Financiamiento *</label>
+                <select name="fuente_financiamiento" class="form-select" required>
+                  <option value="">Seleccione una opción</option>
+                  <option value="propio_municipal" {% if form.fuente_financiamiento.value == 'propio_municipal' %}selected{% endif %}>Propio Municipal</option>
+                  <option value="estatal" {% if form.fuente_financiamiento.value == 'estatal' %}selected{% endif %}>Estatal</option>
+                  <option value="federal" {% if form.fuente_financiamiento.value == 'federal' %}selected{% endif %}>Federal</option>
+                </select>
+                {% if form.fuente_financiamiento.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.fuente_financiamiento.errors|join:", " }}
+                  </div>
+                {% endif %}
+                <div class="form-help">Selecciona la fuente de financiamiento</div>
+              </div>
+              {% endif %}
+              
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Giro *</label>
+                <select name="giro" class="form-select" required>
+                  <option value="">Selecciona un giro</option>
+                  <option value="000000100">000000100 ALIMENTOS Y ABARROTES</option>
+                  <option value="000000200">000000200 VETERINARIA</option>
+                  <option value="000000300">000000300 MATERIAL DE LIMPIEZA</option>
+                  <option value="000000400">000000400 EQUIPO PESADO PARA LIMPIEZA</option>
+                  <option value="000000500">000000500 EQUIPO Y EQUIPAMIENTOS VARIOS</option>
+                  <option value="000000600">000000600 MATERIAL DEPORTIVO</option>
+                  <option value="000000700">000000700 FERRETERÍA Y TLAPALERIA</option>
+                  <option value="000000800">000000800 IMPRESIONES Y PUBLICACIONES</option>
+                  <option value="000000900">000000900 MATERIAL DE CONSTRUCCIÓN</option>
+                  <option value="000001000">000001000 MATERIAL ELECTRICO</option>
+                  <option value="000001200">000001200 VIVEROS</option>
+                  <option value="000001300">000001300 PAPELERÍA</option>
+                  <option value="000001400">000001400 JUGUETES</option>
+                  <option value="000001500">000001500 MEDICAMENTOS Y LABORATORIOS</option>
+                  <option value="000001600">000001600 VEHICULOS</option>
+                  <option value="000001700">000001700 UNIFORMES</option>
+                  <option value="000001800">000001800 CALZADO</option>
+                  <option value="000001900">000001900 ARRENDAMIENTOS VARIOS</option>
+                  <option value="000002000">000002000 SERVICIOS</option>
+                  <option value="000002100">000002100 REFACCIONES</option>
+                  <option value="000002200">000002200 LUBRICANTES</option>
+                  <option value="000002300">000002300 EQUIPO DE SEGURIDAD</option>
+                  <option value="000002400">000002400 EQUIPO DE TECNOLOGIAS</option>
+                  <option value="000002500">000002500 SUMINISTROS VARIOS / ACCESORIOS Y CONSUMIBLES/ REGALOS P/EVENTOS/ MATERIAL BÁSICO P/ MANUALIDADES</option>
+                  <option value="000002600">000002600 MERCERIAS Y BLANCOS</option>
+                  <option value="000002700">000002700 EQUIPO MÉDICO Y ORTOPÉDICO</option>
+                  <option value="000002800">000002800 EQUIPO DE FOTOGRAFÍA/ CAMARAS / VIDEO/ SONIDO E ILUMINACIÓN</option>
+                  <option value="000002900">000002900 MAQUINARIA Y HERRAMIENTAS</option>
+                  <option value="000003000">000003000 REFACCIONES DEL TALLER VEHICULAR</option>
+                  <option value="000003100">000003100 IMPRESIONES Y PUBLICACIONES</option>
+                </select>
+                <div class="form-help">Selecciona el giro correspondiente</div>
+              </div>
+            </div>
+
+            <!-- Fila para Tipo de Adquisición -->
+            <div class="form-row">
+              <div class="form-group" style="width: 100%;">
+                <label class="form-label">Tipo de Adquisición *</label>
+                <select name="tipo_adquisicion" class="form-select" required>
+                  <option value="">Selecciona una opción</option>
+                  <option value="bienes" {% if form.tipo_adquisicion.value == 'bienes' %}selected{% endif %}>Bienes</option>
+                  <option value="servicios" {% if form.tipo_adquisicion.value == 'servicios' %}selected{% endif %}>Servicios</option>
+                  <option value="arrendamientos" {% if form.tipo_adquisicion.value == 'arrendamientos' %}selected{% endif %}>Arrendamientos</option>
+                </select>
+                {% if form.tipo_adquisicion.errors %}
+                  <div class="invalid-feedback d-block">
+                    {{ form.tipo_adquisicion.errors|join:", " }}
+                  </div>
+                {% endif %}
+                <div class="form-help">Selecciona el tipo de adquisición</div>
+              </div>
+            </div>
+
+            <!-- Campos específicos según el tipo -->
+            {% if tipo == 'giro' %}
+            <div class="form-group">
+              <label class="form-label">Giro *</label>
+              <select name="giro" class="form-select" required>
+                <option value="">Selecciona un tipo de giro</option>
+                {% for giro_key, giro_display in tipo_info.options.giro %}
+                <option value="{{ giro_key }}">{{ giro_display }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-help">Selecciona el tipo de giro o actividad comercial</div>
+            </div>
+
+            {% elif tipo == 'fuente' and mostrar_fuente_financiamiento %}
+            <div class="form-group">
+              <label class="form-label">Fuente de Financiamiento *</label>
+              <select name="fuente_financiamiento" class="form-select" required>
+                <option value="">Selecciona una fuente</option>
+                {% for fuente_key, fuente_display in tipo_info.options.fuente_financiamiento %}
+                <option value="{{ fuente_key }}">{{ fuente_display }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-help">Selecciona la fuente de financiamiento del expediente</div>
+            </div>
+
+            {% elif tipo == 'tipo_adquisicion' %}
+            <div class="form-group">
+              <label class="form-label">Tipo de Adquisición *</label>
+              <select name="tipo_adquisicion" class="form-select" required>
+                <option value="">Selecciona un tipo</option>
+                {% for tipo_key, tipo_display in tipo_info.options.tipo_adquisicion %}
+                <option value="{{ tipo_key }}">{{ tipo_display }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-help">Selecciona el tipo de adquisición a realizar</div>
+            </div>
+
+            {% elif tipo == 'monto' %}
+            <div class="form-group">
+              <label class="form-label">Modalidad por Monto *</label>
+              <select name="modalidad_monto" class="form-select" required>
+                <option value="">Selecciona una modalidad</option>
+                {% for monto_key, monto_display in tipo_info.options.modalidad_monto %}
+                <option value="{{ monto_key }}">{{ monto_display }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-help">Selecciona la modalidad según el monto de la adquisición</div>
+            </div>
+            {% endif %}
+
+            <!-- Botones del formulario -->
+            <div class="form-buttons" style="margin-top: 20px;">
+              <a href="{% url 'expedientes:seleccionar_tipo' %}" class="btn-back">Volver</a>
+              <button type="submit" id="submit-button" class="btn-create">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                Crear Expediente
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Panel derecho de información -->
+        <div class="info-panel">
+          <!-- ¿Qué sucede después? -->
+          <div id="form-errors" style="display: none; color: red; margin-bottom: 15px;"></div>
+          <div class="info-card">
+            <h4>¿Qué sucede después?</h4>
+            
+            <!-- Información de áreas configuradas -->
+            <div style="margin-bottom: 20px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid #ffffff;">
+              <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#3b82f6" style="margin-right: 8px;">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                </svg>
+                <strong style="color: #000000;">Áreas configuradas</strong>
+              </div>
+              <p style="margin: 0; font-size: 0.9em; color: #e5e7eb;">
+                Este expediente tiene <strong>{{ total_areas }} área{{ total_areas|pluralize }}</strong> configurada{{ total_areas|pluralize }} para su seguimiento.
+              </p>
+            </div>
+            <ol class="info-list" style="counter-reset: list-counter 1;">
+              <li>
+                <strong>Expediente creado</strong><br>
+                Se asigna número automático
+              </li>
+             
+              <li>
+                <strong>Seguimiento completo</strong><br>
+                Documentos, comentarios, historial
+              </li>
+            </ol>
+          </div>
+
+            <div style="margin: 15px 0;">
+              <div style="height: 1px; background: rgba(255, 255, 255, 0.1);"></div>
+            </div>
+            
+            <!-- ¿Necesitas ayuda? -->
+          <div class="info-card">
+            <h4>¿Necesitas ayuda?</h4>
+            <p class="help-text">
+              Si tienes dudas sobre qué tipo de expediente crear, consulta la documentación o contacta al administrador.
+            </p>
+            <a href="#" class="btn-guide">Ver Guía</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+   // Validación del formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form.needs-validation');
+  const submitButton = document.getElementById('submit-button');
+  const formErrors = document.getElementById('form-errors');
+  const fileInputs = form ? form.querySelectorAll('input[type="file"]') : [];
+  
+  // Función para validar campos mixtos (áreas que requieren al menos un campo lleno)
+  function validateMixedFields() {
+    let isValid = true;
+    const mixedAreas = {};
+    
+    // Agrupar campos por área
+    document.querySelectorAll('.area-field').forEach(field => {
+      const areaId = field.dataset.areaId;
+      if (!mixedAreas[areaId]) {
+        mixedAreas[areaId] = [];
+      }
+      mixedAreas[areaId].push(field);
+    });
+    
+    // Validar cada área
+    for (const areaId in mixedAreas) {
+      const areaFields = mixedAreas[areaId];
+      const areaElement = document.querySelector(`.area-item[data-area-id="${areaId}"]`);
+      const isRequired = areaElement.querySelector('[data-required="true"]') !== null;
+      
+      if (!isRequired) continue;
+      
+      let hasContent = false;
+      
+      // Verificar si al menos un campo tiene contenido
+      for (const field of areaFields) {
+        if (field.type === 'file') {
+          if (field.files && field.files.length > 0) {
+            hasContent = true;
+            break;
+          }
+        } else if (field.value.trim() !== '') {
+          hasContent = true;
+          break;
+        }
+      }
+      
+      // Si es obligatorio y no tiene contenido, mostrar error
+      if (!hasContent) {
+        isValid = false;
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = 'Este campo es obligatorio. Debe completar al menos un campo de esta área.';
+        
+        // Asegurarse de que el mensaje de error no se duplique
+        const existingError = areaElement.querySelector('.area-required-error');
+        if (!existingError) {
+          errorDiv.classList.add('area-required-error');
+          areaElement.appendChild(errorDiv);
+        }
+      } else {
+        // Remover mensaje de error si existe
+        const existingError = areaElement.querySelector('.area-required-error');
+        if (existingError) {
+          existingError.remove();
+        }
+      }
+    }
+    
+    return isValid;
+  }
+  
+  // Validar archivos
+  fileInputs.forEach(input => {
+    input.addEventListener('change', function() {
+      const file = this.files[0];
+      const errorElement = this.nextElementSibling;
+      
+      if (this.required && (!file || file.size === 0)) {
+        showError(this, 'Por favor, selecciona un archivo válido');
+        return false;
+      }
+      
+      // Validar tamaño máximo de archivo (10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file && file.size > maxSize) {
+        showError(this, 'El archivo es demasiado grande. El tamaño máximo permitido es 10MB');
+        this.value = ''; // Limpiar el input
+        return false;
+      }
+      
+      // Limpiar mensajes de error si todo está bien
+      if (errorElement && errorElement.classList.contains('invalid-feedback')) {
+        errorElement.textContent = '';
+        this.classList.remove('is-invalid');
+      }
+      
+      return true;
+    });
+  });
+  
+  // Mostrar mensaje de error
+  function showError(input, message) {
+    let errorElement = input.nextElementSibling;
+    if (!errorElement || !errorElement.classList.contains('invalid-feedback')) {
+      errorElement = document.createElement('div');
+      errorElement.className = 'invalid-feedback';
+      input.parentNode.insertBefore(errorElement, input.nextSibling);
+    }
+    errorElement.textContent = message;
+    input.classList.add('is-invalid');
+    
+    // Mostrar el contenedor de errores si está oculto
+    if (formErrors) {
+      formErrors.style.display = 'block';
+      formErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+  
+  if (form) {
+    // Validar formulario antes de enviar
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      
+      // Validar campos mixtos
+      if (!validateMixedFields()) {
+        event.stopPropagation();
+        form.classList.add('was-validated');
+        return false;
+      }
+      event.stopPropagation();
+      
+      // Limpiar mensajes de error previos
+      if (formErrors) {
+        formErrors.textContent = '';
+        formErrors.style.display = 'none';
+      }
+      
+      // Validar campos requeridos
+      if (!form.checkValidity()) {
+        const invalidFields = form.querySelectorAll(':invalid');
+        let errorMessage = 'Por favor, completa correctamente los siguientes campos obligatorios:';
+        
+        invalidFields.forEach(field => {
+          const fieldName = field.labels && field.labels.length > 0 ? 
+            field.labels[0].textContent.replace('*', '').trim() : 
+            field.name.replace('_', ' ');
+          
+          if (!errorMessage.includes(fieldName)) {
+            errorMessage += `\n- ${fieldName}`;
+          }
+          
+          // Resaltar campo inválido
+          field.classList.add('is-invalid');
+        });
+        
+        if (formErrors) {
+          formErrors.textContent = errorMessage;
+          formErrors.style.display = 'block';
+        }
+        
+        // Desplazarse al primer campo inválido
+        if (invalidFields.length > 0) {
+          invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        form.classList.add('was-validated');
+        return false;
+      }
+      
+      // Validar archivos obligatorios
+      let hasFileErrors = false;
+      fileInputs.forEach(input => {
+        if (input.required && (!input.files || input.files.length === 0)) {
+          showError(input, 'Este archivo es obligatorio');
+          hasFileErrors = true;
+        }
+      });
+      
+      if (hasFileErrors) {
+        if (formErrors) {
+          formErrors.textContent = 'Por favor, adjunta todos los archivos obligatorios';
+          formErrors.style.display = 'block';
+        }
+        return false;
+      }
+      
+      // Si todo está bien, mostrar indicador de carga y enviar
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.innerHTML = `
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          Procesando...
+        `;
+      }
+      
+      // Enviar formulario
+      form.submit();
+      return true;
+    });
+    
+    // Agregar validación en tiempo real
+    form.querySelectorAll('input, select, textarea').forEach(input => {
+      input.addEventListener('input', function() {
+        if (this.checkValidity()) {
+          this.classList.remove('is-invalid');
+          const errorElement = this.nextElementSibling;
+          if (errorElement && errorElement.classList.contains('invalid-feedback')) {
+            errorElement.textContent = '';
+          }
+        }
+      });
+    });
+  }
+});
+
+// Función para mostrar mensajes de error
+function showError(input, message) {
+  let errorElement = input.nextElementSibling;
+  if (!errorElement || !errorElement.classList.contains('invalid-feedback')) {
+    errorElement = document.createElement('div');
+    errorElement.className = 'invalid-feedback';
+    input.parentNode.insertBefore(errorElement, input.nextSibling);
+  }
+  errorElement.textContent = message;
+  input.classList.add('is-invalid');
+  
+  // Mostrar el contenedor de errores si está oculto
+  const formErrors = document.getElementById('form-errors');
+  if (formErrors) {
+    formErrors.style.display = 'block';
+    formErrors.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+// Funciones para cambio de tema
+function toggleTheme() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const html = document.documentElement;
+  const currentTheme = html.getAttribute('data-theme');
+  const sunIcon = document.querySelector('.sun-icon');
+  const moonIcon = document.querySelector('.moon-icon');
+  
+  if (currentTheme === 'light') {
+    sunIcon.style.display = 'none';
+    moonIcon.style.display = 'block';
+  } else {
+    sunIcon.style.display = 'block';
+    moonIcon.style.display = 'none';
+  }
+}
+
+function initializeTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  updateThemeIcon();
+}
+
+// Inicializar tema al cargar la página
+document.addEventListener('DOMContentLoaded', initializeTheme);
+  </script>
+</body>
+</html>

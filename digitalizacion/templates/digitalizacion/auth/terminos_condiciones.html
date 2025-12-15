@@ -1,0 +1,124 @@
+{% extends 'digitalizacion/base_auth.html' %}
+{% load static %}
+
+{% block title %}Términos y Condiciones - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb justify-content-center">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                            </li>
+                            <li class="breadcrumb-item active">Términos y Condiciones</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2 mb-3 text-zinc-50">
+                        <i class="bi bi-file-text text-emerald-400 me-3"></i>
+                        Términos y Condiciones
+                    </h1>
+                    <p class="text-zinc-400">Última actualización: {{ "now"|date:"d/m/Y" }}</p>
+                </div>
+
+                <!-- Contenido -->
+                <div class="card bg-zinc-900 border-zinc-800">
+                    <div class="card-body p-4">
+                        <div class="text-zinc-300">
+                            <h3 class="h4 text-emerald-400 mb-4">1. Aceptación de los Términos</h3>
+                            <p class="mb-4">
+                                Al acceder y utilizar el Sistema de Gestión de Expedientes de la Secretaría de Servicios Públicos, 
+                                usted acepta estar sujeto a estos términos y condiciones de uso. Si no está de acuerdo con alguna 
+                                parte de estos términos, no debe utilizar el sistema.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">2. Uso Autorizado</h3>
+                            <p class="mb-4">
+                                Este sistema está destinado exclusivamente para el uso de empleados autorizados de la Secretaría 
+                                de Servicios Públicos. El acceso no autorizado está estrictamente prohibido y puede resultar en 
+                                acciones legales.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">3. Responsabilidades del Usuario</h3>
+                            <ul class="mb-4">
+                                <li>Mantener la confidencialidad de sus credenciales de acceso</li>
+                                <li>No compartir su cuenta con otros usuarios</li>
+                                <li>Reportar inmediatamente cualquier uso no autorizado</li>
+                                <li>Utilizar el sistema únicamente para fines oficiales</li>
+                                <li>Respetar la confidencialidad de la información</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">4. Uso Prohibido</h3>
+                            <p class="mb-4">
+                                Está prohibido utilizar el sistema para:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Actividades ilegales o fraudulentas</li>
+                                <li>Acceso no autorizado a información confidencial</li>
+                                <li>Modificación o eliminación de datos sin autorización</li>
+                                <li>Uso personal o comercial no relacionado con funciones oficiales</li>
+                                <li>Transmisión de malware o código malicioso</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">5. Confidencialidad</h3>
+                            <p class="mb-4">
+                                Toda la información contenida en el sistema es confidencial y está protegida por las leyes 
+                                de transparencia y acceso a la información pública. Los usuarios deben mantener la 
+                                confidencialidad de esta información.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">6. Propiedad Intelectual</h3>
+                            <p class="mb-4">
+                                El sistema y todo su contenido son propiedad de la Secretaría de Servicios Públicos. 
+                                Los usuarios no tienen derecho a copiar, modificar o distribuir el software o contenido 
+                                sin autorización expresa.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">7. Limitación de Responsabilidad</h3>
+                            <p class="mb-4">
+                                La Secretaría de Servicios Públicos no será responsable por daños directos, indirectos, 
+                                incidentales o consecuentes que puedan resultar del uso del sistema.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">8. Modificaciones</h3>
+                            <p class="mb-4">
+                                Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios 
+                                serán notificados a través del sistema y entrarán en vigor inmediatamente.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">9. Terminación</h3>
+                            <p class="mb-4">
+                                Podemos suspender o terminar el acceso al sistema en cualquier momento por violación 
+                                de estos términos o por cualquier otra razón que consideremos apropiada.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">10. Contacto</h3>
+                            <p class="mb-4">
+                                Para preguntas sobre estos términos, contacte al administrador del sistema o envíe un 
+                                correo electrónico a la Secretaría de Servicios Públicos.
+                            </p>
+
+                            <div class="alert alert-info border-info mt-4">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Nota:</strong> Al utilizar este sistema, usted confirma que ha leído, 
+                                entendido y aceptado estos términos y condiciones.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de regreso -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'digitalizacion:register' %}" class="btn btn-outline-emerald-400">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Registro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

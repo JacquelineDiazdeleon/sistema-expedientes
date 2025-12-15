@@ -1,0 +1,442 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}{{ documento.titulo }} - Sistema de Digitalización{% endblock %}
+{% block description %}Detalle del expediente {{ documento.numero_documento }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-950">
+    <div class="container py-4">
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'digitalizacion:lista_documentos' %}" class="text-emerald-400 text-decoration-none">Expedientes</a>
+                </li>
+                <li class="breadcrumb-item active text-zinc-400">{{ documento.numero_documento }}</li>
+            </ol>
+        </nav>
+
+        <!-- Header del expediente -->
+        <div class="card bg-zinc-900 border-zinc-800 mb-4">
+            <div class="card-header border-zinc-800">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1 me-3">
+                        <h1 class="h3 text-zinc-100 mb-2">{{ documento.titulo }}</h1>
+                        <div class="d-flex flex-wrap gap-3 text-sm text-zinc-400">
+                            <span><i class="bi bi-hash me-1"></i>{{ documento.numero_documento }}</span>
+                            <span><i class="bi bi-building me-1"></i>{{ documento.departamento.nombre }}</span>
+                            <span><i class="bi bi-tag me-1"></i>{{ documento.tipo_documento.nombre }}</span>
+                            {% if documento.giro %}
+                            <span><i class="bi bi-briefcase me-1"></i>{{ documento.giro }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 text-sm text-zinc-400 mt-2">
+                            <span><i class="bi bi-wallet me-1"></i>{{ documento.get_fuente_financiamiento_display }}</span>
+                            <span><i class="bi bi-box me-1"></i>{{ documento.get_tipo_adquisicion_display }}</span>
+                            <span><i class="bi bi-currency-dollar me-1"></i>{{ documento.get_modalidad_monto_display }}</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Estado -->
+                        <span class="badge {% if documento.estado == 'verificado' %}bg-success{% elif documento.estado == 'digitalizado' %}bg-info{% elif documento.estado == 'en_proceso' %}bg-warning{% elif documento.estado == 'archivado' %}bg-secondary{% elif documento.estado == 'rechazado' %}bg-danger{% else %}bg-dark{% endif %} fs-6">
+                            {{ documento.get_estado_display }}
+                        </span>
+                        
+                        <!-- Prioridad -->
+                        <span class="badge {% if documento.prioridad == 'urgente' %}bg-danger{% elif documento.prioridad == 'alta' %}bg-warning{% elif documento.prioridad == 'media' %}bg-info{% else %}bg-secondary{% endif %}">
+                            {{ documento.get_prioridad_display }}
+                        </span>
+                        
+                        <!-- Acciones -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end bg-zinc-800 border-zinc-700">
+                                <li>
+                                    <a class="dropdown-item text-zinc-300" href="{% url 'digitalizacion:editar_documento' documento.pk %}">
+                                        <i class="bi bi-pencil me-2"></i>Editar
+                                    </a>
+                                </li>
+                                {% if documento.estado != 'digitalizado' and documento.estado != 'verificado' %}
+                                <li>
+                                    <a class="dropdown-item text-zinc-300" href="{% url 'digitalizacion:digitalizar_documento' documento.pk %}">
+                                        <i class="bi bi-cloud-upload me-2"></i>Digitalizar
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% if documento.estado == 'digitalizado' %}
+                                <li>
+                                    <a class="dropdown-item text-zinc-300" href="{% url 'digitalizacion:verificar_documento' documento.pk %}">
+                                        <i class="bi bi-check-circle me-2"></i>Verificar
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider border-zinc-700"></li>
+                                <li>
+                                    <button class="dropdown-item text-zinc-300" onclick="copyToClipboard('{{ request.build_absolute_uri }}')">
+                                        <i class="bi bi-share me-2"></i>Compartir
+                                    </button>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="{% url 'digitalizacion:eliminar_documento' documento.pk %}">
+                                        <i class="bi bi-trash me-2"></i>Eliminar
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress bar -->
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-zinc-400">Progreso del expediente</small>
+                    <small class="text-zinc-400">
+                        {% if documento.estado == 'verificado' %}100{% elif documento.estado == 'digitalizado' %}75{% elif documento.estado == 'en_proceso' %}50{% else %}25{% endif %}% completado
+                    </small>
+                </div>
+                <div class="progress" style="height: 8px;">
+                    <div id="documentProgress" class="progress-bar bg-emerald-600" style="width: 0%"></div>
+                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const estado = '{{ documento.estado|default:"pendiente" }}';
+                        const progressBar = document.getElementById('documentProgress');
+                        let width = 25; // Default for 'pendiente'
+                        
+                        switch(estado) {
+                            case 'verificado':
+                                width = 100;
+                                break;
+                            case 'digitalizado':
+                                width = 75;
+                                break;
+                            case 'en_proceso':
+                                width = 50;
+                                break;
+                        }
+                        
+                        if (progressBar) {
+                            progressBar.style.width = width + '%';
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+
+        <!-- Tabs de contenido -->
+        <ul class="nav nav-tabs bg-zinc-900 border-zinc-800 mb-4" id="expedienteTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active bg-transparent text-zinc-300" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                    <i class="bi bi-info-circle me-2"></i>Información
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link bg-transparent text-zinc-300" id="documentos-tab" data-bs-toggle="tab" data-bs-target="#documentos" type="button" role="tab">
+                    <i class="bi bi-files me-2"></i>Documentos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link bg-transparent text-zinc-300" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab">
+                    <i class="bi bi-clock-history me-2"></i>Historial
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las tabs -->
+        <div class="tab-content" id="expedienteTabsContent">
+            <!-- Tab de Información -->
+            <div class="tab-pane fade show active" id="info" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card bg-zinc-900 border-zinc-800">
+                            <div class="card-header border-zinc-800">
+                                <h5 class="card-title text-zinc-100 mb-0">Detalles del Expediente</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Número de Documento</label>
+                                        <p class="text-zinc-100 fw-medium">{{ documento.numero_documento }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Fecha del Documento</label>
+                                        <p class="text-zinc-100">{{ documento.fecha_documento|date:"d/m/Y" }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Tipo de Documento</label>
+                                        <p class="text-zinc-100">{{ documento.tipo_documento.nombre }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Departamento</label>
+                                        <p class="text-zinc-100">{{ documento.departamento.nombre }}</p>
+                                    </div>
+                                    {% if documento.fecha_vencimiento %}
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Fecha de Vencimiento</label>
+                                        <p class="text-zinc-100">{{ documento.fecha_vencimiento|date:"d/m/Y" }}</p>
+                                    </div>
+                                    {% endif %}
+                                    <div class="col-md-6">
+                                        <label class="form-label text-zinc-400">Confidencial</label>
+                                        <p class="text-zinc-100">
+                                            {% if documento.confidencial %}
+                                                <i class="bi bi-shield-check text-warning me-1"></i>Sí
+                                            {% else %}
+                                                <i class="bi bi-shield text-zinc-400 me-1"></i>No
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                {% if documento.descripcion %}
+                                <div class="mt-4">
+                                    <label class="form-label text-zinc-400">Descripción</label>
+                                    <p class="text-zinc-100">{{ documento.descripcion }}</p>
+                                </div>
+                                {% endif %}
+                                
+                                {% if documento.palabras_clave %}
+                                <div class="mt-4">
+                                    <label class="form-label text-zinc-400">Palabras Clave</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        {% for palabra in documento.get_palabras_clave_list %}
+                                        <span class="badge bg-zinc-800 text-zinc-300">{{ palabra }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                {% if documento.observaciones %}
+                                <div class="mt-4">
+                                    <label class="form-label text-zinc-400">Observaciones</label>
+                                    <p class="text-zinc-100">{{ documento.observaciones }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <!-- Información de seguimiento -->
+                        <div class="card bg-zinc-900 border-zinc-800 mb-4">
+                            <div class="card-header border-zinc-800">
+                                <h5 class="card-title text-zinc-100 mb-0">Seguimiento</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Creado por:</span>
+                                    <span class="text-zinc-100">{{ documento.creado_por.get_full_name|default:documento.creado_por.username }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Fecha de creación:</span>
+                                    <span class="text-zinc-100">{{ documento.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                                </div>
+                                {% if documento.digitalizado_por %}
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Digitalizado por:</span>
+                                    <span class="text-zinc-100">{{ documento.digitalizado_por.get_full_name|default:documento.digitalizado_por.username }}</span>
+                                </div>
+                                {% endif %}
+                                {% if documento.fecha_digitalizacion %}
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Fecha digitalización:</span>
+                                    <span class="text-zinc-100">{{ documento.fecha_digitalizacion|date:"d/m/Y H:i" }}</span>
+                                </div>
+                                {% endif %}
+                                {% if documento.verificado_por %}
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Verificado por:</span>
+                                    <span class="text-zinc-100">{{ documento.verificado_por.get_full_name|default:documento.verificado_por.username }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Archivo digital -->
+                        {% if documento.archivo_digital %}
+                        <div class="card bg-zinc-900 border-zinc-800">
+                            <div class="card-header border-zinc-800">
+                                <h5 class="card-title text-zinc-100 mb-0">Archivo Digital</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Archivo:</span>
+                                    <span class="text-zinc-100">{{ documento.archivo_digital.name|slice:"15:" }}</span>
+                                </div>
+                                {% if documento.tamaño_archivo %}
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="text-zinc-400">Tamaño:</span>
+                                    <span class="text-zinc-100">{{ documento.tamaño_archivo_formateado }}</span>
+                                </div>
+                                {% endif %}
+                                <a href="{{ documento.archivo_digital.url }}" class="btn btn-emerald-600 w-100" target="_blank">
+                                    <i class="bi bi-download me-2"></i>Descargar
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab de Documentos -->
+            <div class="tab-pane fade" id="documentos" role="tabpanel">
+                <div class="card bg-zinc-900 border-zinc-800">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0">Gestión de Documentos por Etapas</h5>
+                        <small class="text-zinc-400">Aquí se implementarían las 17 etapas del proceso</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-5">
+                            <i class="bi bi-folder-plus text-zinc-600" style="font-size: 3rem;"></i>
+                            <h5 class="text-zinc-400 mt-3">Gestión de Etapas</h5>
+                            <p class="text-zinc-500 mb-4">Esta funcionalidad se implementará en la siguiente versión del sistema</p>
+                            <div class="alert alert-info bg-zinc-800 border-zinc-700 text-zinc-300">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Las 17 etapas incluyen: INICIO, SOLICITUD DEL ÁREA, COTIZACIÓN, REQUISICIÓN SIMA, 
+                                SUFICIENCIA PRESUPUESTAL, Aprobaciones, Notificación a compras, Valoración por tipo, 
+                                Adjudicación, Formalización, Contrato, Recepciones, Generación de evidencia, 
+                                Envío a compras y Pago.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab de Historial -->
+            <div class="tab-pane fade" id="historial" role="tabpanel">
+                <div class="card bg-zinc-900 border-zinc-800">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0">Historial de Cambios</h5>
+                        <small class="text-zinc-400">Registro de todas las actividades del expediente</small>
+                    </div>
+                    <div class="card-body">
+                        {% if historial %}
+                        <div class="timeline">
+                            {% for registro in historial %}
+                            <div class="d-flex align-items-start mb-4">
+                                <div class="flex-shrink-0 me-3">
+                                    <div class="rounded-circle bg-emerald-600 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi bi-person text-white"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="text-zinc-100 mb-1">{{ registro.accion }}</h6>
+                                            <p class="text-zinc-300 mb-1">{{ registro.descripcion }}</p>
+                                            <small class="text-zinc-400">
+                                                por {{ registro.usuario.get_full_name|default:registro.usuario.username }}
+                                                {% if registro.estado_anterior and registro.estado_nuevo %}
+                                                • {{ registro.estado_anterior }} → {{ registro.estado_nuevo }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                        <small class="text-zinc-500">{{ registro.fecha|timesince }} atrás</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-clock-history text-zinc-600" style="font-size: 2rem;"></i>
+                            <p class="text-zinc-400 mt-2">Sin historial de cambios</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Safe modal handling to prevent backdrop errors
+function safeModalOperation(modalId, operation) {
+    try {
+        const modalElement = document.getElementById(modalId);
+        if (!modalElement) {
+            console.warn(`Modal with ID '${modalId}' not found`);
+            return null;
+        }
+        
+        const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+        
+        if (typeof modal[operation] === 'function') {
+            return modal[operation]();
+        }
+        
+        console.warn(`Modal operation '${operation}' is not a function`);
+        return null;
+    } catch (error) {
+        console.error('Error in modal operation:', error);
+        return null;
+    }
+}
+
+// Safe modal show/hide handlers
+document.addEventListener('show.bs.modal', function(event) {
+    try {
+        // Ensure backdrop is properly handled
+        const modal = event.target;
+        if (modal) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            document.body.appendChild(backdrop);
+            document.body.classList.add('modal-open');
+        }
+    } catch (error) {
+        console.error('Error in show.bs.modal handler:', error);
+    }
+});
+
+document.addEventListener('hidden.bs.modal', function(event) {
+    try {
+        // Clean up backdrop
+        const backdrops = document.getElementsByClassName('modal-backdrop');
+        while(backdrops[0]) {
+            backdrops[0].parentNode.removeChild(backdrops[0]);
+        }
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    } catch (error) {
+        console.error('Error in hidden.bs.modal handler:', error);
+    }
+});
+// Función para copiar al portapapeles
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Mostrar notificación de éxito
+        DashboardJS.showAlert('Enlace copiado al portapapeles', 'success');
+    }).catch(function() {
+        DashboardJS.showAlert('No se pudo copiar el enlace', 'error');
+    });
+}
+
+// Activar tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Animaciones de entrada para las cards
+    const cards = document.querySelectorAll('.card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.classList.add('fade-in');
+    });
+});
+</script>
+{% endblock %}

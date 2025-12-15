@@ -1,0 +1,513 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Solicitudes de Registro - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-zinc-100 fw-bold mb-1">Solicitudes de Registro</h1>
+                    <p class="text-zinc-400 mb-0">Gestiona las solicitudes de nuevos usuarios del sistema</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'digitalizacion:dashboard' %}" class="btn btn-outline-emerald-600">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-warning me-3">
+                            <i class="bi bi-clock text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-zinc-100 fw-bold mb-0">{{ solicitudes_pendientes.count }}</h4>
+                            <small class="text-zinc-400">Pendientes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-success me-3">
+                            <i class="bi bi-check-circle text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-zinc-100 fw-bold mb-0">{{ solicitudes_aprobadas.count }}</h4>
+                            <small class="text-zinc-400">Aprobadas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-danger me-3">
+                            <i class="bi bi-x-circle text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-zinc-100 fw-bold mb-0">{{ solicitudes_rechazadas.count }}</h4>
+                            <small class="text-zinc-400">Rechazadas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon bg-info me-3">
+                            <i class="bi bi-people text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-zinc-100 fw-bold mb-0">{{ total_solicitudes }}</h4>
+                            <small class="text-zinc-400">Total</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Solicitudes Pendientes -->
+    <div class="card bg-zinc-900 border-zinc-800">
+        <div class="card-header bg-zinc-800 border-zinc-700">
+            <h5 class="text-zinc-100 mb-0">
+                <i class="bi bi-clock-history me-2"></i>Solicitudes Pendientes de Revisión
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if solicitudes_pendientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th class="text-zinc-300">Solicitante</th>
+                                <th class="text-zinc-300">Email</th>
+                                <th class="text-zinc-300">Rol Solicitado</th>
+                                <th class="text-zinc-300">Puesto</th>
+                                <th class="text-zinc-300">Fecha Solicitud</th>
+                                <th class="text-zinc-300">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for solicitud in solicitudes_pendientes %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">
+                                            <i class="bi bi-person-circle text-emerald-400"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="text-zinc-100">{{ solicitud.nombres }} {{ solicitud.apellidos }}</strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-zinc-100">{{ solicitud.email_institucional }}</td>
+                                <td>
+                                    <span class="badge bg-info">{{ solicitud.rol_solicitado.nombre }}</span>
+                                </td>
+                                <td class="text-zinc-100">{{ solicitud.puesto|default:"No especificado" }}</td>
+                                <td class="text-zinc-400">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-success btn-sm" 
+                                                onclick="aprobarSolicitud({{ solicitud.id }})"
+                                                title="Aprobar solicitud">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-danger btn-sm" 
+                                                onclick="rechazarSolicitud({{ solicitud.id }})"
+                                                title="Rechazar solicitud">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-info btn-sm" 
+                                                onclick="verDetalles({{ solicitud.id }})"
+                                                title="Ver detalles">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-check-circle text-success fs-1 mb-3"></i>
+                    <h5 class="text-zinc-100 mb-2">¡Excelente!</h5>
+                    <p class="text-zinc-400 mb-0">No hay solicitudes pendientes de revisión</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial de Solicitudes -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h6 class="text-zinc-100 mb-0">
+                        <i class="bi bi-check-circle me-2"></i>Solicitudes Aprobadas Recientes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if solicitudes_aprobadas %}
+                        <div class="list-group list-group-flush">
+                            {% for solicitud in solicitudes_aprobadas|slice:":5" %}
+                            <div class="list-group-item bg-transparent border-zinc-700">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-zinc-100">{{ solicitud.nombres }} {{ solicitud.apellidos }}</strong>
+                                        <br>
+                                        <small class="text-zinc-400">{{ solicitud.rol_solicitado.nombre }}</small>
+                                    </div>
+                                    <small class="text-zinc-500">{{ solicitud.fecha_resolucion|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-zinc-400 text-center mb-0">No hay solicitudes aprobadas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h6 class="text-zinc-100 mb-0">
+                        <i class="bi bi-x-circle me-2"></i>Solicitudes Rechazadas Recientes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if solicitudes_rechazadas %}
+                        <div class="list-group list-group-flush">
+                            {% for solicitud in solicitudes_rechazadas|slice:":5" %}
+                            <div class="list-group-item bg-transparent border-zinc-700">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong class="text-zinc-100">{{ solicitud.nombres }} {{ solicitud.apellidos }}</strong>
+                                        <br>
+                                        <small class="text-zinc-400">{{ solicitud.rol_solicitado.nombre }}</small>
+                                    </div>
+                                    <small class="text-zinc-500">{{ solicitud.fecha_resolucion|date:"d/m/Y" }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-zinc-400 text-center mb-0">No hay solicitudes rechazadas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Aprobar Solicitud -->
+<div class="modal fade" id="aprobarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-zinc-900 border-zinc-700">
+            <div class="modal-header bg-zinc-800 border-zinc-700">
+                <h5 class="modal-title text-zinc-100">
+                    <i class="bi bi-check-circle text-success me-2"></i>Aprobar Solicitud
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-zinc-300">¿Estás seguro de que deseas aprobar esta solicitud de registro?</p>
+                <p class="text-zinc-400 small">Se creará una cuenta de usuario y se enviará una notificación al solicitante.</p>
+            </div>
+            <div class="modal-footer bg-zinc-800 border-zinc-700">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="confirmarAprobar" title="Confirmar aprobación">
+                    <i class="bi bi-check-lg me-2"></i>Aprobar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Rechazar Solicitud -->
+<div class="modal fade" id="rechazarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-zinc-900 border-zinc-700">
+            <div class="modal-header bg-zinc-800 border-zinc-700">
+                <h5 class="modal-title text-zinc-100">
+                    <i class="bi bi-x-circle text-danger me-2"></i>Rechazar Solicitud
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-zinc-300">¿Estás seguro de que deseas rechazar esta solicitud de registro?</p>
+                <div class="mb-3">
+                    <label for="motivoRechazo" class="form-label text-zinc-300">Motivo del rechazo:</label>
+                    <textarea class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                              id="motivoRechazo" rows="3" 
+                              placeholder="Especifica el motivo del rechazo..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer bg-zinc-800 border-zinc-700">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmarRechazar" title="Confirmar rechazo">
+                    <i class="bi bi-x-lg me-2"></i>Rechazar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let solicitudActual = null;
+
+function aprobarSolicitud(solicitudId) {
+    console.log('Aprobar solicitud:', solicitudId);
+    solicitudActual = solicitudId;
+    const modalElement = document.getElementById('aprobarModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    modal.show();
+}
+
+function rechazarSolicitud(solicitudId) {
+    console.log('Rechazar solicitud:', solicitudId);
+    solicitudActual = solicitudId;
+    const modalElement = document.getElementById('rechazarModal');
+    const modal = new bootstrap.Modal(modalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
+    modal.show();
+}
+
+function verDetalles(solicitudId) {
+    // Implementar vista de detalles
+    alert('Función de detalles en desarrollo');
+}
+
+// Esperar a que el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, configurando eventos...');
+    
+    // Función para obtener el token CSRF actualizado
+    function getCSRFToken() {
+        return document.getElementById('csrf-form').querySelector('[name=csrfmiddlewaretoken]').value;
+    }
+    
+    // Función para actualizar el token CSRF
+    function updateCSRFToken() {
+        fetch('/csrf-token/', {
+            method: 'GET',
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('csrf-form').querySelector('[name=csrfmiddlewaretoken]').value = data.csrfToken;
+        })
+        .catch(error => {
+            console.log('Error actualizando CSRF token:', error);
+        });
+    }
+    
+    // Obtener el token CSRF inicial
+    let csrfToken = getCSRFToken();
+    
+    // Actualizar el token CSRF cada 30 minutos
+    setInterval(updateCSRFToken, 30 * 60 * 1000);
+
+    // Evento para el botón de aprobar usando addEventListener
+    document.getElementById('confirmarAprobar').addEventListener('click', function(e) {
+        console.log('Botón aprobar clickeado');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (solicitudActual) {
+            console.log('Enviando solicitud de aprobación para:', solicitudActual);
+            
+            fetch("{% url 'digitalizacion:aprobar_solicitud' 0 %}".replace('0', solicitudActual), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken(),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Respuesta aprobar:', data);
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.log('Error aprobar:', error);
+                alert('Error al procesar la solicitud: ' + error);
+            });
+        } else {
+            console.log('No hay solicitud actual seleccionada');
+        }
+        
+        // Cerrar el modal
+        const modalElement = document.getElementById('aprobarModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    });
+    
+    // Evento para el botón de rechazar usando addEventListener
+    document.getElementById('confirmarRechazar').addEventListener('click', function(e) {
+        console.log('Botón rechazar clickeado');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const motivo = document.getElementById('motivoRechazo').value;
+        if (!motivo.trim()) {
+            alert('Por favor especifica un motivo para el rechazo');
+            return;
+        }
+        
+        if (solicitudActual) {
+            console.log('Enviando solicitud de rechazo para:', solicitudActual);
+            
+            const formData = new FormData();
+            formData.append('motivo', motivo);
+            
+            fetch("{% url 'digitalizacion:rechazar_solicitud' 0 %}".replace('0', solicitudActual), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Respuesta rechazar:', data);
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.log('Error rechazar:', error);
+                alert('Error al procesar la solicitud: ' + error);
+            });
+        }
+        
+        // Cerrar el modal
+        const modalElement = document.getElementById('rechazarModal');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    });
+    
+    // Limpiar el campo de motivo cuando se abre el modal de rechazo
+    document.getElementById('rechazarModal').addEventListener('show.bs.modal', function() {
+        document.getElementById('motivoRechazo').value = '';
+    });
+    
+    console.log('Eventos configurados correctamente');
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para modales de solicitudes */
+    .modal {
+        z-index: 9999999 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 9999998 !important;
+        pointer-events: none !important; /* Permitir clics a través del backdrop */
+    }
+    
+    .modal-dialog {
+        z-index: 9999999 !important;
+        pointer-events: auto !important;
+    }
+    
+    .modal-content {
+        z-index: 9999999 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+    
+    .modal-footer {
+        z-index: 9999999 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+    }
+    
+    .modal-footer .btn {
+        z-index: 10000000 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+    
+    /* Asegurar que los botones del modal sean interactivos */
+    #confirmarAprobar,
+    #confirmarRechazar {
+        z-index: 10000000 !important;
+        position: relative !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        user-select: none !important;
+    }
+    
+    /* Forzar que el modal esté por encima de todo */
+    .modal.show {
+        display: block !important;
+        z-index: 9999999 !important;
+        pointer-events: auto !important;
+    }
+    
+    .modal.show .modal-dialog {
+        z-index: 9999999 !important;
+        pointer-events: auto !important;
+    }
+    
+    /* Asegurar que el contenido del modal sea interactivo */
+    .modal-body,
+    .modal-header {
+        pointer-events: auto !important;
+    }
+    
+    /* Estilos adicionales para botones */
+    .btn {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+    }
+</style>
+{% endblock %}

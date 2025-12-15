@@ -1,0 +1,277 @@
+/* Estilos para la página de Reportes */
+
+.stats-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.chart-container canvas {
+    background: #1f2937;
+    border-radius: 6px;
+}
+
+/* Mejorar visibilidad de los gráficos */
+.chart-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(59, 130, 246, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+/* Indicadores de estado */
+.text-yellow-400 {
+    color: #fbbf24 !important;
+}
+
+.text-green-400 {
+    color: #4ade80 !important;
+}
+
+.text-red-400 {
+    color: #f87171 !important;
+}
+
+.filters-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.export-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+    transform: translateY(-1px);
+}
+
+.period-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.period-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: -webkit-fill-available;
+}
+
+.period-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+}
+
+.period-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.period-btn:not(.active):hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary);
+}
+
+/* Estilos específicos para tema claro */
+[data-theme="light"] .stats-card {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .stats-number {
+    color: #667eea;
+}
+
+[data-theme="light"] .stats-label {
+    color: #6c757d;
+}
+
+[data-theme="light"] .filters-section {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .period-btn {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+    color: #495057;
+}
+
+[data-theme="light"] .period-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+[data-theme="light"] .period-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .stats-number {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .period-selector {
+        flex-wrap: wrap;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Estilos para las tablas de reportes */
+.table-dark {
+    background-color: #1f2937;
+    color: #f4f4f5;
+}
+
+.table-dark thead th {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #f9fafb;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+}
+
+.table-dark tbody tr {
+    border-color: #4b5563;
+}
+
+.table-dark tbody tr:hover {
+    background-color: #374151;
+    color: #f9fafb;
+}
+
+.table-dark td {
+    border-color: #4b5563;
+    vertical-align: middle;
+}
+
+/* Indicadores de tendencia */
+.text-success {
+    color: #10b981 !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.text-warning {
+    color: #f59e0b !important;
+}
+
+.text-info {
+    color: #06b6d4 !important;
+}
+
+.text-muted {
+    color: #9ca3af !important;
+}
+
+.fw-bold {
+    font-weight: 700 !important;
+}
+
+/* Responsive para tablas */
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Botones de exportación */
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.export-btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mensaje cuando no hay datos */
+.text-muted {
+    color: #9ca3af !important;
+    font-style: italic;
+}

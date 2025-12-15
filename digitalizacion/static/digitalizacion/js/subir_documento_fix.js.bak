@@ -1,0 +1,144 @@
+// Función para subir un documento
+async function subirDocumento(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const uploadSpinner = document.getElementById('uploadSpinner');
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+    
+    try {
+        // Mostrar indicador de carga
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Subiendo...';
+        }
+        
+        if (uploadSpinner) {
+            uploadSpinner.classList.remove('d-none');
+        }
+        
+        // Deshabilitar actualización automática temporalmente
+        if (window.ProgressManager && window.ProgressManager.deshabilitarActualizacionAutomatica) {
+            window.ProgressManager.deshabilitarActualizacionAutomatica(10); // 10 segundos
+        }
+        
+        // Obtener el ID del área del formulario
+        const areaId = form.querySelector('input[name="area_id"]')?.value;
+        
+        // Realizar la petición de subida
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]')?.value || ''
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        console.log('Respuesta del servidor:', data);
+        
+        if (response.ok) {
+            showAlert('✅ Documento subido correctamente', 'success');
+            
+            // Actualizar la barra de progreso con los datos del servidor
+            if (data.progreso !== undefined) {
+                await actualizarProgresoDesdeData(data);
+            }
+            
+            // Cerrar el modal y restaurar el botón
+            const modal = bootstrap.Modal.getInstance(document.getElementById('subirDocumentoModal'));
+            if (modal) modal.hide();
+            
+            // Recargar los documentos del área después de un pequeño retraso
+            if (areaId) {
+                const areaElement = document.querySelector(`[data-area-id="${areaId}"]`);
+                if (areaElement) {
+                    const areaNombre = areaElement.textContent.trim();
+                    // Pequeño retraso para asegurar que el modal se cierre primero
+                    setTimeout(() => {
+                        cargarDocumentosArea(areaId, areaNombre);
+                        // Forzar una actualización manual después de cargar los documentos
+                        if (window.ProgressManager && window.ProgressManager.forzarActualizacionProgreso) {
+                            setTimeout(window.ProgressManager.forzarActualizacionProgreso, 1000);
+                        }
+                    }, 1000);
+                }
+            }
+        } else {
+            const errorMsg = data.error || data.message || 'Error al subir el documento';
+            showAlert(errorMsg, 'danger');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error al subir el documento. Intente nuevamente.', 'danger');
+    } finally {
+        // Restaurar el estado del botón
+        restoreButtonState();
+        
+        // Limpiar el formulario
+        if (form) form.reset();
+    }
+}
+
+// Función auxiliar para actualizar el progreso desde los datos del servidor
+async function actualizarProgresoDesdeData(data) {
+    const barraProgreso = document.getElementById('barra-progreso');
+    const porcentajeProgreso = document.getElementById('porcentaje-progreso');
+    const textoProgreso = document.getElementById('texto-progreso');
+    
+    // Actualizar la barra de progreso
+    if (barraProgreso) {
+        const progreso = Math.min(100, Math.max(0, data.progreso || 0));
+        barraProgreso.style.width = `${progreso}%`;
+        barraProgreso.setAttribute('aria-valuenow', progreso);
+        barraProgreso.setAttribute('data-progress', progreso);
+        
+        // Actualizar clases de color según el progreso
+        barraProgreso.classList.remove('bg-success', 'bg-primary', 'bg-warning');
+        if (progreso >= 100) {
+            barraProgreso.classList.add('bg-success');
+        } else if (progreso >= 50) {
+            barraProgreso.classList.add('bg-primary');
+        } else {
+            barraProgreso.classList.add('bg-warning');
+        }
+        
+        // Actualizar tooltip si existe
+        if (barraProgreso._tooltip) {
+            const completadas = data.etapas_completadas || 0;
+            const total = data.total_etapas || 1;
+            barraProgreso._tooltip._config.title = `${completadas} de ${total} áreas completadas (${progreso}%)`;
+            barraProgreso._tooltip.update();
+        }
+    }
+    
+    // Actualizar el porcentaje
+    if (porcentajeProgreso) {
+        porcentajeProgreso.textContent = `${data.progreso}%`;
+    }
+    
+    // Actualizar el texto de progreso detallado
+    if (textoProgreso) {
+        const completadas = data.etapas_completadas || 0;
+        const total = data.total_etapas || 1;
+        textoProgreso.textContent = `${completadas} de ${total} áreas completadas`;
+    }
+}
+
+// Función para restaurar el estado del botón
+function restoreButtonState() {
+    const submitBtn = document.querySelector('#subirDocumentoForm button[type="submit"]');
+    const uploadSpinner = document.getElementById('uploadSpinner');
+    
+    if (uploadSpinner) {
+        uploadSpinner.classList.add('d-none');
+    }
+    
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-upload me-2"></i>Subir Documento';
+    }
+}

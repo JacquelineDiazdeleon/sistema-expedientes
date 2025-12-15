@@ -1,0 +1,209 @@
+﻿radient;
+                        },
+                        borderWidth: 0,
+                        hoverBackgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            // Solid dark blue hover color
+                            gradient.addColorStop(0, '#1e3a8a');
+                            gradient.addColorStop(1, '#172554');
+                            
+                            return gradient;
+                        },
+                        hoverBorderWidth: 0,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8
+                    },
+                    line: {
+                        tension: 0.35,
+                        borderWidth: 2,
+                        borderColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            
+                            const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                            // Solid dark blue line color
+                            gradient.addColorStop(0, '#1e40af');
+                            gradient.addColorStop(1, '#1e3a8a');
+                            
+                            return gradient;
+                        },
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            // Darker blue background for better contrast
+                            gradient.addColorStop(0, isDark ? 'rgba(30, 58, 138, 0.2)' : 'rgba(30, 58, 138, 0.2)');
+                            gradient.addColorStop(0.8, 'rgba(30, 58, 138, 0.05)');
+                            
+                            return gradient;
+                        },
+                        fill: 'start',
+                        pointBackgroundColor: colors.accent,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointHoverBackgroundColor: colors.accent,
+                        pointHoverBorderColor: '#ffffff',
+                        pointHoverBorderWidth: 2,
+                        pointHitRadius: 10,
+                        pointHoverBorderJoinStyle: 'round',
+                        pointStyle: 'circle'
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart',
+                    y: {
+                        type: 'number',
+                        easing: 'easeOutQuart',
+                        from: (ctx) => {
+                            if (ctx.type === 'data') {
+                                return ctx.chart.scales.y.getPixelForValue(0);
+                            }
+                            return 0;
+                        }
+                    },
+                    x: {
+                        type: 'number',
+                        easing: 'easeOutQuart',
+                        from: (ctx) => {
+                            if (ctx.type === 'data') {
+                                return ctx.chart.scales.x.getPixelForValue(0);
+                            }
+                            return 0;
+                        }
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 8,
+                        right: 16,
+                        left: 8,
+                        bottom: 8
+                    }
+                },
+                // Add some spacing around the chart
+                spacing: 8,
+                // Better interaction settings
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest',
+                    axis: 'x'
+                },
+                // Better legend interaction
+                onHover: (event, chartElement) => {
+                    event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                }
+            };
+        }
+        
+        
+        // Initialize the monthly expedientes chart with modern styling
+        function initMonthlyExpedientesChart() {
+            const ctx = document.getElementById('monthlyExpedientesChart').getContext('2d');
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            monthlyExpedientesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Expedientes',
+                        data: [],
+                        borderWidth: 0,
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8,
+                        // The actual colors will be set by the chart options
+                    }]
+                },
+                options: getChartOptions('monthly')
+            });
+            
+            // Load initial data
+            loadMonthlyExpedientesData();
+            
+            // Add responsive behavior
+            window.addEventListener('resize', function() {
+                if (monthlyExpedientesChart) {
+                    monthlyExpedientesChart.resize();
+                }
+            });
+        }
+        
+        
+        // Load monthly expedientes data
+        function loadMonthlyExpedientesData() {
+            fetch('/api/estadisticas/expedientes-mensuales/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && monthlyExpedientesChart) {
+                        monthlyExpedientesChart.data.labels = data.labels;
+                        monthlyExpedientesChart.data.datasets[0].data = data.data;
+                        monthlyExpedientesChart.update();
+                        
+                        // Show date range
+                        const dateRange = document.createElement('div');
+                        dateRange.className = 'date-range text-xs text-gray-500 text-right mt-1';
+                        dateRange.textContent = `${data.start_date} al ${data.end_date}`;
+                        
+                        const container = document.getElementById('monthlyExpedientesChart').parentNode;
+                        const existingRange = container.querySelector('.date-range');
+                        if (existingRange) {
+                            container.removeChild(existingRange);
+                        }
+                        container.appendChild(dateRange);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading monthly expedientes data:', error);
+                    showChartError('monthlyExpedientesChart', 'Error al cargar los datos mensuales');
+                });
+        }
+        
+        // Show error message in chart container
+        function showChartError(chartId, message) {
+            const chartContainer = document.getElementById(chartId);
+            if (chartContainer) {
+                chartContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <svg class="w-10 h-10 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <p class="text-red-500">${message}</p>
+                        <button onclick="location.reload()" class="mt-2 px-3 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors">
+                            Reintentar
+                        </button>
+                    </div>`;
+            }
+        }
+        
+        // Refresh weekly chart
+        function refreshWeeklyChart() {
+            const btn = document.getElementById('refreshWeeklyBtn');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>`;
+                
+                loadWeeklyExpedientesData();
+                
+                // Re-enable button after animation
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                        </svg>`;
+                },

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Digitalización - Secretaría de Servicios Públicos{% endblock %}>
+    <meta name="description" content="{% block description %}Sistema moderno de gestión de expedientes digitales de la Secretaría de Servicios Públicos{% endblock %}">
+    
+    <!-- Fuentes modernas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- CSS personalizado moderno -->
+    <link rel="stylesheet" href="{% load static %}{% static 'css/modern-design.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Sidebar moderno -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="{% url 'digitalizacion:dashboard' %}" class="logo">
+                    <div class="logo-icon">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <span>Sistema Digital</span>
+                </a>
+                <button class="collapse-btn" id="sidebarToggle" title="Colapsar sidebar">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-content">
+                <!-- Botón nuevo expediente destacado -->
+                <a href="{% url 'expedientes:seleccionar_tipo' %}" class="new-expediente-btn">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Nuevo Expediente</span>
+                </a>
+                
+                <!-- Menú de navegación -->
+                <nav class="nav-menu">
+                    <div class="nav-item">
+                        <a href="{% url 'digitalizacion:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="bi bi-house nav-icon"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="{% url 'expedientes:lista' %}" class="nav-link {% if 'expedientes' in request.resolver_match.namespace %}active{% endif %}">
+                            <i class="bi bi-folder nav-icon"></i>
+                            <span>Expedientes</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="{% url 'digitalizacion:tipos_documento' %}" class="nav-link">
+                            <i class="bi bi-tags nav-icon"></i>
+                            <span>Tipos de Documento</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="{% url 'digitalizacion:departamentos' %}" class="nav-link">
+                            <i class="bi bi-building nav-icon"></i>
+                            <span>Departamentos</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="{% url 'digitalizacion:buscar_documentos' %}" class="nav-link">
+                            <i class="bi bi-search nav-icon"></i>
+                            <span>Buscar</span>
+                        </a>
+                    </div>
+                    
+                    <div class="nav-item">
+                        <a href="{% url 'digitalizacion:reportes' %}" class="nav-link">
+                            <i class="bi bi-bar-chart nav-icon"></i>
+                            <span>Reportes</span>
+                        </a>
+                    </div>
+                    
+                    {% if user.is_staff %}
+                    <div class="nav-item">
+                        <a href="{% url 'admin:index' %}" class="nav-link">
+                            <i class="bi bi-shield-check nav-icon"></i>
+                            <span>Administración</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </nav>
+            </div>
+        </aside>
+
+        <!-- Contenido principal -->
+        <main class="main-content" id="mainContent">
+            <!-- Header principal -->
+            <header class="main-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p>{% block page_subtitle %}Gestiona tus expedientes de manera eficiente y moderna{% endblock %}</p>
+                    </div>
+                    
+                    <div class="header-right">
+                        <!-- Toggle de tema -->
+                        <button class="theme-toggle" id="themeToggle" title="Cambiar tema">
+                            <i class="bi bi-moon"></i>
+                        </button>
+                        
+                        {% if user.is_authenticated %}
+                        <!-- Notificaciones -->
+                        <button class="notification-btn" id="notificationBtn" title="Notificaciones">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        
+                        <!-- Perfil de usuario -->
+                        <div class="user-profile" id="userProfile">
+                            <div class="user-avatar">
+                                {% if user.foto_perfil %}
+                                    <img src="{{ user.foto_perfil.url }}" alt="Foto de perfil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                                {% else %}
+                                    {{ user.get_full_name|default:user.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="user-role">
+                                    {% if user.is_staff %}Administrador{% else %}Usuario{% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <!-- Botones de autenticación -->
+                        <div class="d-flex align-items-center gap-3">
+                            <a href="{% url 'digitalizacion:login' %}" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                            </a>
+                            <a href="{% url 'digitalizacion:register' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-person-plus me-2"></i>Registrarse
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mensajes del sistema -->
+            {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                    {% if message.tags == 'error' %}
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                    {% elif message.tags == 'success' %}
+                        <i class="bi bi-check-circle me-2"></i>
+                    {% elif message.tags == 'warning' %}
+                        <i class="bi bi-exclamation-circle me-2"></i>
+                    {% else %}
+                        <i class="bi bi-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Contenido de la página -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Panel de notificaciones -->
+    {% if user.is_authenticated %}
+    <div class="notification-panel" id="notificationPanel">
+        <div class="notification-panel-header">
+            <h6 class="notification-panel-title">
+                <i class="bi bi-bell-fill me-2"></i>Notificaciones
+            </h6>
+            <button class="notification-panel-close" id="closeNotifications">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div id="notificationList" class="notification-list">
+            <div class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <div class="text-muted mt-2">Cargando notificaciones...</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Dropdown de usuario -->
+    {% if user.is_authenticated %}
+    <div class="user-dropdown" id="userDropdown">
+        <div class="user-dropdown-header">
+            <div class="user-avatar">
+                {% if user.foto_perfil %}
+                    <img src="{{ user.foto_perfil.url }}" alt="Foto de perfil" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                    {{ user.get_full_name|default:user.username|first|upper }}
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                <div class="user-role">{{ user.email }}</div>
+            </div>
+        </div>
+        
+        <a href="{% url 'digitalizacion:profile' %}" class="user-dropdown-item">
+            <i class="bi bi-person me-2"></i>Mi Perfil
+        </a>
+        <a href="{% url 'digitalizacion:configuracion' %}" class="user-dropdown-item">
+            <i class="bi bi-gear me-2"></i>Configuración
+        </a>
+        
+        <div class="user-dropdown-divider"></div>
+        
+        <a href="{% url 'digitalizacion:logout' %}" class="user-dropdown-item text-danger">
+            <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- JavaScript personalizado moderno -->
+    <script src="{% load static %}{% static 'js/modern-dashboard.js' %}"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle del sidebar
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('collapsed');
+                
+                const icon = this.querySelector('i');
+                if (sidebar.classList.contains('collapsed')) {
+                    icon.className = 'bi bi-chevron-right';
+                } else {
+                    icon.className = 'bi bi-chevron-left';
+                }
+            });
+        }
+        
+        // Toggle del tema
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('bi-moon')) {
+                    icon.className = 'bi bi-sun';
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    icon.className = 'bi bi-moon';
+                    document.documentElement.removeAttribute('data-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+        }
+        
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            const icon = themeToggle?.querySelector('i');
+            if (icon) icon.className = 'bi bi-sun';
+        }
+        
+        // Dropdown de usuario
+        const userProfile = document.getElementById('userProfile');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        if (userProfile && userDropdown) {
+            userProfile.addEventListener('click', function() {
+                userDropdown.classList.toggle('show');
+            });
+            
+            // Cerrar al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!userProfile.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+        }
+        
+        // Panel de notificaciones
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationPanel = document.getElementById('notificationPanel');
+        const closeNotifications = document.getElementById('closeNotifications');
+        
+        if (notificationBtn && notificationPanel) {
+            notificationBtn.addEventListener('click', function() {
+                notificationPanel.classList.toggle('show');
+            });
+            
+            if (closeNotifications) {
+                closeNotifications.addEventListener('click', function() {
+                    notificationPanel.classList.remove('show');
+                });
+            }
+            
+            // Cerrar al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!notificationBtn.contains(e.target) && !notificationPanel.contains(e.target)) {
+                    notificationPanel.classList.remove('show');
+                }
+            });
+        }
+        
+        // Responsive sidebar
+        function handleResize() {
+            if (window.innerWidth <= 1024) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('collapsed');
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+        handleResize();
+    });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

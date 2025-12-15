@@ -1,0 +1,322 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}{{ documento.nombre_documento }} - Sistema de Digitalización{% endblock %}
+
+{% block extra_css %}
+<style>
+    .document-viewer-container {
+        background: #f8f9fa;
+        min-height: 80vh;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+    }
+    
+    .document-info {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .pdf-viewer-wrapper {
+        background: #525252;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .pdf-toolbar {
+        position: sticky;
+        top: 0;
+        background: #2b2b2b;
+        padding: 10px;
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+    }
+    
+    .pdf-canvas-container {
+        padding: 20px;
+        text-align: center;
+        background: #525252;
+        min-height: 600px;
+    }
+    
+    .image-viewer {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+    }
+    
+    .image-viewer img {
+        max-width: 100%;
+        max-height: 80vh;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        cursor: zoom-in;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Información del documento -->
+            <div class="document-info">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2>
+                        <i class="bi bi-file-earmark-text me-2"></i>
+                        {{ documento.nombre_documento }}
+                    </h2>
+                    <div>
+                        <a href="{% url 'digitalizacion:descargar_documento' documento.id %}" class="btn btn-primary">
+                            <i class="bi bi-cloud-arrow-down me-2"></i>Descargar
+                        </a>
+                        <a href="{% url 'digitalizacion:buscar_documentos' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Volver
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Expediente:</strong> 
+                            {% if documento.expediente %}
+                                <a href="{% url 'expedientes:detalle' documento.expediente.id %}">
+                                    {{ documento.expediente.numero_expediente }}
+                                </a>
+                            {% else %}
+                                Sin expediente
+                            {% endif %}
+                        </p>
+                        <p><strong>Área:</strong> {{ documento.area.titulo|default:"Sin área" }}</p>
+                        <p><strong>Subido por:</strong> {{ documento.subido_por.get_full_name|default:documento.subido_por.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Fecha de subida:</strong> {{ documento.fecha_subida|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Tamaño:</strong> {{ documento.tamano_archivo_formateado|default:"N/A" }}</p>
+                        <p><strong>Tipo de archivo:</strong> {{ documento.tipo_archivo|default:"N/A" }}</p>
+                    </div>
+                </div>
+                
+                {% if documento.descripcion %}
+                <div class="mt-3">
+                    <strong>Descripción:</strong>
+                    <p class="text-muted">{{ documento.descripcion }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Visor del documento -->
+            <div class="document-viewer-container">
+                {% with extension=documento.archivo.name|slice:"-4:"|lower %}
+                    {% if extension == '.pdf' %}
+                        <!-- Visor de PDF con PDF.js -->
+                        <div class="pdf-viewer-wrapper">
+                            <div class="pdf-toolbar">
+                                <div>
+                                    <button id="pdf-prev" class="btn btn-sm btn-light me-2">
+                                        <i class="bi bi-chevron-left"></i> Anterior
+                                    </button>
+                                    <span id="pdf-page-info" style="margin: 0 15px; color: white;">Página 1 de 1</span>
+                                    <button id="pdf-next" class="btn btn-sm btn-light">
+                                        Siguiente <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <div>
+                                    <button id="pdf-zoom-out" class="btn btn-sm btn-light me-2">
+                                        <i class="bi bi-zoom-out"></i>
+                                    </button>
+                                    <span id="pdf-zoom-info" style="margin: 0 10px; color: white;">100%</span>
+                                    <button id="pdf-zoom-in" class="btn btn-sm btn-light">
+                                        <i class="bi bi-zoom-in"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="pdf-canvas-container">
+                                <canvas id="pdf-canvas" style="display: block; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></canvas>
+                                <div id="pdf-loading" style="text-align: center; padding: 50px; color: white;">
+                                    <div class="spinner-border text-light" role="status">
+                                        <span class="visually-hidden">Cargando PDF...</span>
+                                    </div>
+                                    <p class="mt-3">Cargando documento PDF...</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% elif extension == '.jpg' or extension == '.jpeg' or extension == '.png' or extension == '.gif' or extension == '.bmp' or extension == '.webp' or extension == '.svg' %}
+                        <!-- Visor de imágenes -->
+                        <div class="image-viewer">
+                            <img src="{{ documento.archivo.url }}" 
+                                 alt="{{ documento.nombre_documento }}"
+                                 onclick="this.style.transform = this.style.transform === 'scale(1.5)' ? 'scale(1)' : 'scale(1.5)'; this.style.transition = 'transform 0.3s';">
+                        </div>
+                    {% elif extension == '.docx' or extension == '.doc' %}
+                        <!-- Visor de Word -->
+                        <div style="width: 100%; height: 80vh;">
+                            <iframe src="https://docs.google.com/viewer?url={{ request.scheme }}://{{ request.get_host }}{{ documento.archivo.url }}&embedded=true" 
+                                    style="width: 100%; height: 100%; border: none;" 
+                                    frameborder="0"></iframe>
+                        </div>
+                    {% elif extension == '.xlsx' or extension == '.xls' %}
+                        <!-- Visor de Excel -->
+                        <div class="d-flex justify-content-center align-items-center p-5" style="height: 80vh;">
+                            <div class="text-center">
+                                <i class="bi bi-file-excel" style="font-size: 4rem; color: #217346;"></i>
+                                <p class="mt-3">Para ver este documento de Excel, puedes descargarlo o abrirlo con Google Sheets.</p>
+                                <a href="https://docs.google.com/spreadsheets/d/1/edit?usp=sharing&url={{ request.scheme }}://{{ request.get_host }}{{ documento.archivo.url }}" 
+                                   target="_blank" class="btn btn-primary mt-2">
+                                    <i class="bi bi-box-arrow-up-right me-2"></i>Abrir con Google Sheets Viewer
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <!-- Otros tipos de archivo -->
+                        <div class="d-flex justify-content-center align-items-center p-5" style="height: 80vh;">
+                            <div class="text-center">
+                                <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
+                                <p class="mt-3">Este tipo de archivo no se puede visualizar directamente.</p>
+                                <p class="text-muted">Por favor, descarga el archivo para verlo.</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
+            
+            <!-- Historial del documento -->
+            {% if historial %}
+            <div class="document-info mt-4">
+                <h4><i class="bi bi-clock-history me-2"></i>Historial</h4>
+                <div class="list-group">
+                    {% for registro in historial %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ registro.accion }}</h6>
+                            <small>{{ registro.fecha|date:"d/m/Y H:i" }}</small>
+                        </div>
+                        <p class="mb-1">{{ registro.descripcion }}</p>
+                        <small>Por: {{ registro.usuario.get_full_name|default:registro.usuario.username }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- PDF.js para visualización de PDFs sin descargar -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    // Configurar el worker de PDF.js
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    
+    // Cargar y mostrar PDF si es un archivo PDF
+    {% with extension=documento.archivo.name|slice:"-4:"|lower %}
+    {% if extension == '.pdf' %}
+    (function() {
+        const pdfUrl = '{{ documento.archivo.url }}';
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let scale = 1.0;
+        
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(function(page) {
+                const viewport = page.getViewport({scale: scale});
+                const canvas = document.getElementById('pdf-canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+                
+                renderTask.promise.then(function() {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+            });
+            
+            document.getElementById('pdf-page-info').textContent = 'Página ' + num + ' de ' + pdfDoc.numPages;
+            const prevBtn = document.getElementById('pdf-prev');
+            const nextBtn = document.getElementById('pdf-next');
+            if (prevBtn) prevBtn.disabled = num <= 1;
+            if (nextBtn) nextBtn.disabled = num >= pdfDoc.numPages;
+        }
+        
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+        
+        function cambiarPagina(delta) {
+            const newPage = pageNum + delta;
+            if (newPage >= 1 && newPage <= pdfDoc.numPages) {
+                pageNum = newPage;
+                queueRenderPage(pageNum);
+            }
+        }
+        
+        function cambiarZoom(factor) {
+            scale *= factor;
+            if (scale < 0.5) scale = 0.5;
+            if (scale > 3.0) scale = 3.0;
+            const zoomInfo = document.getElementById('pdf-zoom-info');
+            if (zoomInfo) zoomInfo.textContent = Math.round(scale * 100) + '%';
+            queueRenderPage(pageNum);
+        }
+        
+        // Cargar el PDF
+        const loadingDiv = document.getElementById('pdf-loading');
+        
+        if (typeof pdfjsLib === 'undefined') {
+            loadingDiv.innerHTML = '<p style="color: #ff6b6b;">Error: PDF.js no está cargado. Recarga la página.</p>';
+            return;
+        }
+        
+        pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+            pdfDoc = pdf;
+            document.getElementById('pdf-page-info').textContent = 'Página 1 de ' + pdf.numPages;
+            renderPage(1);
+            loadingDiv.style.display = 'none';
+        }).catch(function(error) {
+            loadingDiv.innerHTML = '<p style="color: #ff6b6b;">Error al cargar el PDF: ' + error.message + '</p><p><a href="' + pdfUrl + '" target="_blank" style="color: #4CAF50;">Abrir en nueva pestaña</a></p>';
+        });
+        
+        // Configurar eventos de los botones
+        const prevBtn = document.getElementById('pdf-prev');
+        const nextBtn = document.getElementById('pdf-next');
+        const zoomOutBtn = document.getElementById('pdf-zoom-out');
+        const zoomInBtn = document.getElementById('pdf-zoom-in');
+        
+        if (prevBtn) prevBtn.addEventListener('click', function() { cambiarPagina(-1); });
+        if (nextBtn) nextBtn.addEventListener('click', function() { cambiarPagina(1); });
+        if (zoomOutBtn) zoomOutBtn.addEventListener('click', function() { cambiarZoom(0.8); });
+        if (zoomInBtn) zoomInBtn.addEventListener('click', function() { cambiarZoom(1.25); });
+    })();
+    {% endif %}
+    {% endwith %}
+</script>
+{% endblock %}
+

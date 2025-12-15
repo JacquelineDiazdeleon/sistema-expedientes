@@ -1,0 +1,448 @@
+All areas in the database:
+ID	Type		Subtype		Active	Title
+--------------------------------------------------------------------------------
+436	adjudicacion_directa	None	True	Solicitud de suficiencia presupuestal y autorización de compromiso de pago
+437	adjudicacion_directa	None	True	Solicitud y contestación de compromiso de pago
+438	adjudicacion_directa	None	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+439	adjudicacion_directa	None	True	Solicitud de avaluo en caso de ser renta de algún vehículo
+440	adjudicacion_directa	None	True	Solicitud de requisición del área
+441	adjudicacion_directa	None	True	Análisis costo beneficio
+442	adjudicacion_directa	None	True	Requisición
+443	adjudicacion_directa	None	True	Cotización
+444	adjudicacion_directa	None	True	3 o más cotizaciones
+445	adjudicacion_directa	None	True	Avalúo en caso de ser requerido
+446	adjudicacion_directa	None	True	En caso de ser vehículos: facturas, seguro, chofer responsable
+447	adjudicacion_directa	None	True	Invitación al comité de adquisiciones
+448	adjudicacion_directa	None	True	Solicitud y dictamen de la adjudicación
+449	adjudicacion_directa	None	True	Acta de sesión de comité
+450	adjudicacion_directa	None	True	Contrato
+451	adjudicacion_directa	None	True	Constancia de proveedor
+452	adjudicacion_directa	None	True	Constancia de situación fiscal
+453	adjudicacion_directa	None	True	Comprobante de domicilio fiscal
+454	adjudicacion_directa	None	True	Apertura de establecimiento (si aplica)
+455	adjudicacion_directa	None	True	Comprobante de domicilio de establecimiento comercial (si aplica)
+456	adjudicacion_directa	None	True	Opinión de cumplimiento de SAT positiva
+457	adjudicacion_directa	None	True	Opinión de cumplimiento de IMSS
+458	adjudicacion_directa	None	True	Opinión de cumplimiento de INFONAVIT
+459	adjudicacion_directa	None	True	Opinión de cumplimiento finanzas del estado
+460	adjudicacion_directa	None	True	Acta constitutiva (personas morales)
+461	adjudicacion_directa	None	True	Poder notarial (en caso de aplicar)
+462	adjudicacion_directa	None	True	Copia INE
+463	adjudicacion_directa	None	True	Carta de no sanción
+464	adjudicacion_directa	None	True	Carta de no cargo público
+465	adjudicacion_directa	None	True	Carta compromiso
+466	adjudicacion_directa	None	True	Currículum empresarial
+467	adjudicacion_directa	None	True	Solicitud de pago
+468	adjudicacion_directa	None	True	Factura, XML y validación
+469	adjudicacion_directa	None	True	Orden de compra
+470	adjudicacion_directa	None	True	Vale de entrada
+471	adjudicacion_directa	None	True	Acta de entrega con INE de proveedor y persona que recibe
+472	adjudicacion_directa	None	True	Acta de entrega de proveedor
+473	adjudicacion_directa	None	True	Oficio de conformidad y evidencia fotográfica
+474	adjudicacion_directa	None	True	Anexos de adjudicación
+427	compra_directa	None	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+428	compra_directa	None	True	Solicitud de requisición del área
+429	compra_directa	None	True	Requisición
+430	compra_directa	None	True	Cotización
+431	compra_directa	None	True	Solicitud de pago
+432	compra_directa	None	True	Factura, XML y validación
+433	compra_directa	None	True	Orden de compra
+434	compra_directa	None	True	Vale de entrada
+435	compra_directa	None	True	Oficio de conformidad y evidencia fotográfica
+410	concurso_invitacion	None	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+411	concurso_invitacion	None	True	Solicitud de requisición del área
+412	concurso_invitacion	None	True	Requisición
+413	concurso_invitacion	None	True	Cotización
+414	concurso_invitacion	None	True	Invitación a licitación
+415	concurso_invitacion	None	True	Acta de junta de aclaraciones
+416	concurso_invitacion	None	True	Acta de recepción de propuestas técnicas
+417	concurso_invitacion	None	True	Dictamen y cuadro comparativo
+418	concurso_invitacion	None	True	Acta de elaboración del fallo
+419	concurso_invitacion	None	True	Acta de lectura de fallo
+420	concurso_invitacion	None	True	Contrato
+421	concurso_invitacion	None	True	Solicitud de pago
+422	concurso_invitacion	None	True	Factura, XML y validación
+423	concurso_invitacion	None	True	Orden de compra
+424	concurso_invitacion	None	True	Vale de entrada
+425	concurso_invitacion	None	True	Oficio de conformidad y evidencia fotográfica
+426	concurso_invitacion	None	True	Anexos de licitación
+172	fuente	estatal	True	SOLICITUD DEL ÁREA
+173	fuente	estatal	True	COTIZACIÓN
+174	fuente	estatal	True	REQUISICIÓN SIMA
+175	fuente	estatal	True	SUFICIENCIA PRESUPUESTAL
+176	fuente	estatal	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+177	fuente	estatal	True	APROBACIÓN SECRETARIO
+178	fuente	estatal	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+179	fuente	estatal	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+180	fuente	estatal	True	ADJUDICACIÓN
+181	fuente	estatal	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+182	fuente	estatal	True	CONTRATO
+183	fuente	estatal	True	RECEPCIÓN DEL BIEN O SERVICIO
+184	fuente	estatal	True	RECEPCIÓN DE FACTURACIÓN
+185	fuente	estatal	True	GENERACIÓN DE EVIDENCIA
+186	fuente	estatal	True	ENVÍO DE EXPEDIENTE A COMPRAS
+187	fuente	estatal	True	PAGO
+189	fuente	federal	True	SOLICITUD DEL ÁREA
+190	fuente	federal	True	COTIZACIÓN
+191	fuente	federal	True	REQUISICIÓN SIMA
+192	fuente	federal	True	SUFICIENCIA PRESUPUESTAL
+193	fuente	federal	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+194	fuente	federal	True	APROBACIÓN SECRETARIO
+195	fuente	federal	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+196	fuente	federal	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+197	fuente	federal	True	ADJUDICACIÓN
+198	fuente	federal	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+199	fuente	federal	True	CONTRATO
+200	fuente	federal	True	RECEPCIÓN DEL BIEN O SERVICIO
+201	fuente	federal	True	RECEPCIÓN DE FACTURACIÓN
+202	fuente	federal	True	GENERACIÓN DE EVIDENCIA
+203	fuente	federal	True	ENVÍO DE EXPEDIENTE A COMPRAS
+204	fuente	federal	True	PAGO
+155	fuente	propio_municipal	True	SOLICITUD DEL ÁREA
+156	fuente	propio_municipal	True	COTIZACIÓN
+157	fuente	propio_municipal	True	REQUISICIÓN SIMA
+158	fuente	propio_municipal	True	SUFICIENCIA PRESUPUESTAL
+159	fuente	propio_municipal	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+160	fuente	propio_municipal	True	APROBACIÓN SECRETARIO
+161	fuente	propio_municipal	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+162	fuente	propio_municipal	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+163	fuente	propio_municipal	True	ADJUDICACIÓN
+164	fuente	propio_municipal	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+165	fuente	propio_municipal	True	CONTRATO
+166	fuente	propio_municipal	True	RECEPCIÓN DEL BIEN O SERVICIO
+167	fuente	propio_municipal	True	RECEPCIÓN DE FACTURACIÓN
+168	fuente	propio_municipal	True	GENERACIÓN DE EVIDENCIA
+169	fuente	propio_municipal	True	ENVÍO DE EXPEDIENTE A COMPRAS
+170	fuente	propio_municipal	True	PAGO
+104	giro	comercial	True	SOLICITUD DEL ÁREA
+105	giro	comercial	True	COTIZACIÓN
+106	giro	comercial	True	REQUISICIÓN SIMA
+107	giro	comercial	True	SUFICIENCIA PRESUPUESTAL
+108	giro	comercial	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+109	giro	comercial	True	APROBACIÓN SECRETARIO
+110	giro	comercial	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+111	giro	comercial	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+112	giro	comercial	True	ADJUDICACIÓN
+113	giro	comercial	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+114	giro	comercial	True	CONTRATO
+115	giro	comercial	True	RECEPCIÓN DEL BIEN O SERVICIO
+116	giro	comercial	True	RECEPCIÓN DE FACTURACIÓN
+117	giro	comercial	True	GENERACIÓN DE EVIDENCIA
+118	giro	comercial	True	ENVÍO DE EXPEDIENTE A COMPRAS
+119	giro	comercial	True	PAGO
+87	giro	construccion	True	SOLICITUD DEL ÁREA
+88	giro	construccion	True	COTIZACIÓN
+89	giro	construccion	True	REQUISICIÓN SIMA
+90	giro	construccion	True	SUFICIENCIA PRESUPUESTAL
+91	giro	construccion	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+92	giro	construccion	True	APROBACIÓN SECRETARIO
+93	giro	construccion	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+94	giro	construccion	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+95	giro	construccion	True	ADJUDICACIÓN
+96	giro	construccion	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+97	giro	construccion	True	CONTRATO
+98	giro	construccion	True	RECEPCIÓN DEL BIEN O SERVICIO
+99	giro	construccion	True	RECEPCIÓN DE FACTURACIÓN
+100	giro	construccion	True	GENERACIÓN DE EVIDENCIA
+101	giro	construccion	True	ENVÍO DE EXPEDIENTE A COMPRAS
+102	giro	construccion	True	PAGO
+70	giro	ferreteria	True	SOLICITUD DEL ÁREA
+71	giro	ferreteria	True	COTIZACIÓN
+72	giro	ferreteria	True	REQUISICIÓN SIMA
+73	giro	ferreteria	True	SUFICIENCIA PRESUPUESTAL
+74	giro	ferreteria	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+75	giro	ferreteria	True	APROBACIÓN SECRETARIO
+76	giro	ferreteria	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+77	giro	ferreteria	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+78	giro	ferreteria	True	ADJUDICACIÓN
+79	giro	ferreteria	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+80	giro	ferreteria	True	CONTRATO
+81	giro	ferreteria	True	RECEPCIÓN DEL BIEN O SERVICIO
+82	giro	ferreteria	True	RECEPCIÓN DE FACTURACIÓN
+83	giro	ferreteria	True	GENERACIÓN DE EVIDENCIA
+84	giro	ferreteria	True	ENVÍO DE EXPEDIENTE A COMPRAS
+85	giro	ferreteria	True	PAGO
+138	giro	industrial	True	SOLICITUD DEL ÁREA
+139	giro	industrial	True	COTIZACIÓN
+140	giro	industrial	True	REQUISICIÓN SIMA
+141	giro	industrial	True	SUFICIENCIA PRESUPUESTAL
+142	giro	industrial	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+143	giro	industrial	True	APROBACIÓN SECRETARIO
+144	giro	industrial	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+145	giro	industrial	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+146	giro	industrial	True	ADJUDICACIÓN
+147	giro	industrial	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+148	giro	industrial	True	CONTRATO
+149	giro	industrial	True	RECEPCIÓN DEL BIEN O SERVICIO
+150	giro	industrial	True	RECEPCIÓN DE FACTURACIÓN
+151	giro	industrial	True	GENERACIÓN DE EVIDENCIA
+152	giro	industrial	True	ENVÍO DE EXPEDIENTE A COMPRAS
+153	giro	industrial	True	PAGO
+327	giro	otros	True	SOLICITUD DEL ÁREA
+328	giro	otros	True	COTIZACIÓN
+329	giro	otros	True	REQUISICIÓN SIMA
+330	giro	otros	True	SUFICIENCIA PRESUPUESTAL
+331	giro	otros	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+332	giro	otros	True	APROBACIÓN SECRETARIO
+333	giro	otros	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+334	giro	otros	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+335	giro	otros	True	ADJUDICACIÓN
+336	giro	otros	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+337	giro	otros	True	CONTRATO
+338	giro	otros	True	RECEPCIÓN DEL BIEN O SERVICIO
+339	giro	otros	True	RECEPCIÓN DE FACTURACIÓN
+340	giro	otros	True	GENERACIÓN DE EVIDENCIA
+341	giro	otros	True	ENVÍO DE EXPEDIENTE A COMPRAS
+342	giro	otros	True	PAGO
+121	giro	servicios	True	SOLICITUD DEL ÁREA
+122	giro	servicios	True	COTIZACIÓN
+123	giro	servicios	True	REQUISICIÓN SIMA
+124	giro	servicios	True	SUFICIENCIA PRESUPUESTAL
+125	giro	servicios	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+126	giro	servicios	True	APROBACIÓN SECRETARIO
+127	giro	servicios	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+128	giro	servicios	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+129	giro	servicios	True	ADJUDICACIÓN
+130	giro	servicios	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+131	giro	servicios	True	CONTRATO
+132	giro	servicios	True	RECEPCIÓN DEL BIEN O SERVICIO
+133	giro	servicios	True	RECEPCIÓN DE FACTURACIÓN
+134	giro	servicios	True	GENERACIÓN DE EVIDENCIA
+135	giro	servicios	True	ENVÍO DE EXPEDIENTE A COMPRAS
+136	giro	servicios	True	PAGO
+389	licitacion	fondo_federal	True	Solicitud y aprobación de fondo
+390	licitacion	fondo_federal	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+391	licitacion	fondo_federal	True	Solicitud de requisición del área
+392	licitacion	fondo_federal	True	Estudio de mercado
+393	licitacion	fondo_federal	True	Requisición
+394	licitacion	fondo_federal	True	Cotización
+395	licitacion	fondo_federal	True	Invitación a licitación
+396	licitacion	fondo_federal	True	Acta de junta de aclaraciones
+397	licitacion	fondo_federal	True	Acta de recepción de propuestas técnicas
+398	licitacion	fondo_federal	True	Dictamen y cuadro comparativo
+399	licitacion	fondo_federal	True	Acta de elaboración del fallo
+400	licitacion	fondo_federal	True	Acta de lectura de fallo
+401	licitacion	fondo_federal	True	Contrato
+402	licitacion	fondo_federal	True	Solicitud de pago
+403	licitacion	fondo_federal	True	Factura, XML y validación
+404	licitacion	fondo_federal	True	Orden de compra
+405	licitacion	fondo_federal	True	Vale de entrada
+406	licitacion	fondo_federal	True	Acta de entrega con INE de proveedor y persona que recibe
+407	licitacion	fondo_federal	True	Acta de entrega de proveedor
+408	licitacion	fondo_federal	True	Oficio de conformidad y evidencia fotográfica
+409	licitacion	fondo_federal	True	Anexos de licitación
+372	licitacion	recurso_propio	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+373	licitacion	recurso_propio	True	Solicitud de requisición del área
+374	licitacion	recurso_propio	True	Requisición
+375	licitacion	recurso_propio	True	Cotización
+376	licitacion	recurso_propio	True	Invitación a licitación
+377	licitacion	recurso_propio	True	Acta de junta de aclaraciones
+378	licitacion	recurso_propio	True	Acta de recepción de propuestas técnicas
+379	licitacion	recurso_propio	True	Dictamen y comparativo comparativo
+380	licitacion	recurso_propio	True	Acta de elaboración del fallo
+381	licitacion	recurso_propio	True	Acta de lectura de fallo
+382	licitacion	recurso_propio	True	Contrato
+383	licitacion	recurso_propio	True	Solicitud de pago
+384	licitacion	recurso_propio	True	Factura, XML y validación
+385	licitacion	recurso_propio	True	Orden de compra
+386	licitacion	recurso_propio	True	Vale de entrada
+387	licitacion	recurso_propio	True	Oficio de conformidad y evidencia fotográfica
+388	licitacion	recurso_propio	True	Anexos de licitación
+308	monto	adjudicacion_directa	True	SOLICITUD DEL ÁREA
+309	monto	adjudicacion_directa	True	COTIZACIÓN
+310	monto	adjudicacion_directa	True	REQUISICIÓN SIMA
+311	monto	adjudicacion_directa	True	SUFICIENCIA PRESUPUESTAL
+312	monto	adjudicacion_directa	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+313	monto	adjudicacion_directa	True	APROBACIÓN SECRETARIO
+314	monto	adjudicacion_directa	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+315	monto	adjudicacion_directa	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+316	monto	adjudicacion_directa	True	ADJUDICACIÓN
+317	monto	adjudicacion_directa	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+318	monto	adjudicacion_directa	True	CONTRATO
+319	monto	adjudicacion_directa	True	RECEPCIÓN DEL BIEN O SERVICIO
+320	monto	adjudicacion_directa	True	RECEPCIÓN DE FACTURACIÓN
+321	monto	adjudicacion_directa	True	GENERACIÓN DE EVIDENCIA
+322	monto	adjudicacion_directa	True	ENVÍO DE EXPEDIENTE A COMPRAS
+323	monto	adjudicacion_directa	True	PAGO
+257	monto	compra_directa	True	SOLICITUD DEL ÁREA
+258	monto	compra_directa	True	COTIZACIÓN
+259	monto	compra_directa	True	REQUISICIÓN SIMA
+260	monto	compra_directa	True	SUFICIENCIA PRESUPUESTAL
+261	monto	compra_directa	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+262	monto	compra_directa	True	APROBACIÓN SECRETARIO
+263	monto	compra_directa	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+264	monto	compra_directa	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+265	monto	compra_directa	True	ADJUDICACIÓN
+266	monto	compra_directa	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+267	monto	compra_directa	True	CONTRATO
+268	monto	compra_directa	True	RECEPCIÓN DEL BIEN O SERVICIO
+269	monto	compra_directa	True	RECEPCIÓN DE FACTURACIÓN
+270	monto	compra_directa	True	GENERACIÓN DE EVIDENCIA
+271	monto	compra_directa	True	ENVÍO DE EXPEDIENTE A COMPRAS
+272	monto	compra_directa	True	PAGO
+274	monto	concurso_invitacion	True	SOLICITUD DEL ÁREA
+275	monto	concurso_invitacion	True	COTIZACIÓN
+276	monto	concurso_invitacion	True	REQUISICIÓN SIMA
+277	monto	concurso_invitacion	True	SUFICIENCIA PRESUPUESTAL
+278	monto	concurso_invitacion	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+279	monto	concurso_invitacion	True	APROBACIÓN SECRETARIO
+280	monto	concurso_invitacion	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+281	monto	concurso_invitacion	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+282	monto	concurso_invitacion	True	ADJUDICACIÓN
+283	monto	concurso_invitacion	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+284	monto	concurso_invitacion	True	CONTRATO
+285	monto	concurso_invitacion	True	RECEPCIÓN DEL BIEN O SERVICIO
+286	monto	concurso_invitacion	True	RECEPCIÓN DE FACTURACIÓN
+287	monto	concurso_invitacion	True	GENERACIÓN DE EVIDENCIA
+288	monto	concurso_invitacion	True	ENVÍO DE EXPEDIENTE A COMPRAS
+289	monto	concurso_invitacion	True	PAGO
+291	monto	licitacion	True	SOLICITUD DEL ÁREA
+292	monto	licitacion	True	COTIZACIÓN
+293	monto	licitacion	True	REQUISICIÓN SIMA
+294	monto	licitacion	True	SUFICIENCIA PRESUPUESTAL
+295	monto	licitacion	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+296	monto	licitacion	True	APROBACIÓN SECRETARIO
+297	monto	licitacion	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+298	monto	licitacion	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+299	monto	licitacion	True	ADJUDICACIÓN
+300	monto	licitacion	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+301	monto	licitacion	True	CONTRATO
+302	monto	licitacion	True	RECEPCIÓN DEL BIEN O SERVICIO
+303	monto	licitacion	True	RECEPCIÓN DE FACTURACIÓN
+304	monto	licitacion	True	GENERACIÓN DE EVIDENCIA
+305	monto	licitacion	True	ENVÍO DE EXPEDIENTE A COMPRAS
+306	monto	licitacion	True	PAGO
+240	tipo_adquisicion	arrendamientos	True	SOLICITUD DEL ÁREA
+241	tipo_adquisicion	arrendamientos	True	COTIZACIÓN
+242	tipo_adquisicion	arrendamientos	True	REQUISICIÓN SIMA
+243	tipo_adquisicion	arrendamientos	True	SUFICIENCIA PRESUPUESTAL
+244	tipo_adquisicion	arrendamientos	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+245	tipo_adquisicion	arrendamientos	True	APROBACIÓN SECRETARIO
+246	tipo_adquisicion	arrendamientos	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+247	tipo_adquisicion	arrendamientos	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+248	tipo_adquisicion	arrendamientos	True	ADJUDICACIÓN
+249	tipo_adquisicion	arrendamientos	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+250	tipo_adquisicion	arrendamientos	True	CONTRATO
+251	tipo_adquisicion	arrendamientos	True	RECEPCIÓN DEL BIEN O SERVICIO
+252	tipo_adquisicion	arrendamientos	True	RECEPCIÓN DE FACTURACIÓN
+253	tipo_adquisicion	arrendamientos	True	GENERACIÓN DE EVIDENCIA
+254	tipo_adquisicion	arrendamientos	True	ENVÍO DE EXPEDIENTE A COMPRAS
+255	tipo_adquisicion	arrendamientos	True	PAGO
+206	tipo_adquisicion	bienes	True	SOLICITUD DE REQUSICIÓN
+207	tipo_adquisicion	bienes	True	COTIZACIÓN
+208	tipo_adquisicion	bienes	True	REQUISICIÓN SIMA
+209	tipo_adquisicion	bienes	True	SUFICIENCIA PRESUPUESTAL
+210	tipo_adquisicion	bienes	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+211	tipo_adquisicion	bienes	True	APROBACIÓN SECRETARIO
+212	tipo_adquisicion	bienes	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+213	tipo_adquisicion	bienes	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+214	tipo_adquisicion	bienes	True	ADJUDICACIÓN
+215	tipo_adquisicion	bienes	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+216	tipo_adquisicion	bienes	True	CONTRATO
+217	tipo_adquisicion	bienes	True	RECEPCIÓN DEL BIEN O SERVICIO
+218	tipo_adquisicion	bienes	True	RECEPCIÓN DE FACTURACIÓN
+219	tipo_adquisicion	bienes	True	GENERACIÓN DE EVIDENCIA
+220	tipo_adquisicion	bienes	True	ENVÍO DE EXPEDIENTE A COMPRAS
+221	tipo_adquisicion	bienes	True	PAGO
+223	tipo_adquisicion	servicios	True	SOLICITUD DEL ÁREA
+224	tipo_adquisicion	servicios	True	COTIZACIÓN
+225	tipo_adquisicion	servicios	True	REQUISICIÓN SIMA
+226	tipo_adquisicion	servicios	True	SUFICIENCIA PRESUPUESTAL
+227	tipo_adquisicion	servicios	True	APROBACIÓN DIRECTOR ADMINISTRATIVO
+228	tipo_adquisicion	servicios	True	APROBACIÓN SECRETARIO
+229	tipo_adquisicion	servicios	True	NOTIFICACIÓN A COMPRAS MUNICIPALES
+230	tipo_adquisicion	servicios	True	VALORACIÓN PARA TIPO DE ADQUISICIÓN
+231	tipo_adquisicion	servicios	True	ADJUDICACIÓN
+232	tipo_adquisicion	servicios	True	FORMALIZACIÓN CON ORDEN DE COMPRA
+233	tipo_adquisicion	servicios	True	CONTRATO
+234	tipo_adquisicion	servicios	True	RECEPCIÓN DEL BIEN O SERVICIO
+235	tipo_adquisicion	servicios	True	RECEPCIÓN DE FACTURACIÓN
+236	tipo_adquisicion	servicios	True	GENERACIÓN DE EVIDENCIA
+237	tipo_adquisicion	servicios	True	ENVÍO DE EXPEDIENTE A COMPRAS
+238	tipo_adquisicion	servicios	True	PAGO
+
+Areas for tipo_expediente='licitacion':
+ID	Type		Subtype		Active	Title
+--------------------------------------------------------------------------------
+389	licitacion	fondo_federal	True	Solicitud y aprobación de fondo
+390	licitacion	fondo_federal	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+391	licitacion	fondo_federal	True	Solicitud de requisición del área
+392	licitacion	fondo_federal	True	Estudio de mercado
+393	licitacion	fondo_federal	True	Requisición
+394	licitacion	fondo_federal	True	Cotización
+395	licitacion	fondo_federal	True	Invitación a licitación
+396	licitacion	fondo_federal	True	Acta de junta de aclaraciones
+397	licitacion	fondo_federal	True	Acta de recepción de propuestas técnicas
+398	licitacion	fondo_federal	True	Dictamen y cuadro comparativo
+399	licitacion	fondo_federal	True	Acta de elaboración del fallo
+400	licitacion	fondo_federal	True	Acta de lectura de fallo
+401	licitacion	fondo_federal	True	Contrato
+402	licitacion	fondo_federal	True	Solicitud de pago
+403	licitacion	fondo_federal	True	Factura, XML y validación
+404	licitacion	fondo_federal	True	Orden de compra
+405	licitacion	fondo_federal	True	Vale de entrada
+406	licitacion	fondo_federal	True	Acta de entrega con INE de proveedor y persona que recibe
+407	licitacion	fondo_federal	True	Acta de entrega de proveedor
+408	licitacion	fondo_federal	True	Oficio de conformidad y evidencia fotográfica
+409	licitacion	fondo_federal	True	Anexos de licitación
+372	licitacion	recurso_propio	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+373	licitacion	recurso_propio	True	Solicitud de requisición del área
+374	licitacion	recurso_propio	True	Requisición
+375	licitacion	recurso_propio	True	Cotización
+376	licitacion	recurso_propio	True	Invitación a licitación
+377	licitacion	recurso_propio	True	Acta de junta de aclaraciones
+378	licitacion	recurso_propio	True	Acta de recepción de propuestas técnicas
+379	licitacion	recurso_propio	True	Dictamen y comparativo comparativo
+380	licitacion	recurso_propio	True	Acta de elaboración del fallo
+381	licitacion	recurso_propio	True	Acta de lectura de fallo
+382	licitacion	recurso_propio	True	Contrato
+383	licitacion	recurso_propio	True	Solicitud de pago
+384	licitacion	recurso_propio	True	Factura, XML y validación
+385	licitacion	recurso_propio	True	Orden de compra
+386	licitacion	recurso_propio	True	Vale de entrada
+387	licitacion	recurso_propio	True	Oficio de conformidad y evidencia fotográfica
+388	licitacion	recurso_propio	True	Anexos de licitación
+
+Areas for licitacion subtypes (recurso_propio and fondo_federal):
+ID	Type		Subtype		Active	Title
+--------------------------------------------------------------------------------
+389	licitacion	fondo_federal	True	Solicitud y aprobación de fondo
+390	licitacion	fondo_federal	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+391	licitacion	fondo_federal	True	Solicitud de requisición del área
+392	licitacion	fondo_federal	True	Estudio de mercado
+393	licitacion	fondo_federal	True	Requisición
+394	licitacion	fondo_federal	True	Cotización
+395	licitacion	fondo_federal	True	Invitación a licitación
+396	licitacion	fondo_federal	True	Acta de junta de aclaraciones
+397	licitacion	fondo_federal	True	Acta de recepción de propuestas técnicas
+398	licitacion	fondo_federal	True	Dictamen y cuadro comparativo
+399	licitacion	fondo_federal	True	Acta de elaboración del fallo
+400	licitacion	fondo_federal	True	Acta de lectura de fallo
+401	licitacion	fondo_federal	True	Contrato
+402	licitacion	fondo_federal	True	Solicitud de pago
+403	licitacion	fondo_federal	True	Factura, XML y validación
+404	licitacion	fondo_federal	True	Orden de compra
+405	licitacion	fondo_federal	True	Vale de entrada
+406	licitacion	fondo_federal	True	Acta de entrega con INE de proveedor y persona que recibe
+407	licitacion	fondo_federal	True	Acta de entrega de proveedor
+408	licitacion	fondo_federal	True	Oficio de conformidad y evidencia fotográfica
+409	licitacion	fondo_federal	True	Anexos de licitación
+372	licitacion	recurso_propio	True	Oficio y contestación de control patrimonial, TIC´s o capital humano
+373	licitacion	recurso_propio	True	Solicitud de requisición del área
+374	licitacion	recurso_propio	True	Requisición
+375	licitacion	recurso_propio	True	Cotización
+376	licitacion	recurso_propio	True	Invitación a licitación
+377	licitacion	recurso_propio	True	Acta de junta de aclaraciones
+378	licitacion	recurso_propio	True	Acta de recepción de propuestas técnicas
+379	licitacion	recurso_propio	True	Dictamen y comparativo comparativo
+380	licitacion	recurso_propio	True	Acta de elaboración del fallo
+381	licitacion	recurso_propio	True	Acta de lectura de fallo
+382	licitacion	recurso_propio	True	Contrato
+383	licitacion	recurso_propio	True	Solicitud de pago
+384	licitacion	recurso_propio	True	Factura, XML y validación
+385	licitacion	recurso_propio	True	Orden de compra
+386	licitacion	recurso_propio	True	Vale de entrada
+387	licitacion	recurso_propio	True	Oficio de conformidad y evidencia fotográfica
+388	licitacion	recurso_propio	True	Anexos de licitación
+
+Done!

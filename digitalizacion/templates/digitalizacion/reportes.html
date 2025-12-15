@@ -1,0 +1,2310 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reportes de Expedientes - Sistema de Digitalización</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
+  <!-- Flatpickr CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap');
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    :root {
+        --gradient-start: #f8f9fa;
+        --gradient-end: #ffffff;
+        --sidebar-bg: #f8f9fa;
+        --glass-bg: #ffffff;
+        --glass-border: #dee2e6;
+        --text-primary: #212529;
+        --text-secondary: #495057;
+        --text-muted: #6c757d;
+    }
+
+    [data-theme="dark"] {
+        --gradient-start: #2a2f38;
+        --gradient-end: #f9f2d6;
+        --sidebar-bg: #20252d;
+        --glass-bg: #1a1a1a;
+        --glass-border: rgba(75, 85, 99, 0.4);
+        --text-primary: #ffffff;
+        --text-secondary: #d1d5db;
+        --text-muted: #9ca3af;
+    }
+
+    body {
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+        min-height: 100vh;
+        color: var(--text-primary);
+    }
+    
+    a {
+        text-decoration: none;
+    }
+
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        width: 100%;
+        min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .dashboard-sidebar {
+        background: var(--sidebar-bg);
+        display: flex;
+        flex-direction: column;
+        padding: 20px 20px 20px 25px;
+        gap: 25px;
+        box-shadow: inset -40px 0 60px -30px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+    
+    .sidebar-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    
+    .user-menu-sidebar {
+        margin-top: auto;
+        padding-top: 20px;
+        border-top: 1px solid var(--glass-border);
+        position: relative;
+    }
+    
+    .sidebar-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 6px;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        text-decoration: none;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .action-btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+    
+    .action-btn .menu-icon,
+    .action-btn .theme-icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    [data-theme="dark"] .dashboard-sidebar {
+        box-shadow: inset -40px 0 60px -30px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo-text {
+        font-weight: 300;
+        font-size: 1.4em;
+        line-height: 1.1;
+        margin: 0;
+        color: var(--text-primary);
+    }
+
+    .logo-subtext {
+        font-weight: 300;
+        font-size: 0.8em;
+        padding-left: 5px;
+        margin-top: 5px;
+        opacity: 0.7;
+        letter-spacing: 0.02em;
+        display: block;
+    }
+
+    .dashboard-menu {
+        margin-top: 30px;
+        width: 100%;
+        border-top: 1px solid #dee2e6;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        top: 0;
+    }
+
+    [data-theme="dark"] .dashboard-menu {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #495057;
+        padding: 10px 12px;
+        font-weight: 400;
+        font-size: 0.9em;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    [data-theme="dark"] .menu-item {
+        color: rgba(255, 255, 255, 0.7);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .menu-item:last-child {
+        border-bottom: none;
+    }
+
+    .menu-item:hover {
+        color: #212529;
+        background: #f8f9fa;
+    }
+
+    [data-theme="dark"] .menu-item:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .menu-item.active {
+        background: #1e40af;
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    [data-theme="dark"] .menu-item.active {
+        background: #1e3a8a;
+    }
+
+    .menu-item.active::after {
+        content: "";
+        position: absolute;
+        right: -25px;
+        width: 0;
+        height: 0;
+        border-top: 20px solid transparent;
+        border-bottom: 20px solid transparent;
+        border-left: 12px solid #17245c;
+        top: 50%;
+        transform: translateY(-50%);
+        filter: drop-shadow(-2px 0 1px rgba(0, 0, 0, 0.5));
+    }
+
+    [data-theme="dark"] .menu-item.active::after {
+        border-left: 12px solid #121212cc;
+    }
+
+    .menu-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Main content */
+    .dashboard-main {
+        display: flex;
+        flex-direction: column;
+        padding: 30px;
+        overflow-y: auto;
+        height: 100vh;
+    }
+
+    .page-header {
+        margin-bottom: 20px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        margin: 0;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .page-header i {
+        font-size: 1.5rem;
+        color: var(--text-primary);
+    }
+    
+    .page-description {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin: 0 0 30px 0;
+    }
+    
+    /* User Menu Styles */
+    .user-menu-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: transparent;
+        border: 1px solid var(--glass-border);
+        border-radius: 50px;
+        padding: 6px 12px 6px 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        width: 100%;
+    }
+    
+    .user-menu-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.9em;
+        text-transform: uppercase;
+    }
+    
+    .user-info {
+        text-align: left;
+        line-height: 1.2;
+        display: none;
+    }
+    
+    .user-name {
+        font-weight: 500;
+        font-size: 0.9em;
+        color: var(--text-primary);
+    }
+    
+    .user-role {
+        font-size: 0.75em;
+        color: var(--text-muted);
+    }
+    
+    .user-menu-dropdown {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 10px);
+        min-width: 200px;
+        background: var(--glass-bg);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        padding: 8px 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+        transition: all 0.2s ease;
+        z-index: 1000;
+    }
+    
+    .user-menu-sidebar.active .user-menu-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    
+    .user-menu-item {
+        display: flex;
+        align-items: center;
+        padding: 10px 16px;
+        color: var(--text-primary);
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    
+    .user-menu-item:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+    
+    .user-menu-item i {
+        width: 20px;
+        margin-right: 10px;
+        text-align: center;
+        color: var(--text-muted);
+    }
+    
+    .user-menu-divider {
+        height: 1px;
+        background: var(--glass-border);
+        margin: 8px 0;
+    }
+    
+    @media (min-width: 768px) {
+        .user-info {
+            display: block;
+        }
+        
+        .user-menu-btn {
+            padding: 6px 16px 6px 6px;
+        }
+    }
+    
+    /* Estilos para componentes de reportes */
+    .filtros-section {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+    
+    .filtros-header {
+      margin-bottom: 1.5rem;
+    }
+    
+    .filtros-header h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .filtros-header p {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .filtro-grupo {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .filtro-grupo label {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .filtro-grupo input,
+    .filtro-grupo select {
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .filtro-grupo input:focus,
+    .filtro-grupo select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .botones-filtros {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-filtro {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .btn-filtro.primario {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-filtro.primario:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-filtro.secundario {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-filtro.secundario:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+    }
+    
+    .btn-filtro.exportar {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-filtro.exportar:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .estadisticas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .estadistica-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .estadistica-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px var(--shadow-color);
+    }
+    
+    .estadistica-valor {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .estadistica-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .resultados-section {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+    
+    .resultados-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .resultados-header h3 {
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .resultados-count {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-container {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .tabla-expedientes {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-primary);
+    }
+    
+    .tabla-expedientes th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-expedientes td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-expedientes tr:hover {
+      background: var(--hover-bg);
+    }
+    
+    .estado-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    
+    .estado-pendiente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .estado-en-proceso {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .estado-completado {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .estado-rechazado {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .tipo-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .paginacion {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    
+    .btn-pagina {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    
+    .btn-pagina:hover {
+      background: var(--hover-bg);
+    }
+    
+    .btn-pagina.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .btn-pagina:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .loading-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border-color);
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .sin-resultados {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+    
+    .sin-resultados i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .error-container {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      color: #ef4444;
+    }
+    
+    .error-container i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      
+      .left-panel {
+        display: none;
+      }
+      
+      .main-content {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+        padding: 20px;
+      }
+      
+      .filtros-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .botones-filtros {
+        flex-direction: column;
+      }
+      
+      .estadisticas-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Variables CSS para temas */
+    :root {
+      --bg-primary: #20252d;
+      --bg-secondary: rgba(26, 26, 26, 0.95);
+      --bg-tertiary: rgba(26, 26, 26, 0.95);
+      --bg-gradient: linear-gradient(160deg, #2a2f38 10%, #f9f2d6 90%);
+      --text-primary: white;
+      --text-secondary: rgba(255 255 255 / 0.7);
+      --text-muted: rgba(255 255 255 / 0.5);
+      --border-color: rgba(255 255 255 / 0.2);
+      --border-light: rgba(255 255 255 / 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.3);
+      --panel-bg: #1a1a1a;
+      --panel-border: #333;
+      --hover-bg: rgba(255 255 255 / 0.15);
+      --active-bg: #121212cc;
+      --notification-badge: #ff4757;
+    }
+    
+    [data-theme="light"] {
+      --bg-primary: #f8f9fa;
+      --bg-secondary: rgba(255, 255, 255, 0.9);
+      --bg-tertiary: rgba(248, 249, 250, 0.9);
+      --bg-gradient: linear-gradient(160deg, #e9ecef 10%, #f8f9fa 90%);
+      --text-primary: #212529;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --border-light: rgba(0, 0, 0, 0.05);
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --panel-bg: #ffffff;
+      --panel-border: #dee2e6;
+      --hover-bg: rgba(0, 0, 0, 0.05);
+      --active-bg: #e9ecef;
+      --notification-badge: #dc3545;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--bg-gradient);
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-primary);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 100px 1fr;
+      width: 100%;
+      height: 100vh;
+      color: var(--text-primary);
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+
+    .left-panel {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 20px 25px;
+      gap: 25px;
+      position: relative;
+      box-shadow: inset -40px 0 60px -30px var(--shadow-color);
+      transition: all 0.3s ease;
+    }
+    
+    .logo-text {
+      font-weight: 300;
+      font-size: 1.4em;
+      font-family: 'Roboto', sans-serif;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    
+    .logo-text strong {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .nav-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      padding: 12px 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 400;
+      font-size: 0.95em;
+    }
+    
+    .nav-item:hover {
+      background: var(--hover-bg);
+      transform: translateX(5px);
+    }
+    
+    .nav-item.active {
+      background: var(--active-bg);
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .nav-item i {
+      font-size: 1.2em;
+      width: 20px;
+      text-align: center;
+    }
+    
+    .main-content {
+      grid-column: 2 / 3;
+      grid-row: 1 / 3;
+      padding: 30px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    .page-header h1 {
+      font-size: 2.2em;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    
+    .page-header i {
+      font-size: 1.8em;
+      color: var(--text-primary);
+    }
+    
+    .page-description {
+      color: var(--text-secondary);
+      font-size: 1.1em;
+      margin: 0 0 30px 0;
+    }
+    
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      backdrop-filter: blur(10px);
+    }
+    
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+    
+    .theme-toggle i {
+      font-size: 1.2em;
+    }
+    
+    /* Estilos para componentes de reportes */
+    .filtros-section {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+    
+    .filtros-header {
+      margin-bottom: 1.5rem;
+    }
+    
+    .filtros-header h2 {
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .filtros-header p {
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    
+    .filtros-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .filtro-grupo {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .filtro-grupo label {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .filtro-grupo input,
+    .filtro-grupo select {
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .filtro-grupo input:focus,
+    .filtro-grupo select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .botones-filtros {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-filtro {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .btn-filtro.primario {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    .btn-filtro.primario:hover {
+      background: #2563eb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-filtro.secundario {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .btn-filtro.secundario:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+    }
+    
+    .btn-filtro.exportar {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-filtro.exportar:hover {
+      background: #059669;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    
+    .estadisticas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .estadistica-card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+    
+    .estadistica-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px var(--shadow-color);
+    }
+    
+    .estadistica-valor {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .estadistica-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    .resultados-section {
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(10px);
+    }
+    
+    .resultados-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .resultados-header h3 {
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .resultados-count {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-container {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .tabla-expedientes {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-primary);
+    }
+    
+    .tabla-expedientes th {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-expedientes td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+    
+    .tabla-expedientes tr:hover {
+      background: var(--hover-bg);
+    }
+    
+    .estado-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+    
+    .estado-pendiente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .estado-en-proceso {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .estado-completado {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .estado-rechazado {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .tipo-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    
+    .paginacion {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+    }
+    
+    .btn-pagina {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+    }
+    
+    .btn-pagina:hover {
+      background: var(--hover-bg);
+    }
+    
+    .btn-pagina.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+    
+    .btn-pagina:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .loading-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--border-color);
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .sin-resultados {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      color: var(--text-secondary);
+    }
+    
+    .sin-resultados i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    
+    .error-container {
+      display: none;
+      text-align: center;
+      padding: 3rem;
+      color: #ef4444;
+    }
+    
+    .error-container i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      
+      .left-panel {
+        display: none;
+      }
+      
+      .main-content {
+        grid-column: 1 / 2;
+        grid-row: 1 / 2;
+        padding: 20px;
+      }
+      
+      .filtros-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .botones-filtros {
+        flex-direction: column;
+      }
+      
+      .estadisticas-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+      <div class="sidebar-content">
+        
+        <h1 class="logo-text">
+          Secretaría de Servicios Públicos
+          <span class="logo-subtext">Digitalización de archivos</span>
+        </h1>
+
+            <nav class="dashboard-menu">
+                <a href="{% url 'digitalizacion:dashboard' %}" class="menu-item">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="{% url 'expedientes:lista_expedientes' %}" role="menuitem" class="menu-item" tabindex="0">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                    </svg>
+                    Expedientes
+                </a>
+                <a href="{% url 'digitalizacion:buscar_documentos' %}" role="menuitem" class="menu-item" tabindex="0" id="buscarDocumentoBtn">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Buscar Documento
+                </a>
+                <a href="{% url 'digitalizacion:reportes' %}" role="menuitem" class="menu-item active" tabindex="0">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Reportes
+                </a>
+                <a href="{% url 'areas:gestionar' %}" role="menuitem" class="menu-item" tabindex="0">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    Áreas
+                </a>
+                <a href="{% url 'digitalizacion:panel_administracion' %}" role="menuitem" class="menu-item" tabindex="0">
+                    <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Configuración
+                </a>
+            </nav>
+        
+        <!-- User Menu at bottom of sidebar -->
+        <div class="user-menu-sidebar">
+          <button id="userMenuBtn" class="user-menu-btn">
+            <div class="user-avatar">
+              {% if user.first_name and user.last_name %}
+                {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+              {% else %}
+                {{ user.username|first|upper }}
+              {% endif %}
+            </div>
+            <div class="user-info">
+              <div class="user-name">
+                {% if user.get_full_name %}
+                  {{ user.get_full_name }}
+                {% else %}
+                  {{ user.username }}
+                {% endif %}
+              </div>
+              <div class="user-role">
+                {% if user.is_superuser %}
+                  Administrador
+                {% else %}
+                  Usuario
+                {% endif %}
+              </div>
+            </div>
+            <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          
+          <div class="user-menu-dropdown">
+            <a href="{% url 'digitalizacion:perfil_usuario' %}" class="user-menu-item">
+              <i class="fas fa-user"></i>
+              <span>Mi perfil</span>
+            </a>
+            {% if user.is_staff %}
+            <a href="{% url 'digitalizacion:gestion_solicitudes' %}" class="user-menu-item">
+              <i class="fas fa-user-check"></i>
+              <span>Gestionar Solicitudes</span>
+            </a>
+            {% endif %}
+            <a href="{% url 'digitalizacion:gestion_usuarios' %}" class="user-menu-item">
+              <i class="fas fa-users-cog"></i>
+              <span>Gestión de Usuarios</span>
+            </a>
+            <a href="{% url 'digitalizacion:panel_administracion' %}" class="user-menu-item">
+              <i class="fas fa-cog"></i>
+              <span>Configuración</span>
+            </a>
+            <div class="user-menu-divider"></div>
+            <a href="{% url 'digitalizacion:logout' %}" class="user-menu-item" style="color: #ef4444;">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Cerrar sesión</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Header de la página -->
+      <div class="page-header">
+        <i class="bi bi-bar-chart"></i>
+        <h1>Reportes de Expedientes</h1>
+            </div>
+      
+      <p class="page-description">
+        Selecciona el período de tiempo y filtra los expedientes según tus necesidades
+      </p>
+      
+      <!-- Sección de filtros -->
+      <div class="filtros-section">
+        <div class="filtros-header">
+          <h2>Filtros de Búsqueda</h2>
+          <p>Configura los parámetros para obtener los reportes deseados</p>
+        </div>
+        
+        <div class="filtros-grid">
+          <div class="filtro-grupo">
+            <label for="fecha-inicio">Fecha de Inicio</label>
+            <input type="text" id="fecha-inicio" placeholder="Seleccionar fecha">
+    </div>
+
+          <div class="filtro-grupo">
+            <label for="fecha-fin">Fecha de Fin</label>
+            <input type="text" id="fecha-fin" placeholder="Seleccionar fecha">
+                </div>
+          
+          <div class="filtro-grupo">
+            <label for="estado">Estado del Expediente</label>
+            <select id="estado">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En Proceso</option>
+              <option value="completado">Completado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
+            </div>
+          
+          <div class="filtro-grupo">
+            <label for="tipo">Tipo de Expediente</label>
+            <select id="tipo">
+              <option value="">Todos los tipos</option>
+              <option value="licitacion">Licitación</option>
+              <option value="concurso_invitacion">Concurso por invitación</option>
+              <option value="compra_directa">Compra directa</option>
+              <option value="adjudicacion_directa">Adjudicación directa</option>
+            </select>
+                    </div>
+                    </div>
+        
+        <div class="botones-filtros">
+          <button class="btn-filtro primario" onclick="aplicarFiltros()">
+            <i class="bi bi-search"></i>
+            Aplicar Filtros
+                        </button>
+          <button class="btn-filtro secundario" onclick="limpiarFiltros()">
+            <i class="bi bi-arrow-clockwise"></i>
+            Limpiar Filtros
+          </button>
+          <button class="btn-filtro exportar" onclick="exportarExcel()">
+            <i class="bi bi-download"></i>
+            Exportar a Excel
+          </button>
+          <button class="btn-filtro exportar" onclick="window.exportarPDF()" style="background: #dc3545;">
+            <i class="bi bi-file-pdf"></i>
+            Exportar a PDF
+          </button>
+        </div>
+    </div>
+
+      <!-- Estadísticas -->
+      <div class="estadisticas-grid">
+        <div class="estadistica-card">
+          <div class="estadistica-valor" id="total-expedientes">0</div>
+          <div class="estadistica-label">Total de Expedientes</div>
+            </div>
+        <div class="estadistica-card">
+          <div class="estadistica-valor" id="expedientes-pendientes">0</div>
+          <div class="estadistica-label">Pendientes</div>
+        </div>
+        <div class="estadistica-card">
+          <div class="estadistica-valor" id="expedientes-proceso">0</div>
+          <div class="estadistica-label">En Proceso</div>
+            </div>
+        <div class="estadistica-card">
+          <div class="estadistica-valor" id="expedientes-completados">0</div>
+          <div class="estadistica-label">Completados</div>
+        </div>
+    </div>
+
+      <!-- Resultados -->
+      <div class="resultados-section">
+        <div class="resultados-header">
+          <h3>Resultados de la Búsqueda</h3>
+          <div class="resultados-count" id="resultados-count">0 expedientes encontrados</div>
+    </div>
+
+        <!-- Loading -->
+        <div class="loading-container" id="loading-container">
+          <div class="spinner"></div>
+          <p style="margin-top: 1rem; color: var(--text-secondary);">Buscando expedientes...</p>
+    </div>
+
+        <!-- Sin resultados -->
+        <div class="sin-resultados" id="sin-resultados">
+          <i class="bi bi-search"></i>
+          <h4>No se encontraron expedientes</h4>
+          <p>Intenta ajustar los filtros de búsqueda</p>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div class="error-container" id="error-container">
+          <i class="bi bi-exclamation-triangle"></i>
+          <h4>Error al cargar datos</h4>
+          <p id="error-message">Ha ocurrido un error inesperado</p>
+          <button class="btn-filtro primario" onclick="aplicarFiltros()" style="margin-top: 1rem;">
+            <i class="bi bi-arrow-clockwise"></i>
+            Reintentar
+                        </button>
+                    </div>
+        
+        <!-- Tabla de resultados -->
+        <div class="tabla-container" id="tabla-container" style="display: none;">
+          <table class="tabla-expedientes">
+                            <thead>
+                                <tr>
+                <th>Número</th>
+                <th>Tipo</th>
+                <th>Subtipo</th>
+                                    <th>Estado</th>
+                <th>Fecha Creación</th>
+                <th>Departamento</th>
+                <th>Solicitante</th>
+                                </tr>
+                            </thead>
+            <tbody id="tabla-body">
+                                <!-- Los datos se cargarán dinámicamente -->
+                            </tbody>
+                        </table>
+          
+          <!-- Paginación -->
+          <div class="paginacion" id="paginacion">
+            <!-- Los controles de paginación se generarán dinámicamente -->
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+  <!-- Token CSRF para las peticiones AJAX -->
+  {% csrf_token %}
+  
+  <!-- Botón de cambio de tema -->
+  <button class="theme-toggle" onclick="toggleTheme()" title="Cambiar tema">
+    <i class="bi bi-sun-fill" id="theme-icon"></i>
+                        </button>
+ 
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  
+  <!-- Flatpickr JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+  
+  <!-- XLSX.js para exportar a Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- jsPDF para exportar a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  
+<script>
+    // Variables globales
+    let expedientesData = [];
+    let paginaActual = 1;
+    const expedientesPorPagina = 10;
+    
+    // Definir exportarPDF como función global INMEDIATAMENTE
+    window.exportarPDF = function() {
+      console.log('=== exportarPDF llamada ===');
+      if (!expedientesData || expedientesData.length === 0) {
+        alert('No hay datos para exportar. Por favor, aplica los filtros primero.');
+        return;
+      }
+      
+      if (typeof window.jspdf === 'undefined') {
+        alert('Error: La librería jsPDF no está cargada. Por favor, recarga la página.');
+        return;
+      }
+      
+      try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+        let yPos = margin;
+        
+        function checkPageBreak(requiredHeight) {
+          if (yPos + requiredHeight > pageHeight - margin) {
+            doc.addPage();
+            yPos = margin;
+            return true;
+          }
+          return false;
+        }
+        
+        doc.setFontSize(18);
+        doc.setFont(undefined, 'bold');
+        doc.text('Reporte de Expedientes y Documentos', pageWidth / 2, yPos, { align: 'center' });
+        yPos += 10;
+        
+        const fechaHoy = new Date();
+        const fechaStr = fechaHoy.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Fecha del reporte: ${fechaStr}`, pageWidth / 2, yPos, { align: 'center' });
+        yPos += 15;
+        
+        expedientesData.forEach((exp) => {
+          checkPageBreak(30);
+          doc.setFontSize(14);
+          doc.setFont(undefined, 'bold');
+          doc.setDrawColor(0, 0, 0);
+          doc.setFillColor(230, 230, 230);
+          doc.rect(margin, yPos - 5, pageWidth - 2 * margin, 8, 'FD');
+          doc.text(`Expediente: ${exp.numero}`, margin + 5, yPos);
+          yPos += 8;
+          
+          doc.setFontSize(10);
+          doc.setFont(undefined, 'normal');
+          const infoExpediente = [
+            `Título: ${exp.titulo || 'Sin título'}`,
+            `Tipo: ${formatearTipo(exp.tipo)}`,
+            `Subtipo: ${exp.subtipo || 'No especificado'}`,
+            `Estado: ${formatearEstado(exp.estado)}`,
+            `Departamento: ${exp.departamento || 'Sin departamento'}`,
+            `Solicitante: ${exp.solicitante || 'No especificado'}`,
+            `Fecha de creación: ${exp.fecha_creacion || 'No especificada'}`,
+            `Progreso: ${exp.progreso || 0}%`
+          ];
+          
+          infoExpediente.forEach(info => {
+            checkPageBreak(6);
+            doc.text(info, margin + 5, yPos);
+            yPos += 6;
+          });
+          
+          yPos += 3;
+          checkPageBreak(10);
+          doc.setFontSize(12);
+          doc.setFont(undefined, 'bold');
+          doc.text('Documentos:', margin + 5, yPos);
+          yPos += 8;
+          
+          if (exp.documentos && exp.documentos.length > 0) {
+            const documentosTable = exp.documentos.map((doc, docIndex) => [
+              docIndex + 1,
+              doc.nombre || 'Sin nombre',
+              doc.area || 'No especificada',
+              doc.etapa || 'No especificada',
+              doc.validado === 'Sí' ? 'Validado' : 'No validado',
+              doc.fecha_subida || 'No especificada'
+            ]);
+            
+            doc.autoTable({
+              startY: yPos,
+              head: [['#', 'Nombre del Documento', 'Área', 'Etapa', 'Estado', 'Fecha Subida']],
+              body: documentosTable,
+              margin: { left: margin, right: margin },
+              styles: { fontSize: 8, cellPadding: 2 },
+              headStyles: { fillColor: [70, 130, 180], textColor: 255, fontStyle: 'bold' },
+              alternateRowStyles: { fillColor: [245, 245, 245] },
+              columnStyles: {
+                0: { cellWidth: 10 },
+                1: { cellWidth: 60 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 30 },
+                4: { cellWidth: 25 },
+                5: { cellWidth: 35 }
+              }
+            });
+            
+            yPos = doc.lastAutoTable.finalY + 5;
+          } else {
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'italic');
+            doc.text('No hay documentos asociados a este expediente', margin + 5, yPos);
+            yPos += 8;
+          }
+          
+          yPos += 5;
+          doc.setDrawColor(200, 200, 200);
+          doc.line(margin, yPos, pageWidth - margin, yPos);
+          yPos += 10;
+        });
+        
+        const totalPages = doc.internal.pages.length - 1;
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFontSize(8);
+          doc.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+        }
+        
+        const nombreArchivo = `reporte_expedientes_${fechaHoy.getFullYear()}-${String(fechaHoy.getMonth() + 1).padStart(2, '0')}-${String(fechaHoy.getDate()).padStart(2, '0')}.pdf`;
+        doc.save(nombreArchivo);
+        console.log('PDF generado exitosamente');
+      } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('Error al generar el PDF: ' + (error.message || error));
+      }
+    };
+    
+    console.log('Función exportarPDF definida al inicio:', typeof window.exportarPDF);
+    
+    // Inicialización cuando se carga la página
+    document.addEventListener('DOMContentLoaded', function() {
+      inicializarFiltros();
+    });
+    
+    // Inicializar Flatpickr para los campos de fecha
+    function inicializarFiltros() {
+      const hoy = new Date();
+      const haceUnMes = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate());
+      
+      // Formatear fechas en formato ISO (YYYY-MM-DD) para el valor interno
+      // Usar zona horaria local para evitar problemas de fecha
+      const fechaInicioISO = formatearFechaISO(haceUnMes);
+      const fechaFinISO = formatearFechaISO(hoy);
+      
+      // Inicializar Flatpickr para fecha inicio
+      const fechaInicioInput = document.getElementById('fecha-inicio');
+      const flatpickrInicio = flatpickr("#fecha-inicio", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        placeholder: "Seleccionar fecha",
+        altInput: true,
+        altFormat: "d M Y",
+        defaultDate: fechaInicioISO,
+        onChange: function(selectedDates, dateStr, instance) {
+          console.log('Fecha inicio seleccionada:', dateStr);
+        }
+      });
+      
+      // Inicializar Flatpickr para fecha fin
+      const fechaFinInput = document.getElementById('fecha-fin');
+      const flatpickrFin = flatpickr("#fecha-fin", {
+        locale: "es",
+        dateFormat: "Y-m-d",
+        allowInput: true,
+        placeholder: "Seleccionar fecha",
+        altInput: true,
+        altFormat: "d M Y",
+        defaultDate: fechaFinISO,
+        onChange: function(selectedDates, dateStr, instance) {
+          console.log('Fecha fin seleccionada:', dateStr);
+        }
+      });
+      
+      // Establecer valores iniciales
+      fechaInicioInput.value = fechaInicioISO;
+      fechaFinInput.value = fechaFinISO;
+      
+      // Cargar datos iniciales después de inicializar Flatpickr
+      setTimeout(() => {
+        cargarDatosIniciales();
+      }, 100);
+    }
+    
+    // Cargar datos iniciales
+    function cargarDatosIniciales() {
+      aplicarFiltros();
+    }
+    
+    // Aplicar filtros y buscar expedientes
+    function aplicarFiltros() {
+      paginaActual = 1;
+      buscarExpedientes();
+    }
+    
+    // Limpiar filtros
+    function limpiarFiltros() {
+      const hoy = new Date();
+      const haceUnMes = new Date(hoy.getFullYear(), hoy.getMonth() - 1, hoy.getDate());
+      
+      // Formatear fechas en formato ISO (YYYY-MM-DD)
+      // Usar zona horaria local para evitar problemas de fecha
+      const fechaInicioISO = haceUnMes.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+      const fechaFinISO = hoy.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+      
+      // Limpiar otros filtros
+      document.getElementById('estado').value = '';
+      document.getElementById('tipo').value = '';
+      
+      // Obtener instancias de Flatpickr
+      const fechaInicioInput = document.getElementById('fecha-inicio');
+      const fechaFinInput = document.getElementById('fecha-fin');
+      
+      // Actualizar Flatpickr y valores
+      if (fechaInicioInput._flatpickr) {
+        fechaInicioInput._flatpickr.setDate(fechaInicioISO);
+      }
+      if (fechaFinInput._flatpickr) {
+        fechaFinInput._flatpickr.setDate(fechaFinISO);
+      }
+      
+      // Establecer valores en los campos
+      fechaInicioInput.value = fechaInicioISO;
+      fechaFinInput.value = fechaFinISO;
+      
+      // Aplicar filtros limpios
+      aplicarFiltros();
+    }
+    
+    // Buscar expedientes con filtros
+    function buscarExpedientes() {
+      // Obtener valores reales de Flatpickr
+      const fechaInicioInput = document.getElementById('fecha-inicio');
+      const fechaFinInput = document.getElementById('fecha-fin');
+      
+      let fechaInicio = fechaInicioInput.value;
+      let fechaFin = fechaFinInput.value;
+      
+      // Si Flatpickr está inicializado, obtener el valor real
+      if (fechaInicioInput._flatpickr) {
+        const fechaInicioReal = fechaInicioInput._flatpickr.selectedDates[0];
+        if (fechaInicioReal) {
+          // Usar toLocaleDateString para mantener zona horaria local
+          fechaInicio = fechaInicioReal.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+        }
+      }
+      
+      if (fechaFinInput._flatpickr) {
+        const fechaFinReal = fechaFinInput._flatpickr.selectedDates[0];
+        if (fechaFinReal) {
+          // Usar toLocaleDateString para mantener zona horaria local
+          fechaFin = fechaFinReal.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+        }
+      }
+      
+      const estado = document.getElementById('estado').value;
+      const tipo = document.getElementById('tipo').value;
+      
+      mostrarLoading();
+      
+      // Crear objeto con los filtros
+      const filtros = {
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        estado: estado,
+        tipo: tipo
+      };
+      
+      console.log('Filtros aplicados:', filtros);
+      console.log('Fecha inicio:', fechaInicio);
+      console.log('Fecha fin:', fechaFin);
+      
+      // Llamada AJAX real al endpoint
+      fetch('{% url "digitalizacion:obtener_expedientes_filtrados" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(filtros)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          expedientesData = data.expedientes;
+          ocultarLoading();
+          mostrarResultados();
+          actualizarEstadisticas();
+          renderizarTabla();
+          renderizarPaginacion();
+        } else {
+          console.error('Error al obtener expedientes:', data.error);
+          ocultarLoading();
+          mostrarError(data.error || 'Error desconocido al obtener expedientes');
+        }
+      })
+      .catch(error => {
+        console.error('Error en la petición:', error);
+        ocultarLoading();
+        
+        // Si hay error de conexión, usar datos de ejemplo como fallback
+        if (error.name === 'TypeError' || error.message.includes('fetch')) {
+          console.log('Usando datos de ejemplo como fallback');
+          const expedientes = generarExpedientesEjemplo();
+          expedientesData = expedientes;
+          mostrarResultados();
+          actualizarEstadisticas();
+          renderizarTabla();
+          renderizarPaginacion();
+        } else {
+          mostrarError('Error de conexión: ' + error.message);
+        }
+      });
+    }
+    
+    // Generar expedientes de ejemplo (reemplazar con datos reales)
+    function generarExpedientesEjemplo() {
+      const expedientes = [];
+      const tipos = ['giro', 'pago', 'requisicion'];
+      const subtipos = ['ferreteria', 'limpieza', 'oficina'];
+      const estados = ['pendiente', 'en_proceso', 'completado', 'rechazado'];
+      const departamentos = ['Servicios Públicos', 'Mantenimiento', 'Administración'];
+      const solicitantes = ['Juan Pérez', 'María García', 'Carlos López', 'Ana Martínez'];
+      
+      for (let i = 1; i <= 45; i++) {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() - Math.floor(Math.random() * 30));
+        
+        expedientes.push({
+          id: i,
+          numero: `EXP-${String(i).padStart(4, '0')}`,
+          tipo: tipos[Math.floor(Math.random() * tipos.length)],
+          subtipo: subtipos[Math.floor(Math.random() * subtipos.length)],
+          estado: estados[Math.floor(Math.random() * estados.length)],
+          fecha_creacion: fecha,
+          departamento: departamentos[Math.floor(Math.random() * departamentos.length)],
+          solicitante: solicitantes[Math.floor(Math.random() * solicitantes.length)]
+        });
+      }
+      
+      return expedientes;
+    }
+    
+    // Mostrar loading
+    function mostrarLoading() {
+      document.getElementById('loading-container').style.display = 'flex';
+      document.getElementById('tabla-container').style.display = 'none';
+      document.getElementById('sin-resultados').style.display = 'none';
+      document.getElementById('error-container').style.display = 'none';
+    }
+    
+    // Ocultar loading
+    function ocultarLoading() {
+      document.getElementById('loading-container').style.display = 'none';
+    }
+    
+    // Mostrar resultados
+    function mostrarResultados() {
+      if (expedientesData.length > 0) {
+        document.getElementById('tabla-container').style.display = 'block';
+        document.getElementById('sin-resultados').style.display = 'none';
+        document.getElementById('error-container').style.display = 'none';
+        } else {
+        mostrarSinResultados();
+      }
+    }
+    
+    // Mostrar mensaje de sin resultados
+    function mostrarSinResultados() {
+      document.getElementById('tabla-container').style.display = 'none';
+      document.getElementById('sin-resultados').style.display = 'block';
+      document.getElementById('error-container').style.display = 'none';
+    }
+    
+    // Ocultar resultados
+    function ocultarResultados() {
+      document.getElementById('tabla-container').style.display = 'none';
+      document.getElementById('sin-resultados').style.display = 'none';
+      document.getElementById('error-container').style.display = 'none';
+    }
+    
+    // Mostrar error
+    function mostrarError(mensaje) {
+      document.getElementById('error-message').textContent = mensaje;
+      document.getElementById('error-container').style.display = 'block';
+      document.getElementById('tabla-container').style.display = 'none';
+      document.getElementById('sin-resultados').style.display = 'none';
+    }
+    
+    // Actualizar estadísticas
+    function actualizarEstadisticas() {
+      const total = expedientesData.length;
+      const pendientes = expedientesData.filter(e => e.estado === 'pendiente').length;
+      const enProceso = expedientesData.filter(e => e.estado === 'en_proceso').length;
+      const completados = expedientesData.filter(e => e.estado === 'completado').length;
+      
+      document.getElementById('total-expedientes').textContent = total;
+      document.getElementById('expedientes-pendientes').textContent = pendientes;
+      document.getElementById('expedientes-proceso').textContent = enProceso;
+      document.getElementById('expedientes-completados').textContent = completados;
+      
+      document.getElementById('resultados-count').textContent = `${total} expedientes encontrados`;
+    }
+    
+    // Renderizar tabla
+    function renderizarTabla() {
+      const inicio = (paginaActual - 1) * expedientesPorPagina;
+      const fin = inicio + expedientesPorPagina;
+      const expedientesPagina = expedientesData.slice(inicio, fin);
+      
+      const tbody = document.getElementById('tabla-body');
+      tbody.innerHTML = '';
+      
+      expedientesPagina.forEach(expediente => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${expediente.numero}</td>
+          <td><span class="tipo-badge">${formatearTipo(expediente.tipo)}</span></td>
+          <td>${expediente.subtipo}</td>
+          <td><span class="estado-badge estado-${expediente.estado}">${formatearEstado(expediente.estado)}</span></td>
+          <td>${formatearFecha(expediente.fecha_creacion)}</td>
+          <td>${expediente.departamento}</td>
+          <td>${expediente.solicitante}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Renderizar paginación
+    function renderizarPaginacion() {
+      const totalPaginas = Math.ceil(expedientesData.length / expedientesPorPagina);
+      const paginacion = document.getElementById('paginacion');
+      
+      if (totalPaginas <= 1) {
+        paginacion.style.display = 'none';
+        return;
+      }
+      
+      paginacion.style.display = 'flex';
+      paginacion.innerHTML = '';
+      
+      // Botón anterior
+      const btnAnterior = document.createElement('button');
+      btnAnterior.className = 'btn-pagina';
+      btnAnterior.textContent = 'Anterior';
+      btnAnterior.disabled = paginaActual === 1;
+      btnAnterior.onclick = () => cambiarPagina(paginaActual - 1);
+      paginacion.appendChild(btnAnterior);
+      
+      // Números de página
+      for (let i = 1; i <= totalPaginas; i++) {
+        if (i === 1 || i === totalPaginas || (i >= paginaActual - 2 && i <= paginaActual + 2)) {
+          const btnPagina = document.createElement('button');
+          btnPagina.className = `btn-pagina ${i === paginaActual ? 'active' : ''}`;
+          btnPagina.textContent = i;
+          btnPagina.onclick = () => cambiarPagina(i);
+          paginacion.appendChild(btnPagina);
+        } else if (i === paginaActual - 3 || i === paginaActual + 3) {
+          const span = document.createElement('span');
+          span.textContent = '...';
+          span.style.color = 'var(--text-secondary)';
+          span.style.padding = '0.5rem';
+          paginacion.appendChild(span);
+        }
+      }
+      
+      // Botón siguiente
+      const btnSiguiente = document.createElement('button');
+      btnSiguiente.className = 'btn-pagina';
+      btnSiguiente.textContent = 'Siguiente';
+      btnSiguiente.onclick = () => cambiarPagina(paginaActual + 1);
+      paginacion.appendChild(btnSiguiente);
+    }
+    
+    // Cambiar página
+    function cambiarPagina(pagina) {
+      paginaActual = pagina;
+      renderizarTabla();
+      renderizarPaginacion();
+    }
+    
+    // Formatear tipo de expediente
+    function formatearTipo(tipo) {
+      const tipos = {
+        'licitacion': 'Licitación',
+        'concurso_invitacion': 'Concurso por invitación',
+        'compra_directa': 'Compra directa',
+        'adjudicacion_directa': 'Adjudicación directa'
+      };
+      return tipos[tipo] || tipo;
+    }
+    
+    // Formatear estado
+    function formatearEstado(estado) {
+      const estados = {
+        'pendiente': 'Pendiente',
+        'en_proceso': 'En Proceso',
+        'completado': 'Completado',
+        'rechazado': 'Rechazado'
+      };
+      return estados[estado] || estado;
+    }
+    
+    // Formatear fecha
+    function formatearFecha(fecha) {
+      if (typeof fecha === 'string') {
+        // Si viene como string en formato YYYY-MM-DD, interpretarlo como fecha local
+        // para evitar problemas de zona horaria
+        if (fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          const [year, month, day] = fecha.split('-').map(Number);
+          fecha = new Date(year, month - 1, day); // month es 0-indexed en JavaScript
+        } else {
+          fecha = new Date(fecha);
+        }
+      }
+      return fecha.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+    
+    // Exportar a Excel
+    function exportarExcel() {
+      if (expedientesData.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+      }
+      
+      // Preparar datos para Excel - Crear una fila por cada documento
+      const datosExcel = [];
+      
+      expedientesData.forEach(exp => {
+        // Si el expediente tiene documentos, crear una fila por cada documento
+        if (exp.documentos && exp.documentos.length > 0) {
+          exp.documentos.forEach((doc, index) => {
+            datosExcel.push({
+              'Número Expediente': exp.numero,
+              'Título': exp.titulo || '',
+              'Descripción': exp.descripcion || '',
+              'Tipo': formatearTipo(exp.tipo),
+              'Subtipo': exp.subtipo || '',
+              'Estado': formatearEstado(exp.estado),
+              'Giro': exp.giro || '',
+              'Fuente Financiamiento': exp.fuente_financiamiento || '',
+              'Tipo Adquisición': exp.tipo_adquisicion || '',
+              'Modalidad Monto': exp.modalidad_monto || '',
+              'Número SIMA': exp.numero_sima || '',
+              'Fecha Expediente': exp.fecha_expediente || '',
+              'Fecha Vencimiento': exp.fecha_vencimiento || '',
+              'Fecha Creación': exp.fecha_creacion || '',
+              'Fecha Actualización': exp.fecha_actualizacion || '',
+              'Departamento': exp.departamento || '',
+              'Solicitante': exp.solicitante || '',
+              'Progreso (%)': exp.progreso || 0,
+              'Palabras Clave': exp.palabras_clave || '',
+              'Observaciones': exp.observaciones || '',
+              'Confidencial': exp.confidencial || 'No',
+              'Motivo Rechazo': exp.motivo_rechazo || '',
+              'Fecha Rechazo': exp.fecha_rechazo || '',
+              'Nombre Documento': doc.nombre || '',
+              'Descripción Documento': doc.descripcion || '',
+              'Etapa Documento': doc.etapa || '',
+              'Área Documento': doc.area || '',
+              'Tipo Archivo': doc.tipo_archivo || '',
+              'Tamaño Archivo (bytes)': doc.tamano_archivo || 0,
+              'Subido Por': doc.subido_por || '',
+              'Fecha Subida': doc.fecha_subida || '',
+              'Validado': doc.validado || 'No',
+              'Validado Por': doc.validado_por || '',
+              'Fecha Validación': doc.fecha_validacion || ''
+            });
+          });
+        } else {
+          // Si no tiene documentos, crear una fila solo con información del expediente
+          datosExcel.push({
+            'Número Expediente': exp.numero,
+            'Título': exp.titulo || '',
+            'Descripción': exp.descripcion || '',
+            'Tipo': formatearTipo(exp.tipo),
+            'Subtipo': exp.subtipo || '',
+            'Estado': formatearEstado(exp.estado),
+            'Giro': exp.giro || '',
+            'Fuente Financiamiento': exp.fuente_financiamiento || '',
+            'Tipo Adquisición': exp.tipo_adquisicion || '',
+            'Modalidad Monto': exp.modalidad_monto || '',
+            'Número SIMA': exp.numero_sima || '',
+            'Fecha Expediente': exp.fecha_expediente || '',
+            'Fecha Vencimiento': exp.fecha_vencimiento || '',
+            'Fecha Creación': exp.fecha_creacion || '',
+            'Fecha Actualización': exp.fecha_actualizacion || '',
+            'Departamento': exp.departamento || '',
+            'Solicitante': exp.solicitante || '',
+            'Progreso (%)': exp.progreso || 0,
+            'Palabras Clave': exp.palabras_clave || '',
+            'Observaciones': exp.observaciones || '',
+            'Confidencial': exp.confidencial || 'No',
+            'Motivo Rechazo': exp.motivo_rechazo || '',
+            'Fecha Rechazo': exp.fecha_rechazo || '',
+            'Nombre Documento': 'Sin documentos',
+            'Descripción Documento': '',
+            'Etapa Documento': '',
+            'Área Documento': '',
+            'Tipo Archivo': '',
+            'Tamaño Archivo (bytes)': 0,
+            'Subido Por': '',
+            'Fecha Subida': '',
+            'Validado': '',
+            'Validado Por': '',
+            'Fecha Validación': ''
+          });
+        }
+      });
+      
+      // Crear workbook y worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(datosExcel);
+      
+      // Ajustar ancho de columnas
+      const colWidths = [
+        { wch: 15 }, // Número Expediente
+        { wch: 30 }, // Título
+        { wch: 40 }, // Descripción
+        { wch: 15 }, // Tipo
+        { wch: 15 }, // Subtipo
+        { wch: 15 }, // Estado
+        { wch: 20 }, // Giro
+        { wch: 20 }, // Fuente Financiamiento
+        { wch: 20 }, // Tipo Adquisición
+        { wch: 20 }, // Modalidad Monto
+        { wch: 15 }, // Número SIMA
+        { wch: 15 }, // Fecha Expediente
+        { wch: 15 }, // Fecha Vencimiento
+        { wch: 20 }, // Fecha Creación
+        { wch: 20 }, // Fecha Actualización
+        { wch: 20 }, // Departamento
+        { wch: 20 }, // Solicitante
+        { wch: 12 }, // Progreso
+        { wch: 30 }, // Palabras Clave
+        { wch: 40 }, // Observaciones
+        { wch: 12 }, // Confidencial
+        { wch: 30 }, // Motivo Rechazo
+        { wch: 15 }, // Fecha Rechazo
+        { wch: 30 }, // Nombre Documento
+        { wch: 40 }, // Descripción Documento
+        { wch: 20 }, // Etapa Documento
+        { wch: 20 }, // Área Documento
+        { wch: 15 }, // Tipo Archivo
+        { wch: 15 }, // Tamaño Archivo
+        { wch: 20 }, // Subido Por
+        { wch: 20 }, // Fecha Subida
+        { wch: 10 }, // Validado
+        { wch: 20 }, // Validado Por
+        { wch: 20 }  // Fecha Validación
+      ];
+      ws['!cols'] = colWidths;
+      
+      // Agregar worksheet al workbook
+      XLSX.utils.book_append_sheet(wb, ws, 'Expedientes y Documentos');
+      
+      // Generar archivo y descargar
+      const fechaHoy = new Date();
+      const nombreArchivo = `reporte_expedientes_${fechaHoy.getFullYear()}-${String(fechaHoy.getMonth() + 1).padStart(2, '0')}-${String(fechaHoy.getDate()).padStart(2, '0')}.xlsx`;
+      XLSX.writeFile(wb, nombreArchivo);
+    }
+    
+    // Cambiar tema
+    function toggleTheme() {
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('theme-icon');
+      
+      if (html.getAttribute('data-theme') === 'light') {
+        html.setAttribute('data-theme', 'dark');
+        themeIcon.className = 'bi bi-sun-fill';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        html.setAttribute('data-theme', 'light');
+        themeIcon.className = 'bi bi-moon-fill';
+        localStorage.setItem('theme', 'light');
+      }
+    }
+    
+    // Cargar tema guardado
+    function cargarTemaGuardado() {
+      const temaGuardado = localStorage.getItem('theme');
+      const html = document.documentElement;
+      const themeIcon = document.getElementById('theme-icon');
+      
+      if (temaGuardado) {
+        html.setAttribute('data-theme', temaGuardado);
+        if (temaGuardado === 'light') {
+          themeIcon.className = 'bi bi-moon-fill';
+        }
+      }
+    }
+    
+        // Función auxiliar para formatear fechas en formato YYYY-MM-DD usando zona horaria local
+    function formatearFechaISO(fecha) {
+      return fecha.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+    }
+    
+    // Cargar tema al iniciar
+    cargarTemaGuardado();
+    
+    // Verificar una vez más que la función esté disponible
+    if (typeof window.exportarPDF === 'function') {
+      console.log('✓ window.exportarPDF está disponible como función');
+    } else {
+      console.error('✗ ERROR: window.exportarPDF NO está disponible!');
+      console.error('Tipo:', typeof window.exportarPDF);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,341 @@
+2025-12-08 15:00:02,521 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:00:02,524 - __main__ - ERROR - Error de configuración: NAPS2 no encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+Verifica la instalación de NAPS2 o ajusta NAPS2_CLI en config.json.
+2025-12-08 15:00:02,524 - __main__ - ERROR - Por favor, verifica la instalación de NAPS2 o ajusta NAPS2_CLI en config.json
+2025-12-08 15:01:50,444 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:01:50,447 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:01:50,448 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:01:50,448 - __main__ - INFO - NAPS2 Profile: HP_ADF_300
+2025-12-08 15:01:50,448 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:01:50,449 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:01:50,449 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:01:50,479 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:01:50,479 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:04:02,576 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:04:02,588 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:04:02] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:04:05,556 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:04:05,556 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:04:05] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:05:00,039 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:00,040 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:05:00] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:05:01,202 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:01,203 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:05:01] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:05:08,591 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:08,592 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:05:08] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:05:10,439 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:10,440 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:05:10] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:05:49,151 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:05:49,154 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:49,154 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:05:49,154 - __main__ - INFO - NAPS2 Profile: HP_ADF_300
+2025-12-08 15:05:49,154 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:05:49,154 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:05:49,155 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:05:49,166 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:05:49,166 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:05:59,927 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:05:59,928 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:05:59] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:06:01,039 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:06:01,039 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:06:01] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:06:03,558 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:06:03] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:06:03,576 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765227963043
+2025-12-08 15:06:03,580 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:06:03,580 - __main__ - INFO - Iniciando escaneo con perfil: HP_ADF_300
+2025-12-08 15:06:03,580 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_xi9jvwq7\scanned.pdf
+2025-12-08 15:06:03,581 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe -p HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_xi9jvwq7\scanned.pdf --adf
+2025-12-08 15:06:04,113 - __main__ - INFO - Escaneo completado exitosamente
+2025-12-08 15:06:04,114 - __main__ - ERROR - Error inesperado al escanear: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_xi9jvwq7\scanned.pdf
+2025-12-08 15:06:04,114 - __main__ - ERROR - Error inesperado en scan_route: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_xi9jvwq7\scanned.pdf
+Traceback (most recent call last):
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 222, in scan_route
+    run_naps2_scan(out_pdf)
+    ~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 161, in run_naps2_scan
+    raise FileNotFoundError(f"NAPS2 no generó el archivo: {output_path}")
+FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_xi9jvwq7\scanned.pdf
+2025-12-08 15:06:04,118 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:06:04] "[35m[1mPOST /scan HTTP/1.1[0m" 500 -
+2025-12-08 15:08:25,040 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:08:25,042 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:08:25,043 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:08:25,043 - __main__ - INFO - NAPS2 Profile: HP_ADF_300
+2025-12-08 15:08:25,043 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:08:25,043 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:08:25,043 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:08:25,055 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:08:25,055 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:08:38,744 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:08:38,745 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:08:38] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:08:39,837 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:08:39,838 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:08:39] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:08:41,128 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:08:41] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:08:41,140 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765228120618
+2025-12-08 15:08:41,144 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:08:41,145 - __main__ - INFO - Iniciando escaneo con perfil: HP_ADF_300
+2025-12-08 15:08:41,145 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_85ymcwbz\scanned.pdf
+2025-12-08 15:08:41,146 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe -p HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_85ymcwbz\scanned.pdf --adf
+2025-12-08 15:08:41,320 - __main__ - INFO - Escaneo completado exitosamente
+2025-12-08 15:08:41,321 - __main__ - ERROR - Error inesperado al escanear: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_85ymcwbz\scanned.pdf
+2025-12-08 15:08:41,321 - __main__ - ERROR - Error inesperado en scan_route: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_85ymcwbz\scanned.pdf
+Traceback (most recent call last):
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 222, in scan_route
+    run_naps2_scan(out_pdf)
+    ~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 161, in run_naps2_scan
+    raise FileNotFoundError(f"NAPS2 no generó el archivo: {output_path}")
+FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_85ymcwbz\scanned.pdf
+2025-12-08 15:08:41,324 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:08:41] "[35m[1mPOST /scan HTTP/1.1[0m" 500 -
+2025-12-08 15:11:02,743 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:11:02,744 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:11:02] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:11:18,123 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:11:18,126 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:11:18,126 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:11:18,126 - __main__ - INFO - NAPS2 Profile: HP_ADF_300
+2025-12-08 15:11:18,127 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:11:18,127 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:11:18,127 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:11:18,139 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:11:18,140 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:11:25,088 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:11:25,089 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:11:25] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:11:26,708 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:11:26] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:11:26,716 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765228286194
+2025-12-08 15:11:26,720 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:11:26,720 - __main__ - INFO - Iniciando escaneo con perfil: HP_ADF_300
+2025-12-08 15:11:26,721 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_2l5zl882\scanned.pdf
+2025-12-08 15:11:26,721 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe -p HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_2l5zl882\scanned.pdf --force
+2025-12-08 15:11:27,178 - __main__ - INFO - NAPS2 stdout: The specified profile is unavailable or ambiguous.
+Use the --profile option to specify a profile by name.
+
+2025-12-08 15:11:27,178 - __main__ - INFO - NAPS2 código de salida: 1
+2025-12-08 15:11:27,178 - __main__ - ERROR - Error inesperado al escanear: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_2l5zl882\scanned.pdf
+2025-12-08 15:11:27,179 - __main__ - ERROR - Error inesperado en scan_route: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_2l5zl882\scanned.pdf
+Traceback (most recent call last):
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 226, in scan_route
+    run_naps2_scan(out_pdf)
+    ~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 165, in run_naps2_scan
+    raise FileNotFoundError(f"NAPS2 no generó el archivo: {output_path}")
+FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_2l5zl882\scanned.pdf
+2025-12-08 15:11:27,181 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:11:27] "[35m[1mPOST /scan HTTP/1.1[0m" 500 -
+2025-12-08 15:12:43,110 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:12:43,113 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:12:43,113 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:12:43,113 - __main__ - INFO - NAPS2 Profile: HP_ADF_300
+2025-12-08 15:12:43,113 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:12:43,114 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:12:43,114 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:12:43,125 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:12:43,125 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:12:56,241 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:12:56,242 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:12:56] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:12:57,263 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:12:57,264 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:12:57] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:12:59,038 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:12:59] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:12:59,044 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765228378522
+2025-12-08 15:12:59,047 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:12:59,047 - __main__ - INFO - Iniciando escaneo con perfil: HP_ADF_300
+2025-12-08 15:12:59,047 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_kltsiumk\scanned.pdf
+2025-12-08 15:12:59,048 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_kltsiumk\scanned.pdf --force
+2025-12-08 15:12:59,391 - __main__ - INFO - NAPS2 stdout: The specified profile is unavailable or ambiguous.
+Use the --profile option to specify a profile by name.
+
+2025-12-08 15:12:59,392 - __main__ - INFO - NAPS2 código de salida: 1
+2025-12-08 15:12:59,392 - __main__ - ERROR - Error inesperado al escanear: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_kltsiumk\scanned.pdf
+2025-12-08 15:12:59,392 - __main__ - ERROR - Error inesperado en scan_route: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_kltsiumk\scanned.pdf
+Traceback (most recent call last):
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 226, in scan_route
+    run_naps2_scan(out_pdf)
+    ~~~~~~~~~~~~~~^^^^^^^^^
+  File "D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\scan_service.py", line 165, in run_naps2_scan
+    raise FileNotFoundError(f"NAPS2 no generó el archivo: {output_path}")
+FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Temp\scan_kltsiumk\scanned.pdf
+2025-12-08 15:12:59,395 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:12:59] "[35m[1mPOST /scan HTTP/1.1[0m" 500 -
+2025-12-08 15:13:59,364 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:13:59,366 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:13:59,367 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:13:59,367 - __main__ - INFO - NAPS2 Profile:  HP_ADF_300
+2025-12-08 15:13:59,367 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:13:59,367 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:13:59,368 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:13:59,378 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:13:59,379 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:14:10,693 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:14:10,694 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:14:10] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:14:12,393 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:14:12,394 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:14:12] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:14:13,854 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:14:13] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:14:13,859 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765228453346
+2025-12-08 15:14:13,861 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:14:13,861 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300
+2025-12-08 15:14:13,861 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_l325dl__\scanned.pdf
+2025-12-08 15:14:13,862 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_l325dl__\scanned.pdf --force
+2025-12-08 15:14:22,441 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-08 15:14:22,441 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_l325dl__\scanned.pdf (316665 bytes)
+2025-12-08 15:14:22,442 - __main__ - INFO - Subiendo PDF a Django: http://127.0.0.1:8000/expedientes/328/etapa/57/subir-documento/
+2025-12-08 15:14:22,455 - __main__ - ERROR - Error al subir a Django: 403 Client Error: Forbidden for url: http://127.0.0.1:8000/expedientes/328/etapa/57/subir-documento/
+2025-12-08 15:14:22,455 - __main__ - ERROR - Respuesta Django: <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="robots" content="NONE,NOARCHIVE">
+  <title>403 Forbidden</title>
+  <style type="text/css">
+    html * { padding:0; margin:0; }
+    body * { padding:10px 20px; }
+    body * * { padding:0; }
+    body { font:small sans-serif; background:#eee; color:#000; }
+    body>div { border-bottom:1px solid #ddd; }
+    h1 { font-weight:normal; margin-bottom:.4em; }
+    h1 span { font-size:60%; color:#666; font-weight:normal; }
+    #info { background:#f6f6f6; }
+    #info ul { margin: 0.5em 4em; }
+    #info p, #summary p { padding-top:10px; }
+    #summary { background: #ffc; }
+    #explanation { background:#eee; border-bottom: 0px none; }
+  </style>
+</head>
+<body>
+<div id="summary">
+  <h1>Prohibido <span>(403)</span></h1>
+  <p>La verificación CSRF ha fallado. Solicitud abortada.</p>
+
+
+  <p>Estás viendo este mensaje porqué esta web requiere una cookie CSRF cuando se envían formularios. Esta cookie se necesita por razones de seguridad, para asegurar que tu navegador no ha sido comprometido por terceras partes.</p>
+  <p>Si ha configurado su navegador para deshabilitar las cookies, vuelva a habilitarlas, al menos para este sitio o para solicitudes del &quot;mismo origen&quot;.</p>
+
+</div>
+
+<div id="info">
+  <h2>Help</h2>
+    
+    <p>Reason given for failure:</p>
+    <pre>
+    CSRF cookie not set.
+    </pre>
+    
+
+  <p>In general, this can occur when there is a genuine Cross Site Request Forgery, or when
+  <a
+  href="https://docs.djangoproject.com/en/5.0/ref/csrf/">Django’s
+  CSRF mechanism</a> has not been used correctly.  For POST forms, you need to
+  ensure:</p>
+
+  <ul>
+    <li>Your browser is accepting cookies.</li>
+
+    <li>The view function passes a <code>request</code> to the template’s <a
+    href="https://docs.djangoproject.com/en/dev/topics/templates/#django.template.backends.base.Template.render"><code>render</code></a>
+    method.</li>
+
+    <li>In the template, there is a <code>{% csrf_token
+    %}</code> template tag inside each POST form that
+    targets an internal URL.</li>
+
+    <li>If you are not using <code>CsrfViewMiddleware</code>, then you must use
+    <code>csrf_protect</code> on any views that use the <code>csrf_token</code>
+    template tag, as well as those that accept the POST data.</li>
+
+    <li>The form has a valid CSRF token. After logging in in another browser
+    tab or hitting the back button after a login, you may need to reload the
+    page with the form, because the token is rotated after a login.</li>
+  </ul>
+
+  <p>You’re seeing the help section of this page because you have <code>DEBUG =
+  True</code> in your Django settings file. Change that to <code>False</code>,
+  and only the initial error message will be displayed.  </p>
+
+  <p>You can customize this page using the CSRF_FAILURE_VIEW setting.</p>
+</div>
+
+</body>
+</html>
+
+2025-12-08 15:14:22,457 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:14:22] "[35m[1mPOST /scan HTTP/1.1[0m" 500 -
+2025-12-08 15:16:02,691 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:16:02,693 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:16:02,694 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:16:02,694 - __main__ - INFO - NAPS2 Profile:  HP_ADF_300
+2025-12-08 15:16:02,694 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:16:02,694 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:16:02,694 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:16:02,708 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:16:02,708 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:16:17,805 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:16:17,805 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:16:17] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:16:18,893 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:16:18,894 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:16:18] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:16:20,480 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:16:20] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:16:20,490 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=57, área=57, nombre=Scan_1765228579970
+2025-12-08 15:16:20,494 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:16:20,494 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300
+2025-12-08 15:16:20,495 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_mvo8tsss\scanned.pdf
+2025-12-08 15:16:20,495 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_mvo8tsss\scanned.pdf --force
+2025-12-08 15:16:37,233 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-08 15:16:37,234 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_mvo8tsss\scanned.pdf (1506313 bytes)
+2025-12-08 15:16:37,234 - __main__ - INFO - Subiendo PDF a Django: http://127.0.0.1:8000/expedientes/328/etapa/57/subir-documento/
+2025-12-08 15:16:39,498 - __main__ - INFO - Documento subido exitosamente: {'success': True, 'documento': {'id': 783, 'nombre': 'Scan_1765228579970', 'url': '/media/expedientes/2025/12/EXP-20251208-205208_20251208_211637.pdf', 'fecha_subida': '08/12/2025 21:16', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '1471.0 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 9, 'etapa_actual': 'Solicitud de requisición del área', 'etapa_completada': True}
+2025-12-08 15:16:39,506 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:16:39] "POST /scan HTTP/1.1" 200 -
+2025-12-08 15:51:02,347 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:51:02,350 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:51:02,350 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:51:02,350 - __main__ - INFO - NAPS2 Profile:  HP_ADF_300
+2025-12-08 15:51:02,350 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:51:02,350 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:51:02,351 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:51:02,375 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:51:02,376 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:51:46,741 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:51:46] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:51:46,752 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=58, área=58, nombre=Jacque
+2025-12-08 15:51:46,754 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:51:46,754 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300
+2025-12-08 15:51:46,755 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_wlkd1ac4\scanned.pdf
+2025-12-08 15:51:46,755 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_wlkd1ac4\scanned.pdf --force
+2025-12-08 15:51:59,350 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-08 15:51:59,350 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_wlkd1ac4\scanned.pdf (3871470 bytes)
+2025-12-08 15:51:59,351 - __main__ - INFO - Subiendo PDF a Django: http://127.0.0.1:8000/expedientes/328/etapa/58/subir-documento/
+2025-12-08 15:52:00,947 - __main__ - INFO - Documento subido exitosamente: {'success': True, 'documento': {'id': 784, 'nombre': 'Jacque', 'url': '/media/expedientes/2025/12/EXP-20251208-205208_20251208_215159.pdf', 'fecha_subida': '08/12/2025 21:51', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '3780.7 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 9, 'etapa_actual': 'Requisición', 'etapa_completada': True}
+2025-12-08 15:52:00,950 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:52:00] "POST /scan HTTP/1.1" 200 -
+2025-12-08 15:55:02,538 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-08 15:55:02,541 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:55:02,541 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-08 15:55:02,541 - __main__ - INFO - NAPS2 Profile:  HP_ADF_300
+2025-12-08 15:55:02,541 - __main__ - INFO - Django URL: http://127.0.0.1:8000
+2025-12-08 15:55:02,542 - __main__ - INFO - Campo archivo: documento
+2025-12-08 15:55:02,542 - __main__ - INFO - Escuchando en http://127.0.0.1:5001
+2025-12-08 15:55:02,553 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5001
+2025-12-08 15:55:02,553 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-12-08 15:55:18,063 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:55:18,065 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:55:18] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:56:06,564 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-08 15:56:06,565 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:56:06] "GET /health HTTP/1.1" 200 -
+2025-12-08 15:56:11,633 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:56:11] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:56:11,639 - __main__ - INFO - Recibida solicitud de escaneo (dúplex): expediente=328, etapa=60, área=60, nombre=Scan_1765230971115
+2025-12-08 15:56:11,644 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:56:11,645 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300, modo: dúplex (ambos lados)
+2025-12-08 15:56:11,646 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_us0kb4w6\scanned.pdf
+2025-12-08 15:56:11,646 - __main__ - INFO - Modo dúplex activado - escaneando ambos lados
+2025-12-08 15:56:11,647 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_us0kb4w6\scanned.pdf --force --source duplex
+2025-12-08 15:56:22,138 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-08 15:56:22,139 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_us0kb4w6\scanned.pdf (4163073 bytes)
+2025-12-08 15:56:22,139 - __main__ - INFO - Subiendo PDF a Django: http://127.0.0.1:8000/expedientes/328/etapa/60/subir-documento/
+2025-12-08 15:56:23,564 - __main__ - INFO - Documento subido exitosamente: {'success': True, 'documento': {'id': 785, 'nombre': 'Scan_1765230971115', 'url': '/media/expedientes/2025/12/EXP-20251208-205208_20251208_215622.pdf', 'fecha_subida': '08/12/2025 21:56', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '4065.5 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 9, 'etapa_actual': 'Solicitud de pago', 'etapa_completada': True}
+2025-12-08 15:56:23,567 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:56:23] "POST /scan HTTP/1.1" 200 -
+2025-12-08 15:57:10,838 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:57:10] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-08 15:57:10,850 - __main__ - INFO - Recibida solicitud de escaneo: expediente=328, etapa=63, área=63, nombre=Scan_1765231030315
+2025-12-08 15:57:10,851 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-08 15:57:10,851 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300, modo: simplex (un lado)
+2025-12-08 15:57:10,852 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_xr348htm\scanned.pdf
+2025-12-08 15:57:10,852 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_xr348htm\scanned.pdf --force
+2025-12-08 15:57:21,182 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-08 15:57:21,182 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_xr348htm\scanned.pdf (2801828 bytes)
+2025-12-08 15:57:21,182 - __main__ - INFO - Subiendo PDF a Django: http://127.0.0.1:8000/expedientes/328/etapa/63/subir-documento/
+2025-12-08 15:57:22,596 - __main__ - INFO - Documento subido exitosamente: {'success': True, 'documento': {'id': 786, 'nombre': 'Scan_1765231030315', 'url': '/media/expedientes/2025/12/EXP-20251208-205208_20251208_215721.pdf', 'fecha_subida': '08/12/2025 21:57', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '2736.2 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 9, 'etapa_actual': 'Vale de entrada', 'etapa_completada': True}
+2025-12-08 15:57:22,598 - werkzeug - INFO - 127.0.0.1 - - [08/Dec/2025 15:57:22] "POST /scan HTTP/1.1" 200 -

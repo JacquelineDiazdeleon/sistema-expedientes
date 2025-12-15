@@ -1,0 +1,551 @@
+/**
+ * Manejo de documentos para el módulo de expedientes
+ */
+
+const DocumentosApp = {
+    // Variables de estado
+    areaActual: null,
+    escaneoActual: null,
+    
+    // Referencias a elementos del DOM
+    elementos: {
+        modalSubirDocumento: null,
+        formularioSubida: null,
+        inputArchivo: null,
+        btnSubir: null,
+        spinner: null,
+        btnCamara: null,
+        btnIniciarEscaneo: null,
+        btnDescartarEscaneo: null,
+        btnUsarEscaneo: null,
+        dropZone: null,
+        vistaPreviaEscaneo: null,
+        imagenEscaneada: null,
+        escaneoProgreso: null,
+        contenedorAlertas: null,
+        nombreDocumento: null,
+        observaciones: null
+    },
+    
+    // Inicialización
+    init: function() {
+        console.log('Inicializando módulo de documentos');
+        this.obtenerElementos();
+        this.initEventListeners();
+    },
+    
+    // Obtener referencias a elementos del DOM
+    obtenerElementos: function() {
+        const modalElement = document.getElementById('subirDocumentoModal');
+        
+        this.elementos = {
+            modalSubirDocumento: modalElement ? new bootstrap.Modal(modalElement) : null,
+            formularioSubida: document.getElementById('form-subir-documento'),
+            inputArchivo: document.getElementById('documento'),
+            btnSubir: document.getElementById('btn-subir-documento'),
+            spinner: document.getElementById('uploadSpinner'),
+            btnCamara: document.getElementById('btn-camara'),
+            btnIniciarEscaneo: document.getElementById('btn-iniciar-escaneo'),
+            btnDescartarEscaneo: document.getElementById('btn-descartar-escaneo'),
+            btnUsarEscaneo: document.getElementById('btn-usar-escaneo'),
+            dropZone: document.getElementById('dropZone'),
+            vistaPreviaEscaneo: document.getElementById('vista-previa-escaneo'),
+            imagenEscaneada: document.getElementById('imagen-escaneada'),
+            escaneoProgreso: document.getElementById('escaneo-progreso'),
+            contenedorAlertas: document.getElementById('contenedor-alertas'),
+            nombreDocumento: document.getElementById('nombreDocumento'),
+            observaciones: document.getElementById('observaciones')
+        };
+            vistaPreviaEscaneo: document.getElementById('vista-previa-escaneo'),
+            imagenEscaneada: document.getElementById('imagen-escaneada'),
+            escaneoProgreso: document.getElementById('escaneo-progreso'),
+            contenedorAlertas: document.getElementById('contenedor-alertas')
+        };
+    },
+    
+    /**
+     * Carga los documentos de un área específica
+     * @param {string} areaId - ID del área
+     * @param {string} nombreArea - Nombre del área
+     */
+    cargarDocumentosArea: function(areaId, nombreArea) {
+        console.log('DocumentosApp.cargarDocumentosArea llamado con:', { areaId, nombreArea });
+        
+        if (!areaId) {
+            console.error('Error: No se proporcionó un ID de área válido');
+            this.mostrarError('No se proporcionó un ID de área válido');
+            return;
+        }
+        
+        // Obtener el ID del expediente de la URL
+        const urlParts = window.location.pathname.split('/');
+        const expedienteId = urlParts[urlParts.length - 1];
+        
+        if (!expedienteId || isNaN(expedienteId)) {
+            console.error('No se pudo obtener el ID del expediente de la URL');
+            this.mostrarError('No se pudo identificar el expediente actual');
+            return;
+        }
+        
+        // Guardar el área actual
+        this.areaActual = { id: areaId, nombre: nombreArea };
+        
+        // Mostrar indicador de carga
+        const contenedor = document.getElementById('contenido-documentos');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <span class="ms-3">Cargando documentos para ${nombreArea}...</span>
+                </div>`;
+        }
+        
+        // Realizar la petición al servidor para obtener los documentos del área
+        const url = `/expedientes/${expedienteId}/area/${areaId}/documentos/`;
+        console.log('URL de la API:', url);
+        
+        fetch(url, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    // Si hay un error en la respuesta JSON, lanzar el mensaje de error
+                    throw new Error(err.error || `Error en la petición: ${response.status} ${response.statusText}`);
+                }).catch(() => {
+                    // Si no se puede parsear la respuesta como JSON, lanzar el error genérico
+                    throw new Error(`Error en la petición: ${response.status} ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Documentos recibidos:', data);
+            if (data.success === false) {
+                throw new Error(data.error || 'Error al cargar los documentos');
+            }
+            
+            // Mapear los datos de la API al formato esperado por mostrarDocumentos
+            const documentos = (data.documentos || []).map(doc => ({
+                id: doc.id,
+                titulo: doc.nombre,
+                tipo_documento: doc.tipo,
+                tamano: doc.tamano_archivo || 0,
+                fecha_subida: doc.fecha_subida,
+                url_descarga: doc.archivo_url || '#',
+                descripcion: doc.descripcion || ''
+            }));
+            
+            this.mostrarDocumentos(documentos, data.area?.nombre || nombreArea);
+        })
+        .catch(error => {
+            console.error('Error al cargar documentos:', error);
+            this.mostrarError(`No se pudieron cargar los documentos: ${error.message}`);
+        });
+    },
+    
+    /**
+     * Muestra los documentos en el contenedor correspondiente
+     * @param {Array} documentos - Lista de documentos a mostrar
+     * @param {string} nombreArea - Nombre del área para mostrar en el título
+     */
+    mostrarDocumentos: function(documentos, nombreArea) {
+        const contenedor = document.getElementById('contenido-documentos');
+        if (!contenedor) return;
+        
+        if (!documentos || documentos.length === 0) {
+            this.mostrarListaDocumentosVacia(nombreArea);
+            return;
+        }
+        
+        // Crear HTML para la lista de documentos
+        let html = `
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Documentos en ${nombreArea}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>Tamaño</th>
+                                    <th>Fecha de subida</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+        
+        // Agregar cada documento a la tabla
+        documentos.forEach(doc => {
+            const fecha = new Date(doc.fecha_subida);
+            const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            html += `
+                <tr>
+                    <td>${doc.titulo || 'Sin título'}</td>
+                    <td>${doc.tipo_documento || 'No especificado'}</td>
+                    <td>${this.formatearTamanio(doc.tamano)}</td>
+                    <td>${fechaFormateada}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="${doc.url_descarga}" class="btn btn-outline-primary" title="Descargar" download>
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button class="btn btn-outline-secondary ver-documento" data-documento-id="${doc.id}" title="Vista previa">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-danger eliminar-documento" data-documento-id="${doc.id}" title="Eliminar">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>`;
+        });
+        
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button class="btn btn-azul-oscuro" data-bs-toggle="modal" data-bs-target="#subirDocumentoModal">
+                        <i class="bi bi-upload me-2"></i>Agregar Documento
+                    </button>
+                </div>
+            </div>`;
+        
+        contenedor.innerHTML = html;
+        
+        // Inicializar tooltips de Bootstrap
+        const tooltipTriggerList = [].slice.call(contenedor.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    },
+    
+    /**
+     * Muestra un mensaje de error en el contenedor de documentos
+     * @param {string} mensaje - Mensaje de error a mostrar
+     */
+    mostrarError: function(mensaje) {
+        const contenedor = document.getElementById('contenido-documentos');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div class="alert alert-danger">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <div>
+                            <h5 class="alert-heading">Error al cargar los documentos</h5>
+                            <p class="mb-0">${mensaje}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-end">
+                        <button class="btn btn-outline-primary btn-sm" onclick="window.location.reload()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reintentar
+                        </button>
+                    </div>
+                </div>`;
+        } else {
+            console.error('Error al mostrar mensaje: No se encontró el contenedor de documentos');
+        }
+    },
+    
+    /**
+     * Muestra una lista vacía de documentos
+     * @param {string} nombreArea - Nombre del área para mostrar en el mensaje
+     */
+    mostrarListaDocumentosVacia: function(nombreArea) {
+        const contenedor = document.getElementById('contenido-documentos');
+        if (contenedor) {
+            contenedor.innerHTML = `
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-4">
+                            <i class="bi bi-folder2-open display-4 text-muted"></i>
+                        </div>
+                        <h4>No hay documentos en ${nombreArea}</h4>
+                        <p class="text-muted mb-4">Aún no se han cargado documentos para esta área.</p>
+                        <button class="btn btn-azul-oscuro" data-bs-toggle="modal" data-bs-target="#subirDocumentoModal">
+                            <i class="bi bi-upload me-2"></i>Subir Primer Documento
+                        </button>
+                    </div>
+                </div>`;
+
+// Inicializar manejadores de eventos
+initEventListeners: function() {
+    const { 
+        formularioSubida, 
+        inputArchivo, 
+        btnCamara, 
+        btnIniciarEscaneo,
+        btnDescartarEscaneo,
+        btnUsarEscaneo,
+        dropZone
+    } = this.elementos;
+            
+            // Mostrar el modal
+            if (this.elementos.modalSubirDocumento) {
+                this.elementos.modalSubirDocumento.show();
+            }
+        };
+        
+        // Delegación de eventos para los botones de vista previa
+        document.addEventListener('click', (e) => {
+            const btnVer = e.target.closest('.btn-ver-documento');
+            if (btnVer) {
+                e.preventDefault();
+                const url = btnVer.dataset.url;
+                const nombre = btnVer.dataset.nombre;
+                this.verDocumento(url, nombre);
+            }
+
+            // Manejar eliminación de documentos
+            const btnEliminar = e.target.closest('.btn-eliminar-documento');
+            if (btnEliminar) {
+                e.preventDefault();
+                const documentoId = btnEliminar.dataset.documentoId;
+                const nombreDocumento = btnEliminar.dataset.nombreDocumento;
+                this.confirmarEliminarDocumento(documentoId, nombreDocumento);
+            }
+        });
+    },
+
+    /**
+     * Muestra la vista previa de un documento en un modal
+     * @param {string} url - URL del documento a previsualizar
+     * @param {string} nombre - Nombre del documento
+     */
+    verDocumento: function(url, nombre) {
+        const modal = new bootstrap.Modal(document.getElementById('modalVistaPrevia'));
+        const tituloModal = document.getElementById('modalVistaPreviaLabel');
+        const contenedor = document.getElementById('contenedor-vista-previa');
+        const enlaceDescarga = document.getElementById('descargar-documento');
+        
+        // Configurar el título del modal
+        tituloModal.textContent = `Vista Previa: ${nombre}`;
+        
+        // Configurar el enlace de descarga
+        enlaceDescarga.href = url;
+        enlaceDescarga.download = nombre;
+        enlaceDescarga.title = `Descargar ${nombre}`;
+        
+        // Mostrar el loader
+        contenedor.innerHTML = `
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-2">Cargando vista previa...</p>
+                </div>
+            </div>`;
+        
+        // Mostrar el modal
+        modal.show();
+        
+        // Cargar la vista previa según el tipo de archivo
+        this.cargarVistaPrevia(url, nombre, contenedor);
+    },
+    
+    /**
+     * Carga la vista previa según el tipo de archivo
+     * @param {string} url - URL del archivo
+     * @param {string} nombre - Nombre del archivo
+     * @param {HTMLElement} contenedor - Elemento contenedor
+     */
+    cargarVistaPrevia: function(url, nombre, contenedor) {
+        const extension = nombre.split('.').pop().toLowerCase();
+        let contenido = '';
+        
+        // Configurar el visor según el tipo de archivo
+        if (['pdf'].includes(extension)) {
+            // PDF: usar visor nativo
+            contenido = `
+                <iframe 
+                    src="${url}" 
+                    style="width: 100%; height: 100%; border: none;"
+                    title="Vista previa de ${nombre}">
+                </iframe>`;
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+            // Imágenes: mostrar directamente
+            contenido = `
+                <div class="d-flex justify-content-center align-items-center h-100">
+                    <img src="${url}" alt="Vista previa de ${nombre}" class="img-fluid" style="max-height: 100%; max-width: 100%;">
+                </div>`;
+        } else if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension)) {
+            // Documentos de Office: usar Google Docs Viewer
+            const urlViewer = `https://docs.google.com/viewer?url=${encodeURIComponent(window.location.origin + url)}&embedded=true`;
+            contenido = `
+                <iframe 
+                    src="${urlViewer}" 
+                    style="width: 100%; height: 100%; border: none;"
+                    title="Vista previa de ${nombre}">
+                </iframe>`;
+        } else {
+            // Otros tipos de archivo: mensaje de no soporte
+            contenido = `
+                <div class="d-flex flex-column justify-content-center align-items-center h-100">
+                    <i class="bi bi-file-earmark-text display-1 text-muted mb-3"></i>
+                    <h5>Vista previa no disponible</h5>
+                    <p class="text-muted">Este tipo de archivo no tiene vista previa disponible.</p>
+                    <p>Puedes descargar el archivo para ver su contenido.</p>
+                </div>`;
+        }
+        
+        // Actualizar el contenido del contenedor
+        contenedor.innerHTML = contenido;
+    },
+    
+    /**
+     * Muestra un modal de confirmación para eliminar un documento
+     * @param {string} documentoId - ID del documento a eliminar
+     * @param {string} nombreDocumento - Nombre del documento para mostrar en el mensaje
+     */
+    confirmarEliminarDocumento: function(documentoId, nombreDocumento) {
+        if (!documentoId) {
+            console.error('ID de documento no proporcionado');
+            this.mostrarAlerta('No se pudo identificar el documento a eliminar', 'error');
+            return;
+        }
+
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: `¿Deseas eliminar el documento "${nombreDocumento || 'seleccionado'}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.eliminarDocumento(documentoId);
+            }
+        });
+    },
+    
+    /**
+     * Elimina un documento
+     * @param {string} documentoId - ID del documento a eliminar
+     */
+    eliminarDocumento: async function(documentoId) {
+        if (!documentoId) return;
+        
+        try {
+            const csrfToken = this.getCookie('csrftoken');
+            const response = await fetch(`/documentos/eliminar/${documentoId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                this.mostrarAlerta('Documento eliminado correctamente', 'success');
+                
+                // Disparar evento personalizado para actualizar la interfaz
+                document.dispatchEvent(new CustomEvent('documentoEliminado', { 
+                    detail: { documentoId, areaId: data.area_id } 
+                }));
+                
+            } else {
+                throw new Error(data.error || 'Error al eliminar el documento');
+            }
+            
+        } catch (error) {
+            console.error('Error al eliminar documento:', error);
+            this.mostrarAlerta(error.message || 'Error al eliminar el documento', 'error');
+        }
+    },
+    
+    /**
+     * Muestra u oculta el indicador de carga
+     * @param {boolean} mostrar - Indica si se debe mostrar u ocultar el indicador
+     */
+    mostrarCarga: function(mostrar) {
+        if (this.elementos.btnSubir && this.elementos.spinner) {
+            this.elementos.btnSubir.disabled = mostrar;
+            this.elementos.spinner.classList.toggle('d-none', !mostrar);
+            this.elementos.btnSubir.querySelector('span:not(.spinner-border)').classList.toggle('d-none', mostrar);
+        }
+    },
+    
+    mostrarAlerta: function(mensaje, tipo = 'info') {
+        // Crear contenedor de alertas si no existe
+        let contenedor = document.getElementById('contenedor-alertas');
+        if (!contenedor) {
+            contenedor = document.createElement('div');
+            contenedor.id = 'contenedor-alertas';
+            contenedor.className = 'position-fixed top-0 end-0 p-3';
+            contenedor.style.zIndex = '1100';
+            document.body.appendChild(contenedor);
+        }
+        
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show`;
+        alerta.role = 'alert';
+        alerta.innerHTML = `
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        contenedor.prepend(alerta);
+        
+        // Eliminar la alerta después de 5 segundos
+        setTimeout(() => {
+            alerta.remove();
+            // Eliminar el contenedor si no hay más alertas
+            if (contenedor.children.length === 0) {
+                contenedor.remove();
+            }
+        }, 5000);
+    },
+    
+    /**
+     * Obtiene el valor de una cookie por su nombre
+     * @param {string} name - Nombre de la cookie
+     * @returns {string} Valor de la cookie o cadena vacía si no existe
+     */
+    getCookie: function(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue || '';
+    }
+};
+
+// Inicializar el módulo cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', () => {
+    DocumentosApp.init();
+});
+
+// Hacer que el módulo esté disponible globalmente
+window.DocumentosApp = DocumentosApp;

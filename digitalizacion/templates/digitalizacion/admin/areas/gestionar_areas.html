@@ -1,0 +1,806 @@
+{% extends "digitalizacion/admin/areas/base_sin_nav.html" %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}Gestión de Áreas por Tipo de Expediente{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.css" rel="stylesheet">
+<style>
+    /* ==================== VARIABLES Y CONFIGURACIÓN GLOBAL ==================== */
+    :root {
+        /* Tema claro */
+        --light-bg-primary: #ffffff;
+        --light-bg-secondary: #f8fafc;
+        --light-border: #e2e8f0;
+        --light-text-primary: #1a202c;
+        --light-text-secondary: #4a5568;
+        --light-text-muted: #718096;
+        --light-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --light-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+        
+        /* Colores de acento */
+        --accent-blue: #3182ce;
+        --accent-blue-light: #4299e1;
+        --accent-green: #38a169;
+        --accent-orange: #dd6b20;
+        --accent-red: #e53e3e;
+        --accent-purple: #805ad5;
+    }
+
+    /* ==================== ESTILOS BASE PARA TEMA CLARO ==================== */
+    body {
+        background: var(--light-bg-secondary);
+        margin: 0;
+        padding: 0;
+    }
+    
+    .areas-management-container {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background: var(--light-bg-secondary);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    /* Tabs de tipos superiores - Tema claro */
+    .tipo-tabs-container {
+        background: var(--light-bg-primary);
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        padding: 8px;
+        box-shadow: var(--light-shadow);
+        width: 100%;
+        display: block;
+        margin-bottom: 30px;
+    }
+
+    .tipo-tab {
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        padding: 20px 16px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--light-text-secondary);
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        width: 100%;
+        position: relative;
+    }
+
+    /* Asegurar que todas las columnas se muestren */
+    .tipo-tabs-container .row {
+        margin: 0;
+        width: 100%;
+    }
+
+    .tipo-tabs-container .col-3 {
+        padding: 4px;
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+
+    .tipo-tab:hover {
+        background: var(--light-bg-secondary);
+        transform: translateY(-1px);
+    }
+
+    .tipo-tab.active {
+        background: var(--accent-blue);
+        color: white;
+        box-shadow: var(--light-shadow-lg);
+    }
+
+    .tipo-tab .bi {
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+        opacity: 0.8;
+    }
+
+    .tipo-tab.active .bi {
+        opacity: 1;
+    }
+
+    /* Subtabs */
+    .subtipo-tabs {
+        background: var(--light-bg-secondary);
+        border: 1px solid var(--light-border);
+        border-radius: 8px;
+        padding: 12px;
+    }
+
+    /* Tarjetas de áreas - Tema claro */
+    .area-card {
+        background: var(--light-bg-primary);
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+        box-shadow: var(--light-shadow);
+    }
+
+    .area-card:hover {
+        border-color: var(--accent-blue);
+        box-shadow: var(--light-shadow-lg);
+        transform: translateY(-1px);
+    }
+
+    .area-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .area-card-title {
+        color: var(--light-text-primary);
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .area-card-description {
+        color: var(--light-text-muted);
+        font-size: 0.9rem;
+        margin: 0;
+    }
+
+    .area-card-meta {
+        color: var(--light-text-muted);
+        font-size: 0.8rem;
+        margin-top: 8px;
+    }
+
+    /* Botones modernos */
+    .btn-modern {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 8px 16px;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .btn-modern-primary {
+        background: var(--accent-blue);
+        color: white;
+    }
+
+    .btn-modern-primary:hover {
+        background: var(--accent-blue-light);
+        transform: translateY(-1px);
+    }
+
+    /* Badges modernos */
+    .badge-modern {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    .badge-modern-default {
+        background: #e2e8f0;
+        color: #4a5568;
+    }
+
+    .badge-modern-success {
+        background: #c6f6d5;
+        color: #22543d;
+    }
+
+    .badge-modern-warning {
+        background: #faf089;
+        color: #744210;
+    }
+
+    .badge-modern-danger {
+        background: #fed7d7;
+        color: #742a2a;
+    }
+
+    /* Drag handle */
+    .sortable-handle {
+        color: var(--light-text-muted);
+        cursor: grab;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+    }
+
+    .sortable-handle:hover {
+        background: var(--light-bg-secondary);
+        color: var(--light-text-secondary);
+    }
+
+    /* ==================== ESTADOS DE DRAG Y DROP ==================== */
+    .area-card.sortable-ghost {
+        opacity: 0.4;
+    }
+
+    .area-card.sortable-drag {
+        transform: rotate(3deg);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+    }
+
+    /* ==================== RESPONSIVE ==================== */
+    @media (max-width: 768px) {
+        .tipo-tab {
+            min-height: 80px;
+            padding: 12px 8px;
+        }
+        
+        .tipo-tab .bi {
+            font-size: 1.8rem;
+        }
+        
+        .area-card {
+            padding: 16px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid areas-management-container">
+    <!-- Botón de regreso -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{% url 'digitalizacion:panel_administracion' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver al Panel de Administración
+            </a>
+        </div>
+    </div>
+
+    <!-- Tabs de tipos de expediente -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="tipo-tabs-container">
+                <div class="row g-2">
+                    {% for tipo_key, tipo_display in tipos_choices %}
+                    <div class="col-3">
+                        {% if tipo_selected and tipo_key == tipo_selected %}
+                        <div class="tipo-tab active"
+                             onclick="cambiarTipo('{{ tipo_key }}')"
+                             data-tipo-key="{{ tipo_key }}"
+                             data-tipo-selected="{{ tipo_selected|default:'ninguno' }}">
+                        {% else %}
+                        <div class="tipo-tab"
+                             onclick="cambiarTipo('{{ tipo_key }}')"
+                             data-tipo-key="{{ tipo_key }}"
+                             data-tipo-selected="{{ tipo_selected|default:'ninguno' }}">
+                        {% endif %}
+                            {% if tipo_key == 'licitacion' %}
+                                <i class="bi bi-file-earmark-text"></i>
+                            {% elif tipo_key == 'concurso_invitacion' %}
+                                <i class="bi bi-people"></i>
+                            {% elif tipo_key == 'compra_directa' %}
+                                <i class="bi bi-cart-check"></i>
+                            {% elif tipo_key == 'adjudicacion_directa' %}
+                                <i class="bi bi-check-circle"></i>
+                            {% else %}
+                                <i class="bi bi-folder"></i>
+                            {% endif %}
+                            <h6 class="mb-1">{{ tipo_display }}</h6>
+                            <small>
+                                {% if tipo_key == 'licitacion' %}
+                                    Áreas para expedientes de licitación
+                                {% elif tipo_key == 'concurso_invitacion' %}
+                                    Áreas para expedientes de concurso por invitación
+                                {% elif tipo_key == 'compra_directa' %}
+                                    Áreas para expedientes de compra directa
+                                {% elif tipo_key == 'adjudicacion_directa' %}
+                                    Áreas para expedientes de adjudicación directa
+                                {% else %}
+                                    Áreas para este tipo de expediente
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs de subtipos -->
+    {% if tipo_selected == 'licitacion' %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Tipo de Licitación</h6>
+                    <p class="text-muted mb-0 small">Selecciona el tipo de licitación para ver las áreas específicas</p>
+                </div>
+                <div class="card-body subtipo-tabs">
+                    <div class="btn-group" role="group">
+                        {% for subtipo_key, subtipo_display, count in subtipos_con_contadores %}
+                        <button type="button" 
+                                class="btn {% if subtipo_key == subtipo_selected %}btn-primary{% else %}btn-outline-primary{% endif %}"
+                                onclick="cambiarSubtipo('{{ tipo_selected }}', '{{ subtipo_key }}')">
+                            {{ subtipo_display }}
+                            <span class="badge-modern badge-modern-default ms-2">{{ count }}</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Áreas del tipo seleccionado o mensaje de bienvenida -->
+            <div class="card">
+                {% if not tipo_selected %}
+                <div class="card-body text-center py-5">
+                    <div class="mb-4">
+                        <i class="bi bi-folder-plus" style="font-size: 3rem; color: #6c757d;"></i>
+                    </div>
+                    <h4 class="mb-3">Selecciona un tipo de expediente</h4>
+                    <p class="text-muted mb-4">
+                        Por favor, selecciona uno de los tipos de la parte superior para comenzar a gestionar las áreas.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        {% for tipo_key, tipo_display in tipos_choices %}
+                            <button class="btn btn-outline-primary" onclick="cambiarTipo('{{ tipo_key }}')">
+                                {{ tipo_display }}
+                            </button>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-task"></i> 
+                        Áreas: {{ tipo_selected|title }}
+                        {% if tipo_selected == 'licitacion' and subtipo_selected %}
+                            <span class="badge bg-primary ms-2">
+                                {{ subtipo_selected|title|cut:"_" }}
+                            </span>
+                        {% endif %}
+                    </h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-info me-2" onclick="guardarOrden()">
+                            <i class="bi bi-save"></i> Guardar Orden
+{{ ... }}
+                        </button>
+                        {% if subtipos_disponibles %}
+                        <a href="{% url 'areas:crear' tipo=tipo_selected %}?subtipo={{ subtipo_selected }}" class="btn btn-modern btn-modern-primary">
+                        {% else %}
+                        <a href="{% url 'areas:crear' tipo=tipo_selected %}" class="btn btn-modern btn-modern-primary">
+                        {% endif %}
+                            <i class="bi bi-plus"></i> Nueva Área
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if areas %}
+                    <div id="areas-sortable">
+                        {% for area in areas %}
+                        <div class="area-card" data-area-id="{{ area.pk }}">
+                            <div class="area-card-header">
+                                <i class="bi bi-grip-vertical sortable-handle"></i>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <h6 class="area-card-title">{{ area.titulo }}</h6>
+                                        {% if area.es_default %}
+                                        <span class="badge-modern badge-modern-default">Default</span>
+                                        {% endif %}
+                                        {% if not area.activa %}
+                                        <span class="badge-modern badge-modern-warning">Inactiva</span>
+                                        {% endif %}
+                                        {% if area.obligatoria %}
+                                        <span class="badge-modern badge-modern-danger">Obligatoria</span>
+                                        {% else %}
+                                        <span class="badge-modern badge-modern-success">Opcional</span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="area-card-description">{{ area.descripcion|truncatewords:15 }}</p>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge-modern badge-modern-default">{{ area.get_tipo_area_display }}</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'areas:editar' area_id=area.pk %}" 
+                                           class="btn btn-outline-primary btn-sm"
+                                           title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <button class="btn btn-outline-danger btn-sm eliminar-area" 
+                                                data-area-id="{{ area.pk }}" 
+                                                data-area-nombre="{{ area.titulo|escapejs }}" 
+                                                data-es-default="{% if area.es_default %}true{% else %}false{% endif %}" 
+                                                title="{% if area.es_default %}Eliminar área default{% else %}Eliminar área{% endif %}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información adicional -->
+                            <div class="area-card-meta">
+                                <i class="bi bi-calendar"></i> Creada: {{ area.fecha_creacion|date:"d/m/Y" }}
+                                {% if area.creada_por %}
+                                por <strong>{{ area.creada_por.get_full_name|default:area.creada_por.username }}</strong>
+                                {% endif %}
+                                | <i class="bi bi-hash"></i> Orden: <strong>{{ area.orden }}</strong>
+                                | <i class="bi bi-grid"></i> <strong>{{ area.campos.count }}</strong> campos
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox fs-1 text-muted"></i>
+                        <h5 class="text-muted mt-2">No hay áreas configuradas</h5>
+                        <p class="text-muted">
+                            Crea la primera área para el tipo de expediente 
+                            "{{ tipo_selected|title }}"
+                        </p>
+                        {% if subtipos_disponibles %}
+                        <a href="{% url 'areas:crear' tipo=tipo_selected %}?subtipo={{ subtipo_selected }}" class="btn btn-primary">
+                        {% else %}
+                        <a href="{% url 'areas:crear' tipo=tipo_selected %}" class="btn btn-primary">
+                        {% endif %}
+                            <i class="bi bi-plus"></i> Crear Primera Área
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Panel de información -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Información</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Tipo actual:</strong> {{ tipo_selected|title }}</p>
+                    <p><strong>Total de áreas:</strong> <span id="total-areas">{{ total_areas_activas|default:0 }}</span></p>
+                    <p><strong>Áreas activas:</strong> <span id="areas-activas">{{ total_areas_activas|default:0 }}</span></p>
+                </div>
+            </div>
+
+            <!-- Panel de ayuda -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-question-circle"></i> Ayuda</h6>
+                </div>
+                <div class="card-body">
+                    <h6>Tipos de área:</h6>
+                    <ul class="small">
+                        <li><strong>Solo Texto:</strong> Solo campos de texto/formulario</li>
+                        <li><strong>Subida de Archivo:</strong> Solo para subir documentos</li>
+                        <li><strong>Mixto:</strong> Texto y archivos (recomendado)</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">Consejos:</h6>
+                    <ul class="small">
+                        <li>Arrastra las áreas para reordenarlas</li>
+                        <li>Usa campos personalizados para formularios específicos</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Eliminar Área</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro que deseas eliminar el área "<span id="areaNombre"></span>"?</p>
+                <p class="text-warning small">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    Esta acción no se puede deshacer.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formEliminar" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// Variables globales
+let sortable;
+let currentOrder = [];
+
+// Inicializar al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado, inicializando...');
+    initSortable();
+    initEliminarAreas(); // Inicializar event listeners para eliminar áreas
+    
+    // Retraso para asegurar que todo esté listo
+    setTimeout(() => {
+        // NO actualizar contadores con JavaScript - usar los valores del backend
+        // updateAreaCounters(); // Comentado para usar valores del backend
+        // NO actualizar números de orden al cargar - usar los valores de la BD
+        // actualizarNumerosOrden(); // Comentado para usar orden real de BD
+    }, 100);
+});
+
+// Inicializar event listeners para botones de eliminar áreas
+function initEliminarAreas() {
+    console.log('Inicializando event listeners para eliminar áreas...');
+    
+    // Usar delegación de eventos para manejar botones dinámicos
+    document.addEventListener('click', function(e) {
+        // Verificar si el clic fue en un botón de eliminar o en su icono
+        const eliminarBtn = e.target.closest('.eliminar-area');
+        if (eliminarBtn) {
+            console.log('Botón de eliminar clickeado', eliminarBtn);
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const areaId = eliminarBtn.getAttribute('data-area-id');
+            const areaNombre = eliminarBtn.getAttribute('data-area-nombre') || 'esta área';
+            const esDefault = eliminarBtn.getAttribute('data-es-default') === 'true';
+            
+            console.log('Datos del área:', { areaId, areaNombre, esDefault });
+            
+            if (areaId) {
+                eliminarArea(areaId, areaNombre, esDefault);
+            } else {
+                console.error('No se encontró el ID del área');
+                mostrarAlerta('Error: No se pudo identificar el área a eliminar', 'danger');
+            }
+        }
+    });
+    
+    // Verificar que los botones existan
+    const botonesEliminar = document.querySelectorAll('.eliminar-area');
+    console.log(`Se encontraron ${botonesEliminar.length} botones de eliminar`);
+}
+
+// Inicializar sortable
+function initSortable() {
+    const areasContainer = document.getElementById('areas-sortable');
+    if (areasContainer) {
+        sortable = Sortable.create(areasContainer, {
+            handle: '.sortable-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            onEnd: function(evt) {
+                updateOrder();
+            }
+        });
+        updateOrder();
+    }
+}
+
+// Actualizar orden actual
+function updateOrder() {
+    const areas = document.querySelectorAll('[data-area-id]');
+    currentOrder = Array.from(areas).map(area => area.dataset.areaId);
+    // NO actualizar contadores aquí - usar valores del backend
+    // updateAreaCounters();
+    // Actualizar números de orden en tiempo real cuando se arrastra
+    // Usar setTimeout para evitar múltiples actualizaciones rápidas
+    clearTimeout(window.ordenUpdateTimeout);
+    window.ordenUpdateTimeout = setTimeout(() => {
+        actualizarNumerosOrden();
+    }, 100);
+}
+
+// Actualizar contadores de áreas
+// IMPORTANTE: Actualizar basándose en las áreas realmente visibles en la página
+function updateAreaCounters() {
+    const areas = document.querySelectorAll('[data-area-id]');
+    // Contar solo las áreas visibles (no ocultas por CSS o filtros)
+    let totalAreasVisibles = 0;
+    let activeAreasVisibles = 0;
+    
+    areas.forEach(area => {
+        // Verificar si el área está visible
+        const isVisible = area.offsetParent !== null && 
+                         !area.classList.contains('d-none') && 
+                         window.getComputedStyle(area).display !== 'none';
+        
+        if (isVisible) {
+            totalAreasVisibles++;
+            // Verificar si es activa (no tiene badge de "Inactiva")
+        const inactiveBadge = area.querySelector('.badge-modern-warning');
+        if (!inactiveBadge || !inactiveBadge.textContent.includes('Inactiva')) {
+                activeAreasVisibles++;
+            }
+        }
+    });
+    
+    const totalElement = document.getElementById('total-areas');
+    const activeElement = document.getElementById('areas-activas');
+    
+    if (totalElement) {
+        totalElement.textContent = totalAreasVisibles;
+    }
+    
+    if (activeElement) {
+        activeElement.textContent = activeAreasVisibles;
+    }
+}
+
+// Cambiar tipo de expediente
+function cambiarTipo(tipo) {
+    // Redirigir al tipo seleccionado
+    if (tipo) {
+        // Si es licitación, usar el primer subtipo disponible
+        if (tipo === 'licitacion') {
+            // Para licitación, usar 'recurso_propio' como subtipo por defecto (sin prefijo)
+            window.location.href = `{% url 'areas:gestionar' %}?tipo=${tipo}&subtipo=recurso_propio`;
+        } else {
+            // Para otros tipos, no hay subtipos
+            window.location.href = `{% url 'areas:gestionar' %}?tipo=${tipo}`;
+        }
+    }
+}
+
+// Cambiar subtipo de expediente
+function cambiarSubtipo(tipo, subtipo) {
+    window.location.href = `{% url 'areas:gestionar' %}?tipo=${tipo}&subtipo=${subtipo}`;
+}
+
+// Actualizar números de orden en las tarjetas
+// IMPORTANTE: Actualizar basándose en la posición real en el DOM después de reordenar
+// SOLO actualizar si el área está visible (no oculta por filtros)
+function actualizarNumerosOrden() {
+    const areas = document.querySelectorAll('[data-area-id]');
+    let ordenVisible = 1; // Contador para el orden visible (consecutivo)
+    
+    areas.forEach((area) => {
+        // Verificar si el área está visible (no oculta por CSS o filtros)
+        const isVisible = area.offsetParent !== null && 
+                         !area.classList.contains('d-none') && 
+                         window.getComputedStyle(area).display !== 'none';
+        
+        if (isVisible) {
+        // Buscar específicamente el elemento que contiene el número de orden
+        const ordenText = area.querySelector('.area-card-meta');
+        if (ordenText) {
+                // Actualizar el orden visual basándose en la posición visible
+                ordenText.innerHTML = ordenText.innerHTML.replace(
+                    /(<i class="bi bi-hash"><\/i> Orden: <strong>)\d+(<\/strong>)/,
+                    `$1${ordenVisible}$2`
+                );
+                ordenVisible++;
+            }
+        }
+    });
+}
+
+// Guardar orden
+function guardarOrden() {
+    fetch(`{% url 'areas:reordenar' tipo=tipo_selected %}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            area_ids: currentOrder
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarAlerta('Orden guardado exitosamente', 'success');
+            // Los números ya están actualizados por updateOrder(), no necesitamos actualizarlos de nuevo
+        } else {
+            mostrarAlerta('Error al guardar el orden: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        mostrarAlerta('Error de conexión', 'danger');
+    });
+}
+
+// Eliminar área
+function eliminarArea(areaId, areaNombre, esDefault) {
+    // Si esDefault no está definido, establecerlo como false por defecto
+    if (typeof esDefault === 'undefined') {
+        esDefault = false;
+    }
+    
+    let mensaje = '¿Estás seguro de que deseas eliminar el área "' + areaNombre + '"?\n\n' +
+                 'Esta acción no se puede deshacer.';
+    
+    if (esDefault) {
+        mensaje = '⚠️ ¿Estás seguro de que deseas eliminar el área DEFAULT "' + areaNombre + '"?\n\n' +
+                 'ADVERTENCIA: Esta es un área por defecto del sistema. Al eliminarla:\n' +
+                 '• Se eliminará de TODOS los expedientes existentes\n' +
+                 '• Los nuevos expedientes NO tendrán esta área\n' +
+                 '• Esta acción NO se puede deshacer\n\n' +
+                 '¿Continuar con la eliminación?';
+    }
+    
+    if (confirm(mensaje)) {
+        // Crear formulario para enviar POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        // Construir la URL correcta
+        form.action = '/areas/eliminar/' + areaId + '/';
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        
+        // Obtener el token CSRF
+        const csrfInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfInput) {
+            csrfToken.value = csrfInput.value;
+        } else {
+            // Intentar obtener el token de las cookies
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    csrfToken.value = decodeURIComponent(value);
+                    break;
+                }
+            }
+        }
+        
+        if (!csrfToken.value) {
+            console.error('No se pudo obtener el token CSRF');
+            mostrarAlerta('Error: No se pudo obtener el token de seguridad', 'danger');
+            return;
+        }
+        
+        form.appendChild(csrfToken);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Función para agregar nueva área (se llamará después de crear una)
+function agregarNuevaArea(areaData) {
+    // Esta función se puede usar para agregar áreas dinámicamente
+    // NO actualizar contadores - recargar la página para ver los valores correctos
+    // updateAreaCounters();
+}
+
+// Mostrar alertas
+function mostrarAlerta(mensaje, tipo) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    alertDiv.style = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remover después de 5 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

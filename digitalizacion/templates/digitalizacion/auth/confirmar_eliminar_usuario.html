@@ -1,0 +1,121 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Eliminación - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb justify-content-center">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                            </li>
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'digitalizacion:gestionar_usuarios' %}" class="text-emerald-400 text-decoration-none">Gestionar Usuarios</a>
+                            </li>
+                            <li class="breadcrumb-item active">Confirmar Eliminación</li>
+                        </ol>
+                    </nav>
+                </div>
+
+                <!-- Card de Confirmación -->
+                <div class="card bg-zinc-900 border-zinc-800 shadow-lg">
+                    <div class="card-header bg-danger border-danger text-white text-center">
+                        <i class="bi bi-exclamation-triangle-fill fs-1 mb-3"></i>
+                        <h4 class="mb-0">Confirmar Eliminación de Usuario</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <div class="avatar-lg mx-auto mb-3">
+                                <div class="avatar-title bg-danger text-white rounded-circle" style="width: 80px; height: 80px; font-size: 2rem;">
+                                    {{ usuario_a_eliminar.first_name|first|upper }}{{ usuario_a_eliminar.last_name|first|upper }}
+                                </div>
+                            </div>
+                            <h5 class="text-zinc-50 mb-2">{{ usuario_a_eliminar.get_full_name }}</h5>
+                            <p class="text-zinc-400 mb-0">{{ usuario_a_eliminar.email }}</p>
+                        </div>
+
+                        <div class="alert alert-warning border-warning">
+                            <div class="d-flex">
+                                <i class="bi bi-exclamation-triangle-fill text-warning fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="alert-heading text-warning">¡Atención!</h6>
+                                    <p class="mb-0">Estás a punto de desactivar la cuenta de este usuario. Esta acción:</p>
+                                    <ul class="mb-0 mt-2">
+                                        <li>Desactivará el acceso del usuario al sistema</li>
+                                        <li>Mantendrá todos los datos asociados</li>
+                                        <li>Se puede revertir desde el panel de administración</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card bg-zinc-800 border-zinc-700">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-person-badge text-info fs-3 mb-2"></i>
+                                        <h6 class="text-zinc-50 mb-1">Rol</h6>
+                                        <p class="text-zinc-400 mb-0">
+                                            {% if usuario_a_eliminar.perfil.rol %}
+                                                {{ usuario_a_eliminar.perfil.rol.get_nombre_display }}
+                                            {% else %}
+                                                Sin rol asignado
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-zinc-800 border-zinc-700">
+                                    <div class="card-body text-center">
+                                        <i class="bi bi-building text-info fs-3 mb-2"></i>
+                                        <h6 class="text-zinc-50 mb-1">Departamento</h6>
+                                        <p class="text-zinc-400 mb-0">
+                                            {% if usuario_a_eliminar.perfil.departamento %}
+                                                {{ usuario_a_eliminar.perfil.departamento.nombre }}
+                                            {% else %}
+                                                No especificado
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-danger btn-lg">
+                                    <i class="bi bi-trash me-2"></i>
+                                    Confirmar Desactivación
+                                </button>
+                                <a href="{% url 'digitalizacion:gestionar_usuarios' %}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-left me-2"></i>
+                                    Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

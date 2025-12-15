@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crear Expediente - Sistema de Digitalización - Secretaría de Servicios Públicos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    
+    /* Variables CSS para temas */
+    :root {
+      --gradient-start: #2a2f38;
+      --gradient-end: #f9f2d6;
+      --bg-primary: #20252d;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #2d2d2d;
+      --text-primary: #ffffff;
+      --text-secondary: #d1d5db;
+      --text-muted: #9ca3af;
+      --border-color: rgba(75, 85, 99, 0.4);
+      --border-light: rgba(255, 255, 255, 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.4);
+      --accent-blue: #3b82f6;
+      --accent-purple: #9333ea;
+      --hover-bg: rgba(255, 255, 255, 0.15);
+    }
+    
+    /* Tema Claro */
+    [data-theme="light"] {
+      --gradient-start: #f8f9fa;
+      --gradient-end: #ffffff;
+      --bg-primary: #f8f9fa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f8f9fa;
+      --text-primary: #212529;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: #dee2e6;
+      --border-light: #e9ecef;
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --accent-blue: #091f81;
+      --accent-purple: #06089e;
+      --hover-bg: rgba(0, 0, 0, 0.05);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 1fr;
+      width: 100%;
+      min-height: 100vh;
+      max-width: 100%;
+      overflow-x: hidden;
+      color: #000000;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+    }
+
+    /* Panel izquierdo */
+    .left-panel {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      background: #20252d;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 20px 25px;
+      gap: 25px;
+      position: relative;
+      box-shadow: inset -40px 0 60px -30px #000000cc;
+    }
+    .logo-text {
+      font-weight: 300;
+      font-size: 1.4em;
+      font-family: 'Roboto', sans-serif;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+      margin: 0;
+    }
+    .logo-subtext {
+      font-weight: 300;
+      font-size: 0.8em;
+      padding-left: 5px;
+      margin-top: 5px;
+      opacity: 0.7;
+      letter-spacing: 0.02em;
+    }
+
+    /* Menu */
+    .menu {
+      margin-top: 20px;
+      width: 100%;
+      border-top: 1px solid rgba(255 255 255 / 0.2);
+      border-bottom: 1px solid rgba(255 255 255 / 0.2);
+      display: flex;
+      flex-direction: column;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255 255 255 / 0.7);
+      padding: 10px 12px;
+      font-weight: 400;
+      font-size: 0.9em;
+      border-bottom: 1px solid rgba(255 255 255 / 0.1);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.3s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      text-decoration: none;
+    }
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    .menu-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      fill: none;
+    }
+    .menu-item:hover {
+      color: var(--text-primary);
+      background: var(--hover-bg);
+      text-decoration: none;
+    }
+    .menu-item.active {
+      background: #121212cc;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+      position: relative;
+      box-shadow: 3px 0 8px rgba(0, 0, 0, 0.3) inset;
+    }
+    .menu-item.active:hover {
+      color: white;
+      background: #121212cc;
+      text-decoration: none;
+    }
+    .menu-item.active::after {
+      content: "";
+      position: absolute;
+      right: -12px;
+      width: 0; 
+      height: 0; 
+      border-top: 20px solid transparent;
+      border-bottom: 20px solid transparent; 
+      border-left: 12px solid #121212cc;
+      top: 50%;
+      transform: translateY(-50%);
+      filter: drop-shadow(-2px 0 1px #0008);
+    }
+    
+    [data-theme="light"] .menu-item.active {
+      background: #f8f9fa !important;
+      color: #041e92 !important;
+      box-shadow: 3px 0 8px rgba(4, 30, 146, 0.2) inset;
+    }
+    
+    [data-theme="dark"] .menu-item.active {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+      box-shadow: 3px 0 8px rgba(0, 0, 0, 0.4) inset;
+    }
+
+    /* Contenido principal */
+    .center-main {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: var(--text-primary);
+      overflow-y: auto;
+      min-height: 100vh;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Header principal */
+    .main-content-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .main-content-header h2 {
+      margin: 0 0 10px 0;
+      font-size: 2em;
+      color: #000000;
+      font-weight: 300;
+    }
+
+    .main-content-header p {
+      margin: 0;
+      font-size: 1em;
+      color: #000000;
+      font-weight: 300;
+    }
+    
+    /* Header con botón del tema */
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .header-text {
+      flex: 1;
+      text-align: center;
+    }
+    
+    /* Botón de cambio de tema */
+    .theme-toggle-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+    
+    .theme-toggle-btn:hover {
+      background: var(--hover-bg);
+      transform: scale(1.05);
+    }
+    
+    .theme-toggle-btn .theme-icon {
+      width: 22px;
+      height: 22px;
+      stroke: var(--text-primary);
+      fill: none;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .sun-icon,
+    .theme-toggle-btn .sun-rays {
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .moon-icon {
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos para tema claro */
+    [data-theme="light"] .theme-toggle-btn .sun-icon,
+    [data-theme="light"] .theme-toggle-btn .sun-rays {
+      display: none;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      display: block !important;
+    }
+    
+    /* Estilos para tema oscuro */
+    [data-theme="dark"] .theme-toggle-btn .sun-icon,
+    [data-theme="dark"] .theme-toggle-btn .sun-rays {
+      display: block;
+    }
+    
+    [data-theme="dark"] .theme-toggle-btn .moon-icon {
+      display: none !important;
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .left-panel {
+      background: #f8f9fa !important;
+      box-shadow: inset -40px 0 60px -30px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .logo-text {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .logo-subtext {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .menu {
+      border-top: 1px solid #dee2e6 !important;
+      border-bottom: 1px solid #dee2e6 !important;
+    }
+    
+    [data-theme="light"] .menu-item {
+      color: #495057 !important;
+      border-bottom: 1px solid #e9ecef !important;
+    }
+    
+    [data-theme="light"] .menu-item svg {
+      stroke: #495057 !important;
+    }
+    
+    [data-theme="light"] .menu-item:hover {
+      color: #212529 !important;
+      background: #f8f9fa !important;
+    }
+    
+    [data-theme="light"] .menu-item.active {
+      background: #f8f9fa !important;
+      color: #041e92 !important;
+      border-left: 4px solid #041e92;
+      font-weight: 600;
+    }
+    
+    [data-theme="light"] .menu-item.active svg {
+      stroke: #041e92 !important;
+    }
+    
+    [data-theme="light"] .menu-item.active:hover {
+      background: #f1f3f5 !important;
+    }
+    
+    [data-theme="light"] .option-card {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .option-card:hover {
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15) !important;
+      border-color: #001677 !important;
+    }
+    
+    [data-theme="light"] .option-title {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .option-description {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn {
+      background: #ffffff !important;
+      border: 2px solid #001d9f !important;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn:hover {
+      background: #f8f9fa !important;
+      border-color: #5a67d8 !important;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .theme-icon {
+      stroke: #001d9f !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      stroke: #001d9f !important;
+    }
+    
+    /* Estilos específicos para tema claro - SOLO para tema claro */
+    [data-theme="light"] body {
+      background: linear-gradient(160deg, #f8f9fa 10%, #ffffff 90%) !important;
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .container {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .center-main {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .main-content-header h2 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .main-content-header p {
+      color: #495057 !important;
+    }
+    
+    /* Estilos para tema claro en pantalla de crear expediente */
+    [data-theme="light"] .form-container {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .form-title {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .form-instruction {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] .form-group label {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .form-group input,
+    [data-theme="light"] .form-group select,
+    [data-theme="light"] .form-group textarea {
+      background: #ffffff !important;
+      border: 1px solid #ced4da !important;
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .form-group input::placeholder,
+    [data-theme="light"] .form-group select::placeholder,
+    [data-theme="light"] .form-group textarea::placeholder {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] .info-panel {
+      background: #ffffff !important;
+      border: 1px solid #dee2e6 !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    [data-theme="light"] .info-panel h3 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .info-panel p,
+    [data-theme="light"] .info-panel li {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: #ffffff !important;
+      border: none !important;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    [data-theme="light"] .btn-primary:hover {
+      background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    /* Estilos específicos para tema oscuro - SOLO para tema oscuro */
+    [data-theme="dark"] .logo-text {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .logo-subtext {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item svg {
+      stroke: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item:hover {
+      color: #ffffff !important;
+    }
+    
+    [data-theme="dark"] .menu-item.active {
+      background: rgba(255, 255, 255, 0.1) !important;
+      color: #ffffff !important;
+      border-left: 4px solid #3b82f6;
+      font-weight: 500;
+    }
+    
+    [data-theme="dark"] .menu-item.active svg {
+      stroke: #3b82f6 !important;
+    }
+    
+    [data-theme="dark"] .menu-item.active:hover {
+      background: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    /* Sección de opciones de creación */
+    .creation-options {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    .option-card {
+      background: rgba(32, 37, 45, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 220px;
+      min-height: 240px;
+      box-sizing: border-box;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .option-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+      background: rgba(42, 47, 56, 0.85);
+    }
+
+    .option-card:hover::before {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(99, 102, 241, 0.4));
+    }
+
+    .option-icon {
+      font-size: 2em;
+      margin-bottom: 15px;
+      color: var(--accent-blue);
+      transition: transform 0.3s ease;
+    }
+
+    .option-card:hover .option-icon {
+      transform: scale(1.1);
+    }
+
+    .option-title {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+      position: relative;
+      display: inline-block;
+    }
+
+    .option-title::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 40px;
+      height: 3px;
+      background: var(--accent-blue);
+      transition: width 0.3s ease;
+    }
+
+    .option-card:hover .option-title::after {
+      width: 60px;
+    }
+
+    .option-description {
+      color: var(--text-secondary);
+      font-size: 0.85em;
+      line-height: 1.5;
+      margin-bottom: 15px;
+      transition: color 0.3s ease;
+    }
+
+    .option-card:hover .option-description {
+      color: var(--text-primary);
+    }
+
+    .option-btn {
+      background: #1e3a8a; /* Azul oscuro opaco */
+      color: white !important;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      min-width: 120px;
+      margin-top: auto;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .option-btn:hover {
+      background: #172554; /* Azul más oscuro al pasar el cursor */
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+      color: white !important;
+    }
+
+    .option-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: -1;
+      transition: opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    .option-btn:hover::before {
+      opacity: 1;
+    }
+
+    [data-theme="light"] .option-btn {
+      background: #1e1b4b; /* Azul oscuro para tema claro */
+      color: white !important;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .option-btn:hover {
+      background: #0f172a; /* Azul casi negro para hover en tema claro */
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      color: white !important;
+      border-color: rgba(0, 0, 0, 0.15);
+    }
+
+    [data-theme="light"] .option-btn::before {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Asegurar que el texto siempre sea blanco */
+    .option-btn,
+    .option-btn:link,
+    .option-btn:visited,
+    .option-btn:active,
+    .option-btn:hover {
+      color: white !important;
+    }
+
+    [data-theme="light"] .option-card::before {
+      background: linear-gradient(135deg, rgba(0, 71, 186, 0.3), rgba(0, 71, 186, 0.1));
+    }
+
+    [data-theme="light"] .option-card {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="light"] .option-card:hover {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    [data-theme="light"] .option-card:hover::before {
+      background: linear-gradient(135deg, rgba(0, 71, 186, 0.5), rgba(0, 71, 186, 0.2));
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 250px 1fr;
+      }
+      
+      .creation-options {
+        max-width: 800px;
+      }
+      
+      .option-card {
+        width: 200px;
+        min-height: 220px;
+        padding: 15px 10px;
+      }
+    }
+    
+    @media (max-width: 992px) {
+      .creation-options {
+        max-width: 660px;
+      }
+      
+      .option-card {
+        width: 190px;
+        min-height: 210px;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      
+      .left-panel {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+      }
+      
+      .left-panel.open {
+        left: 0;
+      }
+      
+      .center-main {
+        grid-column: 1;
+        grid-row: 2;
+        padding: 20px 15px;
+        justify-content: flex-start;
+      }
+      
+      .main-content-header h2 {
+        font-size: 1.4em;
+        margin-bottom: 10px;
+      }
+      
+      .main-content-header p {
+        font-size: 0.9em;
+        margin-bottom: 20px;
+      }
+      
+      .creation-options {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 400px;
+        width: 100%;
+        padding: 0;
+      }
+      
+      .option-card {
+        width: 100%;
+        max-width: 280px;
+        min-height: auto;
+        padding: 18px 15px;
+      }
+      
+      .option-title {
+        font-size: 1.2em;
+      }
+      
+      .option-description {
+        font-size: 0.9em;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .center-main {
+        padding: 15px 10px;
+      }
+      
+      .main-content-header h2 {
+        font-size: 1.3em;
+        margin-bottom: 8px;
+      }
+      
+      .main-content-header p {
+        font-size: 0.85em;
+        margin-bottom: 15px;
+      }
+      
+      .option-card {
+        padding: 16px 12px;
+        min-height: auto;
+      }
+      
+      .option-title {
+        font-size: 1.1em;
+        margin-bottom: 8px;
+      }
+      
+      .option-description {
+        font-size: 0.85em;
+        margin-bottom: 15px;
+      }
+      
+      .option-btn {
+        padding: 7px 14px;
+        font-size: 0.8em;
+        min-width: 90px;
+      }
+      
+      .option-icon {
+        font-size: 1.8em;
+        margin-bottom: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel" aria-label="Menú del sistema">
+      <div>
+        <h1 class="logo-text" aria-label="Nombre del sistema">
+          Secretaría de Servicios Públicos<br />
+          <span class="logo-subtext"><br />Digitalización de archivos</span>
+        </h1>
+      </div>
+      <nav aria-label="Menú principal del sistema" class="menu" role="menu">
+        <a href="{% url 'digitalizacion:dashboard' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M9 21v-6h6v6"/></svg>
+          Dashboard
+        </a>
+        <a href="{% url 'expedientes:lista_expedientes' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/></svg>
+          Expedientes
+        </a>
+        <a href="{% url 'expedientes:seleccionar_tipo' %}" role="menuitem" class="menu-item active" tabindex="0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 7h3l3-4h8l3 4h3v10H2V7z"/></svg>
+          Crear
+        </a>
+        <a href="{% url 'digitalizacion:reportes' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14m-7-7v14"/></svg>
+          Reportes
+        </a>
+        <a href="{% url 'areas:gestionar' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="16" r="1"/><path d="M2 12h20"/></svg>
+          Áreas
+        </a>
+        <a href="{% url 'digitalizacion:panel_administracion' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></svg>
+          Configuración
+        </a>
+      </nav>
+    </div>
+
+    <div class="center-main">
+      <div class="main-content-header">
+        <div class="header-content">
+          <div class="header-text">
+            <h2>Crear Expediente</h2>
+            <p>Selecciona el flujo con el que deseas iniciar</p>
+          </div>
+          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar Tema" id="themeToggle">
+            <svg class="theme-icon sun-icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            <svg class="theme-icon moon-icon" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Opciones de creación -->
+      <div class="creation-options">
+        {% for tipo in tipos %}
+        <div class="option-card" data-tipo="{{ tipo.key }}" {% if not tipo.tiene_subtipos %}onclick="window.location.href='{% url 'expedientes:crear' tipo.key %}'"{% endif %}>
+          <div class="option-icon">
+            {% if tipo.key == 'licitacion' %}
+              <i class="bi bi-file-earmark-text"></i>
+            {% elif tipo.key == 'concurso_invitacion' %}
+              <i class="bi bi-people"></i>
+            {% elif tipo.key == 'compra_directa' %}
+              <i class="bi bi-cart-plus"></i>
+            {% elif tipo.key == 'adjudicacion_directa' %}
+              <i class="bi bi-file-earmark-check"></i>
+            {% endif %}
+          </div>
+          <h3 class="option-title">{{ tipo.title }}</h3>
+          <p class="option-description">{{ tipo.description }}</p>
+          {% if tipo.tiene_subtipos %}
+            <button class="option-btn" onclick="mostrarSubtipos(event, '{{ tipo.key }}')">Seleccionar</button>
+          {% else %}
+            <a href="{% url 'expedientes:crear' tipo.key %}" class="option-btn">Continuar</a>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Modal para subtipos -->
+      <div id="subtiposModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Selecciona un subtipo</h3>
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+          </div>
+          <div class="modal-body" id="subtiposContainer">
+            <!-- Los subtipos se cargarán aquí dinámicamente -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Estilos para el modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(-20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal.show .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--bg-tertiary);
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex-grow: 1;
+    }
+
+    .subtipos-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 15px;
+      justify-content: center;
+    }
+
+    .subtipo-card {
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 10px 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      white-space: nowrap;
+      font-size: 0.9em;
+      color: #1e3a8a;
+      font-weight: 500;
+      box-shadow: 0 2px 5px rgba(30, 58, 138, 0.1);
+    }
+
+    .subtipo-card:hover {
+      background: #f8fafc;
+      border-color: #93c5fd;
+      color: #1e40af;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(30, 58, 138, 0.15);
+    }
+
+    .subtipo-card:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(30, 58, 138, 0.1);
+    }
+
+    [data-theme="dark"] .subtipo-card {
+      background: #1e1b4b;
+      border-color: #2d3748;
+      color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    [data-theme="dark"] .subtipo-card:hover {
+      background: #172554;
+      border-color: #3b82f6;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .subtipos-grid {
+        gap: 10px;
+        padding: 10px;
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      
+      .subtipos-grid::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+      }
+      
+      .subtipo-card {
+        flex: 0 0 auto;
+        padding: 8px 12px;
+        font-size: 0.85em;
+      }
+    }
+    }
+
+    .subtipo-icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      color: var(--accent-blue);
+    }
+    
+    .subtipo-title {
+      font-size: 1.1rem;
+      margin: 10px 0;
+      color: var(--text-primary);
+    }
+    
+    .subtipo-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+    }
+  </style>
+  
+  <script>
+    // Variables globales
+    let subtiposActuales = [];
+    let tipoSeleccionado = '';
+    
+    // Mostrar modal con subtipos
+    function mostrarSubtipos(event, tipo) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      tipoSeleccionado = tipo;
+      
+      // Obtener referencias a los elementos
+      const modal = document.getElementById('subtiposModal');
+      const container = document.getElementById('subtiposContainer');
+      
+      // Mostrar loading
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px;">
+          <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3">Cargando opciones disponibles...</p>
+        </div>`;
+      
+      // Mostrar el modal con animación
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        modal.classList.add('show');
+      }, 10);
+      
+      // Hacer petición para obtener subtipos
+      fetch(`/expedientes/crear/?tipo=${tipo}`, {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        },
+        credentials: 'same-origin'
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        if (data.tiene_subtipos && data.subtipos && data.subtipos.length > 0) {
+          subtiposActuales = data.subtipos;
+          renderizarSubtipos();
+        } else {
+          // Si no hay subtipos, redirigir directamente
+          window.location.href = `/expedientes/crear/${tipo}/`;
+        }
+      })
+      .catch(error => {
+        console.error('Error al cargar subtipos:', error);
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px;">
+            <div style="color: #ef4444; font-size: 4rem; margin-bottom: 1rem;">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <h4 style="color: #ef4444; margin-bottom: 1rem;">Error al cargar opciones</h4>
+            <p>${error.message || 'Por favor, recarga la página e intenta nuevamente.'}</p>
+            <button class="btn btn-primary mt-3" onclick="mostrarSubtipos(event, '${tipo}')">
+              <i class="bi bi-arrow-repeat"></i> Reintentar
+            </button>
+          </div>`;
+      });
+    }
+    
+    // Renderizar subtipos en el modal
+    function renderizarSubtipos() {
+      const container = document.getElementById('subtiposContainer');
+      
+      if (!subtiposActuales || subtiposActuales.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 30px; width: 100%;">
+            No hay opciones disponibles en este momento.
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = subtiposActuales.map(subtipo => `
+        <div class="subtipo-card" onclick="seleccionarSubtipo('${subtipo.key}')">
+          <div class="subtipo-icon">
+            <i class="${subtipo.icon || 'bi bi-file-earmark-text'}"></i>
+          </div>
+          <h4 class="subtipo-title">${subtipo.title}</h4>
+          ${subtipo.description ? `<p class="subtipo-desc">${subtipo.description}</p>` : ''}
+        </div>
+      `).join('');
+    }
+    
+    // Seleccionar un subtipo
+    function seleccionarSubtipo(subtipo) {
+      // Enviar formulario con el tipo y subtipo
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/expedientes/crear/';
+      
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = 'csrfmiddlewaretoken';
+      csrf.value = '{{ csrf_token }}';
+      
+      const tipoInput = document.createElement('input');
+      tipoInput.type = 'hidden';
+      tipoInput.name = 'tipo_expediente';
+      tipoInput.value = tipoSeleccionado;
+      
+      const subtipoInput = document.createElement('input');
+      subtipoInput.type = 'hidden';
+      subtipoInput.name = 'subtipo';
+      subtipoInput.value = subtipo;
+      
+      form.appendChild(csrf);
+      form.appendChild(tipoInput);
+      form.appendChild(subtipoInput);
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+    
+    // Cerrar modal con animación
+    function cerrarModal() {
+      const modal = document.getElementById('subtiposModal');
+      if (modal) {
+        modal.classList.remove('show');
+        // Esperar a que termine la animación antes de ocultar
+        setTimeout(() => {
+          modal.style.display = 'none';
+        }, 300);
+      }
+    }
+    
+    // Cerrar al hacer clic fuera del contenido o en la X
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('subtiposModal');
+      const closeBtn = document.querySelector('.close-btn');
+      
+      if (event.target === modal || event.target === closeBtn) {
+        cerrarModal();
+      }
+    });
+    
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', function(event) {
+      const modal = document.getElementById('subtiposModal');
+      if (event.key === 'Escape' && modal && modal.style.display === 'flex') {
+        cerrarModal();
+      }
+    });
+    
+    // Efectos hover para las tarjetas de opciones
+    document.addEventListener('DOMContentLoaded', function() {
+      const optionCards = document.querySelectorAll('.option-card');
+      
+      optionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+          this.style.transform = 'translateY(-8px)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+          this.style.transform = 'translateY(0)';
+        });
+      });
+    });
+    
+    // Funciones para cambio de tema
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon();
+    }
+    
+    function updateThemeIcon() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const sunIcon = document.querySelector('.sun-icon');
+      const moonIcon = document.querySelector('.moon-icon');
+      
+      if (currentTheme === 'light') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }
+    }
+    
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon();
+    }
+    
+    // Inicializar tema al cargar la página
+    document.addEventListener('DOMContentLoaded', initializeTheme);
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+    "AUTH_TOKEN": "CAMBIA_POR_TU_TOKEN_SECRETO_AQUI",
+    "DJANGO_BASE_URL": "http://127.0.0.1:8000",
+    "ARCHIVO_FIELD_NAME": "documento",
+    "NAPS2_CLI": "C:\\Program Files\\NAPS2\\NAPS2.Console.exe",
+    "NAPS2_PROFILE": " HP_ADF_300",
+    "SCAN_TIMEOUT": 180,
+    "UPLOAD_TIMEOUT": 120
+}
+

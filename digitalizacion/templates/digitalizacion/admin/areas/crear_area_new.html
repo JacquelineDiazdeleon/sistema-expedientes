@@ -1,0 +1,187 @@
+{% extends "digitalizacion/base.html" %}
+{% load static %}
+
+{% block title %}Crear Área - {{ tipo_info }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-plus-circle"></i> Crear Nueva Área</h2>
+            <p class="text-muted">Tipo de expediente: {{ tipo_info }}</p>
+        </div>
+        <div>
+            <a href="{% url 'areas:gestionar_tipo' tipo=tipo %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-plus"></i> Nueva Área</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Mostrar mensajes de error -->
+                    {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" id="form-crear-area">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre interno *</label>
+                                    <input type="text" class="form-control {% if form_errors.nombre %}is-invalid{% endif %}" 
+                                           id="nombre" name="nombre" 
+                                           value="{{ form_data.nombre|default:'' }}" required>
+                                    <small class="form-text text-muted">Sin espacios, se convertirá a minúsculas</small>
+                                    {% if form_errors.nombre %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors.nombre }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="titulo" class="form-label">Título visible *</label>
+                                    <input type="text" class="form-control {% if form_errors.titulo %}is-invalid{% endif %}" 
+                                           id="titulo" name="titulo" 
+                                           value="{{ form_data.titulo|default:'' }}" required>
+                                    {% if form_errors.titulo %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors.titulo }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3">{{ form_data.descripcion|default:'' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tipo_area" class="form-label">Tipo de área *</label>
+                                    <select class="form-select" id="tipo_area" name="tipo_area" required>
+                                        {% for value, label in tipo_area_choices %}
+                                        <option value="{{ value }}" 
+                                            {% if form_data.tipo_area %}
+                                                {% if form_data.tipo_area == value %}selected{% endif %}
+                                            {% else %}
+                                                {% if value == 'mixto' %}selected{% endif %}
+                                            {% endif %}>
+                                            {{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tamaño_max_archivo" class="form-label">Tamaño máx. archivo (MB)</label>
+                                    <input type="number" class="form-control {% if form_errors.tamaño_max_archivo %}is-invalid{% endif %}" 
+                                           id="tamaño_max_archivo" name="tamaño_max_archivo" 
+                                           value="{{ form_data.tamaño_max_archivo|default:'10' }}" 
+                                           min="1" max="100" required>
+                                    {% if form_errors.tamaño_max_archivo %}
+                                    <div class="invalid-feedback">
+                                        {{ form_errors.tamaño_max_archivo }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipos_archivo_permitidos" class="form-label">Tipos de archivo permitidos</label>
+                            <input type="text" class="form-control" 
+                                   id="tipos_archivo_permitidos" name="tipos_archivo_permitidos" 
+                                   value="{{ form_data.tipos_archivo_permitidos|default:'pdf,docx,xlsx' }}" 
+                                   placeholder="Separados por comas" required>
+                            <small class="form-text text-muted">Ejemplo: pdf,docx,xlsx,jpg,png</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="obligatoria" name="obligatoria" 
+                                    {% if form_data.obligatoria == 'on' or form_data.obligatoria == True %}checked{% endif %}>
+                                <label class="form-check-label" for="obligatoria">
+                                    Área obligatoria
+                                </label>
+                                <small class="form-text text-muted d-block">Si está marcada, será requerida para completar el expediente</small>
+                            </div>
+                        </div>
+
+                        <!-- Campo oculto para el subtipo si es necesario -->
+                        {% if subtipo %}
+                        <input type="hidden" name="subtipo" value="{{ subtipo }}">
+                        {% endif %}
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'areas:gestionar_tipo' tipo=tipo %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="btn-submit">
+                                <i class="bi bi-save"></i> Crear Área
+                            </button>
+                        </div>
+
+                        <!-- Script para validación del formulario -->
+                        <script>
+                        document.getElementById('form-crear-area').addEventListener('submit', function(e) {
+                            // Validar campos requeridos
+                            const nombre = document.getElementById('nombre').value.trim();
+                            const titulo = document.getElementById('titulo').value.trim();
+                            const tamanoMax = document.getElementById('tamaño_max_archivo').value.trim();
+                            
+                            if (!nombre) {
+                                e.preventDefault();
+                                alert('El nombre interno del área es obligatorio');
+                                return false;
+                            }
+                            
+                            if (!titulo) {
+                                e.preventDefault();
+                                alert('El título del área es obligatorio');
+                                return false;
+                            }
+                            
+                            if (!tamanoMax || isNaN(tamanoMax) || parseInt(tamanoMax) <= 0) {
+                                e.preventDefault();
+                                alert('El tamaño máximo de archivo debe ser un número mayor a 0');
+                                return false;
+                            }
+                            
+                            // Deshabilitar botón para evitar múltiples envíos
+                            const submitBtn = document.getElementById('btn-submit');
+                            submitBtn.disabled = true;
+                            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando...';
+                            
+                            return true;
+                        });
+                        </script>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

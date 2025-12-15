@@ -1,0 +1,1235 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Buscar Documentos - Sistema de Digitalización{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos generales - Diseño moderno con azul oscuro */
+    .search-page-container {
+        background: linear-gradient(to bottom, #f0f4f8 0%, #e8edf2 100%);
+        min-height: 100vh;
+        padding: 2.5rem 0;
+    }
+    
+    .search-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+        color: #ffffff;
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid #1a365d;
+        box-shadow: 0 2px 8px rgba(30, 58, 95, 0.2);
+    }
+    
+    .search-header h2 {
+        font-weight: 600;
+        font-size: 1.5rem;
+        margin-bottom: 0.25rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .search-header p {
+        font-size: 0.9rem;
+        opacity: 0.95;
+        margin: 0;
+        font-weight: 300;
+    }
+    
+    /* Panel de búsqueda - Estilo moderno */
+    .search-filters {
+        background: #ffffff;
+        padding: 2.5rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .search-input-group {
+        position: relative;
+    }
+    
+    .search-input-group .form-control {
+        border-radius: 8px;
+        border: 2px solid #cbd5e0;
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+    
+    .search-input-group .form-control:focus {
+        border-color: #2c5282;
+        box-shadow: 0 0 0 0.25rem rgba(44, 82, 130, 0.15);
+        outline: none;
+    }
+    
+    .search-input-group .btn-primary {
+        border-radius: 8px;
+        padding: 0.875rem 2.5rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(44, 82, 130, 0.3);
+    }
+    
+    .search-input-group .btn-primary:hover {
+        background: linear-gradient(135deg, #1e3a5f 0%, #15304d 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(44, 82, 130, 0.4);
+    }
+    
+    .search-input-group .btn-primary:active {
+        transform: translateY(0);
+    }
+    
+    .form-select {
+        border-radius: 8px;
+        border: 2px solid #cbd5e0;
+        padding: 0.875rem 1.5rem;
+        transition: all 0.3s ease;
+        background: #ffffff;
+    }
+    
+    .form-select:focus {
+        border-color: #2c5282;
+        box-shadow: 0 0 0 0.25rem rgba(44, 82, 130, 0.15);
+        outline: none;
+    }
+    
+    /* Resultados - Estilo moderno */
+    .search-results {
+        margin-top: 2rem;
+    }
+    
+    .result-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-left: 4px solid #2c5282;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .result-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+        transform: scaleY(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .result-item:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(44, 82, 130, 0.15);
+        border-left-color: #1e3a5f;
+    }
+    
+    .result-item:hover::before {
+        transform: scaleY(1);
+    }
+    
+    .result-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1e3a5f;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .result-title i {
+        font-size: 1.4rem;
+    }
+    
+    .result-meta {
+        font-size: 0.9rem;
+        color: #4a5568;
+        margin: 1.25rem 0;
+        padding: 1.25rem;
+        background: linear-gradient(to right, #f7fafc 0%, #edf2f7 100%);
+        border-radius: 8px;
+        border-left: 4px solid #2c5282;
+    }
+    
+    .result-meta div {
+        margin-bottom: 0.75rem;
+    }
+    
+    .result-meta div:last-child {
+        margin-bottom: 0;
+    }
+    
+    .result-meta strong {
+        color: #2d3748;
+        font-weight: 600;
+    }
+    
+    .result-snippet {
+        background: linear-gradient(to right, #f0f4f8 0%, #e8edf2 100%);
+        padding: 1.25rem;
+        border-radius: 8px;
+        margin: 1.25rem 0;
+        border-left: 4px solid #4299e1;
+    }
+    
+    .result-snippet small {
+        display: block;
+        font-weight: 600;
+        color: #2c5282;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+    }
+    
+    .result-snippet .fragmento {
+        color: #2d3748;
+        line-height: 1.7;
+    }
+    
+    .result-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-width: 140px;
+    }
+    
+    .result-actions .btn {
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 2px solid;
+        font-size: 0.875rem;
+    }
+    
+    .result-actions .btn-outline-primary {
+        border-color: #2c5282;
+        color: #2c5282;
+        background: transparent;
+    }
+    
+    .result-actions .btn-outline-primary:hover {
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+        border-color: transparent;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(44, 82, 130, 0.3);
+    }
+    
+    .result-actions .btn-outline-secondary {
+        border-color: #4a5568;
+        color: #4a5568;
+        background: transparent;
+    }
+    
+    .result-actions .btn-outline-secondary:hover {
+        background: #4a5568;
+        border-color: #4a5568;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(74, 85, 104, 0.3);
+    }
+    
+    /* Badges - Estilo moderno azul */
+    .badge {
+        padding: 0.5rem 0.875rem;
+        font-weight: 600;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+    
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%) !important;
+        color: #ffffff;
+    }
+    
+    .badge.bg-secondary {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%) !important;
+        color: #ffffff;
+    }
+    
+    .badge.bg-info {
+        background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%) !important;
+        color: #ffffff;
+    }
+    
+    /* Paginación - Estilo moderno */
+    .pagination {
+        margin-top: 3rem;
+        justify-content: center;
+    }
+    
+    .pagination .page-item .page-link {
+        border-radius: 8px;
+        margin: 0 0.25rem;
+        padding: 0.625rem 1rem;
+        color: #2c5282;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
+        border-color: #2c5282;
+        color: white;
+        box-shadow: 0 4px 12px rgba(44, 82, 130, 0.3);
+    }
+    
+    .pagination .page-item:not(.disabled):not(.active) .page-link:hover {
+        background: #f0f4f8;
+        border-color: #2c5282;
+        color: #1e3a5f;
+        transform: translateY(-2px);
+    }
+    
+    /* Loading - Estilo moderno */
+    .loading {
+        text-align: center;
+        padding: 4rem 2rem;
+        display: none;
+    }
+    
+    .loading .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+        color: #2c5282;
+    }
+    
+    .loading p {
+        margin-top: 1.5rem;
+        font-size: 1.05rem;
+        color: #4a5568;
+        font-weight: 500;
+    }
+    
+    /* No results - Estilo moderno */
+    .no-results {
+        text-align: center;
+        padding: 5rem 2rem;
+        color: #4a5568;
+        display: none;
+    }
+    
+    .no-results i {
+        color: #a0aec0;
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    
+    .no-results h4 {
+        color: #2d3748;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .no-results p {
+        font-size: 1.05rem;
+        color: #4a5568;
+    }
+    
+    /* Alertas - Estilo moderno */
+    .alert {
+        border-radius: 8px;
+        border: 1px solid;
+        padding: 1.25rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .alert-info {
+        background: linear-gradient(to right, #ebf8ff 0%, #bee3f8 100%);
+        color: #1e3a5f;
+        border-color: #90cdf4;
+    }
+    
+    .alert-danger {
+        background: linear-gradient(to right, #fed7d7 0%, #fc8181 100%);
+        color: #742a2a;
+        border-color: #feb2b2;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .search-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .search-filters {
+            padding: 1.5rem;
+        }
+        
+        .result-item {
+            padding: 1.25rem;
+        }
+        
+        .result-actions {
+            flex-direction: row;
+            margin-top: 1rem;
+            min-width: auto;
+        }
+    }
+    
+    /* Animaciones suaves */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .result-item {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Links - Estilo moderno */
+    .result-meta a {
+        color: #2c5282;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .result-meta a:hover {
+        color: #1e3a5f;
+        text-decoration: underline;
+    }
+    
+    /* Form labels - Estilo moderno */
+    .form-label {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Text muted - Ajustes */
+    .text-muted {
+        color: #718096 !important;
+    }
+    
+    /* Efectos adicionales modernos */
+    .search-filters {
+        backdrop-filter: blur(10px);
+    }
+    
+    .result-item {
+        backdrop-filter: blur(10px);
+    }
+    
+    /* Iconos con color azul */
+    .result-title i.text-danger {
+        color: #e53e3e !important;
+    }
+    
+    .result-title i.text-primary {
+        color: #2c5282 !important;
+    }
+    
+    .result-title i.text-success {
+        color: #38a169 !important;
+    }
+    
+    .result-title i.text-info {
+        color: #3182ce !important;
+    }
+    
+    .result-title i.text-secondary {
+        color: #4a5568 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-page-container">
+    <div class="container-fluid">
+        <!-- Header mejorado -->
+        <div class="search-header text-center">
+            <div class="container">
+                <h2><i class="bi bi-search me-2"></i>Búsqueda de Documentos</h2>
+                <p>Encuentra documentos por palabras, frases o contenido dentro de los archivos</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="search-filters">
+                <form id="searchForm" method="get" action="{% url 'digitalizacion:buscar_documentos' %}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="form-group">
+                                    <div class="input-group search-input-group">
+                                    <input type="text" 
+                                           class="form-control form-control-lg" 
+                                           id="searchQuery" 
+                                           name="q" 
+                                           value="{{ query }}" 
+                                           placeholder="Buscar palabras, frases o contenido dentro de los documentos..."
+                                           autocomplete="off"
+                                           autofocus>
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="bi bi-search me-2"></i> Buscar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label class="form-label small text-muted mb-1">
+                                    <i class="bi bi-file-earmark me-1"></i>Tipo de archivo
+                                </label>
+                                <select class="form-select" id="tipoDocumento" name="tipo">
+                                    <option value="todos" {% if tipo == 'todos' %}selected{% endif %}>Todos los tipos</option>
+                                    <option value="pdf" {% if tipo == 'pdf' %}selected{% endif %}>PDF</option>
+                                    <option value="docx" {% if tipo == 'docx' %}selected{% endif %}>Word</option>
+                                    <option value="xlsx" {% if tipo == 'xlsx' %}selected{% endif %}>Excel</option>
+                                    <option value="jpg" {% if tipo == 'jpg' %}selected{% endif %}>Imágenes</option>
+                                </select>
+                            </div>
+                        </div>
+                        {% if expedientes %}
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label class="form-label small text-muted mb-1">
+                                    <i class="bi bi-folder me-1"></i>Expediente
+                                </label>
+                                <select class="form-select" id="expedienteFiltro" name="expediente_id">
+                                    <option value="">Todos los expedientes</option>
+                                    {% for exp in expedientes %}
+                                    <option value="{{ exp.id }}" {% if expediente_actual and expediente_actual.id == exp.id %}selected{% endif %}>
+                                        {{ exp.numero_expediente }} - {{ exp.titulo|truncatechars:30 }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            
+            <div id="searchResults">
+                <div class="loading">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Buscando...</span>
+                    </div>
+                    <p>Buscando documentos...</p>
+                </div>
+                
+                <div class="no-results">
+                    <i class="bi bi-search" style="font-size: 4rem;"></i>
+                    <h4>No se encontraron resultados</h4>
+                    <p>Intenta con otros términos de búsqueda o ajusta los filtros</p>
+                </div>
+                
+                <div id="resultsContainer">
+                    <!-- Los resultados se cargarán aquí mediante JavaScript -->
+                </div>
+                
+                <nav aria-label="Paginación de resultados" class="d-flex justify-content-center">
+                    <ul class="pagination" id="pagination">
+                        <!-- La paginación se generará dinámicamente -->
+                    </ul>
+                </nav>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- PDF.js para visualización de PDFs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    // Configurar el worker de PDF.js
+    if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+</script>
+
+<script>
+$(document).ready(function() {
+    let currentPage = 1;
+    let totalPages = 1;
+    let isLoading = false;
+    
+    // Función para cargar resultados
+    function loadResults(page = 1) {
+        if (isLoading) return;
+        
+        // Convertir la consulta a minúsculas para hacerla insensible a mayúsculas
+        const query = $('#searchQuery').val().toLowerCase();
+        const tipo = $('#tipoDocumento').val();
+        const expedienteId = $('#expedienteFiltro').val();
+        
+        // Mostrar loading
+        $('.loading').show();
+        $('.no-results').hide();
+        $('#resultsContainer').empty();
+        $('#pagination').empty();
+        isLoading = true;
+        
+        // Mostrar mensaje de búsqueda
+        if (query.trim() === '') {
+            $('#searchFeedback').html('<div class="alert alert-info">Por favor ingresa un término de búsqueda</div>');
+            $('.loading').hide();
+            isLoading = false;
+            return;
+        } else {
+            $('#searchFeedback').html(`<div class="alert alert-info">Buscando: <strong>${query}</strong></div>`);
+        }
+        
+        // Realizar la petición AJAX
+        $.ajax({
+            url: '{% url "digitalizacion:api_buscar_documentos" %}',
+            type: 'GET',
+            data: {
+                q: query,
+                tipo: tipo,
+                expediente_id: expedienteId,
+                page: page
+            },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            success: function(response) {
+                if (response && response.success) {
+                    currentPage = response.resultados?.page || 1;
+                    totalPages = response.resultados?.total_paginas || 1;
+                    
+                    // Mostrar resultados
+                    if (response.resultados?.items?.length > 0) {
+                        renderResults(response.resultados.items);
+                        renderPagination();
+                    } else if (response.resultados?.items && response.resultados.items.length === 0) {
+                        $('.no-results').show();
+                    } else {
+                        showError('No se encontraron resultados o el formato de la respuesta es inválido');
+                    }
+                } else {
+                    const errorMsg = (response && response.error) ? response.error : 'Error al realizar la búsqueda';
+                    showError(errorMsg);
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Error al conectar con el servidor';
+                try {
+                    const response = xhr.responseJSON;
+                    if (response && response.error) {
+                        errorMsg = response.error;
+                    } else {
+                        errorMsg += ': ' + (error || status);
+                    }
+                } catch (e) {
+                    errorMsg += ': ' + (error || status);
+                }
+                showError(errorMsg);
+            },
+            complete: function() {
+                $('.loading').hide();
+                isLoading = false;
+                
+                // Actualizar la URL sin recargar la página
+                const params = new URLSearchParams(window.location.search);
+                params.set('q', query);
+                params.set('tipo', tipo);
+                if (expedienteId) {
+                    params.set('expediente_id', expedienteId);
+                } else {
+                    params.delete('expediente_id');
+                }
+                params.set('page', page);
+                
+                const newUrl = window.location.pathname + '?' + params.toString();
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+        });
+    }
+    
+    // Función para renderizar los resultados
+    function renderResults(results) {
+        const container = $('#resultsContainer');
+        container.empty();
+        
+        results.forEach(function(result) {
+            const fileIcon = getFileIcon(result.tipo_archivo);
+            const resultHtml = `
+                <div class="result-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="result-title">
+                                <i class="${fileIcon}"></i>
+                                <span>${result.titulo}</span>
+                            </div>
+                            
+                            <div class="result-meta">
+                                <div>
+                                    <span class="badge bg-primary me-2">${result.tipo_archivo || 'Desconocido'}</span>
+                                    <span class="text-muted"><i class="bi bi-calendar3 me-1"></i> ${result.fecha_creacion}</span>
+                                </div>
+                                
+                                ${result.expediente ? `
+                                <div class="mb-2">
+                                    <strong><i class="bi bi-folder me-1"></i>Expediente:</strong> 
+                                    <a href="${result.expediente.url || '/expedientes/' + result.expediente.id + '/'}" class="text-decoration-none">
+                                        ${result.expediente.numero || result.expediente.numero_expediente || 'EXP-' + result.expediente.id} - ${result.expediente.titulo || 'Sin título'}
+                                    </a>
+                                    <span class="ms-2 badge bg-secondary">${result.expediente.tipo_expediente || 'Sin tipo'}</span>
+                                </div>
+                                ` : ''}
+                                
+                                <div class="mb-2">
+                                    <strong><i class="bi bi-person me-1"></i>Subido por:</strong> 
+                                    <span class="text-muted">${result.usuario || 'Usuario desconocido'}</span>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <strong><i class="bi bi-diagram-3 me-1"></i>Área del Expediente:</strong> 
+                                    <span class="badge bg-info text-dark">${result.area || 'No especificada'}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="result-snippet">
+                                <small>Coincidencia encontrada:</small>
+                                <div class="fragmento">
+                                    ${result.fragmento || 'Sin contenido de vista previa disponible.'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="result-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="if(typeof verDocumentoBusqueda === 'function') { verDocumentoBusqueda('${(result.ruta_archivo || result.url_descarga || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')}', '${(result.tipo_archivo || '').replace(/'/g, "\\'")}', '${(result.titulo || result.nombre || '').replace(/'/g, "\\'").replace(/"/g, '&quot;')}'); } else { alert('Error: La función de visualización no está disponible. Por favor, recarga la página.'); }" title="Ver documento">
+                                <i class="bi bi-eye me-1"></i> Ver
+                            </button>
+                            ${result.expediente ? `
+                            <a href="/expedientes/${result.expediente.id}/" class="btn btn-sm btn-outline-secondary" title="Ir al expediente">
+                                <i class="bi bi-folder-open me-1"></i> Expediente
+                            </a>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.append(resultHtml);
+        });
+    }
+    
+    // Función para renderizar la paginación
+    function renderPagination() {
+        const pagination = $('#pagination');
+        pagination.empty();
+        
+        if (totalPages <= 1) return;
+        
+        // Botón Anterior
+        const prevLi = $(`
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        `);
+        pagination.append(prevLi);
+        
+        // Números de página
+        const startPage = Math.max(1, currentPage - 2);
+        const endPage = Math.min(totalPages, startPage + 4);
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLi = $(`
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `);
+            pagination.append(pageLi);
+        }
+        
+        // Botón Siguiente
+        const nextLi = $(`
+            <li class="page-item ${currentPage >= totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Siguiente">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        `);
+        pagination.append(nextLi);
+        
+        // Manejar clic en la paginación
+        $('.page-link').on('click', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            if (page >= 1 && page <= totalPages && page !== currentPage) {
+                loadResults(page);
+            }
+        });
+    }
+    
+    // Función para mostrar errores
+    function showError(message) {
+        const container = $('#resultsContainer');
+        container.html(`
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> ${message}
+            </div>
+        `);
+    }
+    
+    // Función auxiliar para obtener el ícono según el tipo de archivo
+    function getFileIcon(fileType) {
+        const type = (fileType || '').toLowerCase();
+        if (type.includes('pdf')) return 'bi bi-file-pdf-fill text-danger';
+        if (type.includes('word') || type.includes('doc')) return 'bi bi-file-word-fill text-primary';
+        if (type.includes('excel') || type.includes('xls')) return 'bi bi-file-excel-fill text-success';
+        if (type.includes('image') || ['jpg', 'jpeg', 'png', 'gif'].includes(type)) return 'bi bi-file-image-fill text-info';
+        return 'bi bi-file-earmark-fill text-secondary';
+    }
+    
+    // Manejar envío del formulario
+    $('#searchForm').on('submit', function(e) {
+        e.preventDefault();
+        loadResults(1);
+    });
+    
+    // Cargar resultados iniciales si hay una búsqueda en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('q') || urlParams.has('tipo') || urlParams.has('expediente_id')) {
+        loadResults(parseInt(urlParams.get('page')) || 1);
+    }
+    
+    // Manejar cambio en los filtros
+    $('#tipoDocumento, #expedienteFiltro').on('change', function() {
+        loadResults(1);
+    });
+});
+</script>
+
+<!-- Funciones para visualización de documentos (fuera de document.ready para disponibilidad global) -->
+<script>
+    // Función para ver documento sin descargar
+    window.verDocumentoBusqueda = function(urlArchivo, tipoArchivo, nombreDocumento) {
+        console.log('verDocumentoBusqueda llamado:', {urlArchivo, tipoArchivo, nombreDocumento});
+        if (!urlArchivo) {
+            alert('No hay archivo disponible para ver');
+            return;
+        }
+        
+        // Obtener el tipo de archivo
+        const tipo = tipoArchivo ? tipoArchivo.toLowerCase() : '';
+        const extension = urlArchivo.toLowerCase();
+        
+        // Limpiar contenido previo del modal
+        const modalBody = document.getElementById('modalVerDocumentoBody');
+        if (!modalBody) {
+            alert('Error: No se encontró el modal. Por favor, recarga la página.');
+            return;
+        }
+        modalBody.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
+        
+        // Actualizar título del modal
+        const modalTitle = document.getElementById('modalVerDocumentoLabel');
+        if (modalTitle) {
+            modalTitle.textContent = nombreDocumento || 'Ver Documento';
+        }
+        
+        // Mostrar el modal - intentar con Bootstrap, si no está disponible usar jQuery
+        const modalElement = document.getElementById('modalVerDocumento');
+        if (!modalElement) {
+            alert('Error: No se encontró el modal. Por favor, recarga la página.');
+            return;
+        }
+        
+        // Intentar usar Bootstrap Modal
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else if (typeof $ !== 'undefined' && $.fn.modal) {
+            // Usar jQuery Bootstrap modal como fallback
+            $(modalElement).modal('show');
+        } else {
+            // Si no hay Bootstrap, mostrar el modal manualmente
+            modalElement.style.display = 'block';
+            modalElement.classList.add('show');
+            document.body.classList.add('modal-open');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'modal-backdrop fade show';
+            backdrop.id = 'modalBackdrop';
+            document.body.appendChild(backdrop);
+        }
+        
+        // Cargar contenido según el tipo
+        if (tipo === 'pdf' || extension.endsWith('.pdf')) {
+            cargarPDFEnModal(urlArchivo, modalBody);
+        } else if (tipo === 'docx' || tipo === 'doc' || extension.endsWith('.docx') || extension.endsWith('.doc')) {
+            cargarWordEnModal(urlArchivo, modalBody);
+        } else if (tipo === 'xlsx' || tipo === 'xls' || extension.endsWith('.xlsx') || extension.endsWith('.xls')) {
+            cargarExcelEnModal(urlArchivo, modalBody);
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'].some(ext => extension.endsWith('.' + ext))) {
+            cargarImagenEnModal(urlArchivo, modalBody);
+        } else {
+            modalBody.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
+                    <h5 class="mt-3">Tipo de archivo no soportado para visualización</h5>
+                    <p class="text-muted">Este tipo de archivo no se puede visualizar directamente.</p>
+                    <a href="${urlArchivo}" class="btn btn-primary mt-3" download>
+                        <i class="bi bi-download me-2"></i>Descargar archivo
+                    </a>
+                </div>
+            `;
+        }
+    };
+    
+    // Función para cargar PDF en el modal usando PDF.js
+    function cargarPDFEnModal(urlArchivo, container) {
+        if (!container) return;
+        
+        container.innerHTML = `
+            <div class="pdf-viewer-container" style="width: 100%; height: 80vh; overflow: auto; background: #525659;">
+                <div class="pdf-controls" style="background: #2c2c2c; color: white; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                    <button class="btn btn-sm btn-light" onclick="cambiarPaginaPDF(-1)" id="btnPrev">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <span style="margin: 0 15px;">
+                        Página <span id="pageNum">1</span> de <span id="pageCount">-</span>
+                    </span>
+                    <button class="btn btn-sm btn-light" onclick="cambiarPaginaPDF(1)" id="btnNext">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <div style="margin-left: 15px;">
+                        <button class="btn btn-sm btn-light" onclick="cambiarZoomPDF(-0.25)">
+                            <i class="bi bi-zoom-out"></i>
+                        </button>
+                        <span style="margin: 0 10px;">Zoom: <span id="zoomLevel">100</span>%</span>
+                        <button class="btn btn-sm btn-light" onclick="cambiarZoomPDF(0.25)">
+                            <i class="bi bi-zoom-in"></i>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="pdfCanvas" style="display: block; margin: 20px auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3); image-rendering: auto; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: pixelated;"></canvas>
+            </div>
+        `;
+        
+        // Variables globales para el PDF
+        window.pdfDoc = null;
+        window.pdfPageNum = 1;
+        window.pdfPageRendering = false;
+        window.pdfPageNumPending = null;
+        window.pdfScale = 1.2; // Scale inicial más moderado para mejor visualización
+        window.pdfUrl = urlArchivo;
+        
+        // Cargar el PDF
+        pdfjsLib.getDocument(urlArchivo).promise.then(function(pdf) {
+            window.pdfDoc = pdf;
+            document.getElementById('pageCount').textContent = pdf.numPages;
+            renderPage(pdfPageNum);
+        }).catch(function(error) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: #dc3545;"></i>
+                    <h5 class="mt-3">Error al cargar el PDF</h5>
+                    <p class="text-muted">${error.message}</p>
+                    <a href="${urlArchivo}" class="btn btn-primary mt-3" download>
+                        <i class="bi bi-download me-2"></i>Descargar archivo
+                    </a>
+                </div>
+            `;
+        });
+    }
+    
+    // Función para renderizar una página del PDF con alta calidad
+    function renderPage(num) {
+        window.pdfPageRendering = true;
+        window.pdfDoc.getPage(num).then(function(page) {
+            // Calcular el scale óptimo basado en el tamaño de la pantalla y la calidad deseada
+            const outputScale = window.devicePixelRatio || 1; // Usar devicePixelRatio para pantallas de alta resolución
+            // Aumentar el scale base para mejor calidad, pero mantener el zoom visual
+            const scale = window.pdfScale * outputScale * 1.5; // Multiplicador adicional para mejor calidad
+            
+            const viewport = page.getViewport({scale: scale});
+            const canvas = document.getElementById('pdfCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configurar el canvas con alta resolución
+            // Ajustar el tamaño del canvas para que coincida con el viewport escalado
+            const displayWidth = viewport.width / outputScale;
+            const displayHeight = viewport.height / outputScale;
+            
+            canvas.style.width = displayWidth + 'px';
+            canvas.style.height = displayHeight + 'px';
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            
+            // Mejorar la calidad del renderizado
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.textRenderingOptimization = 'optimizeQuality';
+            
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport,
+                // Opciones adicionales para mejor calidad
+                intent: 'display', // 'display' para mejor calidad visual
+                renderInteractiveForms: false,
+                // Asegurar renderizado de alta calidad
+                enableWebGL: false
+            };
+            const renderTask = page.render(renderContext);
+            
+            renderTask.promise.then(function() {
+                window.pdfPageRendering = false;
+                if (window.pdfPageNumPending !== null) {
+                    renderPage(window.pdfPageNumPending);
+                    window.pdfPageNumPending = null;
+                }
+            });
+        });
+        
+        document.getElementById('pageNum').textContent = num;
+    }
+    
+    // Función para cambiar de página
+    window.cambiarPaginaPDF = function(delta) {
+        if (window.pdfPageRendering) {
+            window.pdfPageNumPending = window.pdfPageNum + delta;
+        } else {
+            window.pdfPageNum += delta;
+            if (window.pdfPageNum < 1) {
+                window.pdfPageNum = 1;
+            } else if (window.pdfPageNum > window.pdfDoc.numPages) {
+                window.pdfPageNum = window.pdfDoc.numPages;
+            }
+            renderPage(window.pdfPageNum);
+        }
+        
+        // Actualizar estado de botones
+        document.getElementById('btnPrev').disabled = window.pdfPageNum <= 1;
+        document.getElementById('btnNext').disabled = window.pdfPageNum >= window.pdfDoc.numPages;
+    };
+    
+    // Función para cambiar el zoom
+    window.cambiarZoomPDF = function(delta) {
+        window.pdfScale += delta;
+        if (window.pdfScale < 0.5) window.pdfScale = 0.5;
+        if (window.pdfScale > 5.0) window.pdfScale = 5.0; // Aumentar zoom máximo para mejor calidad
+        document.getElementById('zoomLevel').textContent = Math.round(window.pdfScale * 100);
+        renderPage(window.pdfPageNum);
+    };
+    
+    // Función para cargar Word en el modal
+    function cargarWordEnModal(urlArchivo, container) {
+        if (!container) return;
+        // Construir URL completa si es relativa
+        const urlCompleta = urlArchivo.startsWith('http') ? urlArchivo : window.location.origin + urlArchivo;
+        const googleDocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(urlCompleta)}&embedded=true`;
+        container.innerHTML = `
+            <div style="width: 100%; height: 80vh;">
+                <iframe src="${googleDocsUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        `;
+    }
+    
+    // Función para cargar Excel en el modal
+    function cargarExcelEnModal(urlArchivo, container) {
+        if (!container) return;
+        // Construir URL completa si es relativa
+        const urlCompleta = urlArchivo.startsWith('http') ? urlArchivo : window.location.origin + urlArchivo;
+        const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/1/edit?usp=sharing&url=${encodeURIComponent(urlCompleta)}`;
+        container.innerHTML = `
+            <div style="width: 100%; height: 80vh;">
+                <iframe src="${googleSheetsUrl}" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        `;
+    }
+    
+    // Función para cargar imagen en el modal con alta calidad y zoom
+    function cargarImagenEnModal(urlArchivo, container) {
+        if (!container) return;
+        
+        // Variables para zoom y pan
+        let imageScale = 1.0;
+        let isDragging = false;
+        let startX, startY, scrollLeft, scrollTop;
+        
+        container.innerHTML = `
+            <div style="width: 100%; height: 80vh; overflow: auto; background: #2c2c2c; position: relative;">
+                <div class="image-controls" style="background: #1a1a1a; color: white; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10;">
+                    <button class="btn btn-sm btn-light" onclick="zoomImagen(-0.25)" id="btnZoomOut">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <span style="margin: 0 10px;">Zoom: <span id="zoomLevelImg">100</span>%</span>
+                    <button class="btn btn-sm btn-light" onclick="zoomImagen(0.25)" id="btnZoomIn">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light" onclick="resetZoomImagen()" style="margin-left: 15px;">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                    <button class="btn btn-sm btn-light" onclick="descargarImagen('${urlArchivo}')" style="margin-left: 15px;">
+                        <i class="bi bi-download"></i> Descargar
+                    </button>
+                </div>
+                <div id="imageContainer" style="display: flex; justify-content: center; align-items: center; min-height: calc(80vh - 60px); padding: 20px; cursor: move;">
+                    <img id="imageViewer" 
+                         src="${urlArchivo}" 
+                         style="max-width: none; max-height: none; image-rendering: auto; image-rendering: -webkit-optimize-contrast; image-rendering: -moz-crisp-edges; image-rendering: crisp-edges; transform: scale(1); transform-origin: center center; transition: transform 0.1s ease-out; box-shadow: 0 4px 20px rgba(0,0,0,0.5); user-select: none; -webkit-user-drag: none; object-fit: contain; will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden;" 
+                         alt="Imagen del documento"
+                         draggable="false"
+                         loading="eager">
+                </div>
+            </div>
+        `;
+        
+        const img = document.getElementById('imageViewer');
+        const imgContainer = document.getElementById('imageContainer');
+        
+        // Guardar referencia global para las funciones de zoom
+        window.currentImageViewer = {
+            img: img,
+            scale: 0.7, // Zoom inicial más pequeño
+            setScale: function(newScale) {
+                this.scale = Math.max(0.25, Math.min(5.0, newScale));
+                // Usar transform con translateZ(0) para activar aceleración de hardware y mejor calidad
+                img.style.transform = `scale(${this.scale}) translateZ(0)`;
+                // Ajustar image-rendering según el zoom para mejor calidad
+                img.style.imageRendering = this.scale >= 1.0 ? 'auto' : 'crisp-edges';
+                document.getElementById('zoomLevelImg').textContent = Math.round(this.scale * 100);
+            }
+        };
+        
+        // Asegurar que la imagen se cargue en alta calidad
+        img.onload = function() {
+            // Forzar recarga en alta resolución si es necesario
+            if (this.naturalWidth && this.naturalHeight) {
+                // Asegurar que se use la resolución completa
+                this.style.imageRendering = 'auto';
+            }
+            window.currentImageViewer.setScale(0.7);
+        };
+        
+        // Si la imagen ya está cargada, aplicar zoom inmediatamente
+        if (img.complete) {
+            img.onload();
+        }
+        
+        // Aplicar el zoom inicial
+        if (img.complete) {
+            window.currentImageViewer.setScale(0.7);
+        } else {
+            img.onload = function() {
+                window.currentImageViewer.setScale(0.7);
+            };
+        }
+        
+        // Cargar imagen en alta calidad
+        img.onload = function() {
+            // Asegurar que la imagen se carga en su resolución completa
+            img.style.width = img.naturalWidth + 'px';
+            img.style.height = img.naturalHeight + 'px';
+        };
+        
+        // Permitir zoom con la rueda del mouse
+        imgContainer.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            if (window.currentImageViewer) {
+                window.currentImageViewer.setScale(window.currentImageViewer.scale + delta);
+            }
+        }, { passive: false });
+        
+        // Permitir arrastrar la imagen cuando está con zoom
+        imgContainer.addEventListener('mousedown', function(e) {
+            if (window.currentImageViewer && window.currentImageViewer.scale > 1) {
+                isDragging = true;
+                startX = e.pageX - imgContainer.offsetLeft;
+                startY = e.pageY - imgContainer.offsetTop;
+                scrollLeft = imgContainer.scrollLeft;
+                scrollTop = imgContainer.scrollTop;
+            }
+        });
+        
+        imgContainer.addEventListener('mouseleave', function() {
+            isDragging = false;
+        });
+        
+        imgContainer.addEventListener('mouseup', function() {
+            isDragging = false;
+        });
+        
+        imgContainer.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - imgContainer.offsetLeft;
+            const y = e.pageY - imgContainer.offsetTop;
+            const walkX = (x - startX) * 2;
+            const walkY = (y - startY) * 2;
+            imgContainer.scrollLeft = scrollLeft - walkX;
+            imgContainer.scrollTop = scrollTop - walkY;
+        });
+    }
+    
+    // Función para hacer zoom en la imagen
+    window.zoomImagen = function(delta) {
+        if (window.currentImageViewer) {
+            window.currentImageViewer.setScale(window.currentImageViewer.scale + delta);
+        }
+    };
+    
+    // Función para resetear el zoom
+    window.resetZoomImagen = function() {
+        if (window.currentImageViewer) {
+            window.currentImageViewer.setScale(0.7); // Reset a zoom más pequeño
+            const container = document.getElementById('imageContainer');
+            if (container) {
+                container.scrollLeft = 0;
+                container.scrollTop = 0;
+            }
+        }
+    };
+    
+    // Función para descargar la imagen
+    window.descargarImagen = function(urlArchivo) {
+        const link = document.createElement('a');
+        link.href = urlArchivo;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>
+
+<!-- Modal para ver documentos -->
+<div class="modal fade" id="modalVerDocumento" tabindex="-1" aria-labelledby="modalVerDocumentoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-fullscreen-lg-down">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%); color: white;">
+                <h5 class="modal-title" id="modalVerDocumentoLabel">Ver Documento</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalVerDocumentoBody" style="padding: 0; min-height: 60vh;">
+                <!-- El contenido se carga dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Documentos - {{ documentos.0.documento.nombre_documento|default:expediente.numero_expediente }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- PDF.js para visualización de PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Configuración de PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+        const { jsPDF } = window.jspdf;
+    </script>
+    <style>
+        /* Estilos para el botón de descarga */
+        .download-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            font-weight: 400;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .download-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+        
+        .download-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .download-btn i {
+            font-size: 1.1rem;
+        }
+        
+        .download-btn.loading i {
+            display: none;
+        }
+        
+        .download-btn.loading::after {
+            content: '';
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 5px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header principal - más pequeño y colores neutros */
+        .header {
+            background: #f8f9fa;  /* Gris claro neutro */
+            padding: 15px 25px;
+            text-align: left;
+            margin: 0;
+            border-bottom: 1px solid #dee2e6;
+            color: #495057;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .btn-volver {
+            background: #6c757d;  /* Gris neutro */
+            color: white;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            border: none;
+            font-size: 0.85rem;
+            gap: 6px;
+        }
+        
+        .btn-volver:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 1.1rem;
+            margin: 0;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .header p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        
+        .contador {
+            background: #e9ecef;
+            color: #495057;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            border: 1px solid #dee2e6;
+        }
+        
+        /* Contenedor principal */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        
+        /* Tarjeta de documento */
+        .documento {
+            background: rgba(255, 255, 255, 0.95);
+            margin-bottom: 30px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+        
+        .documento-header {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .documento-nombre {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .documento-info {
+            font-size: 0.95em;
+            opacity: 0.9;
+            color: #e2e8f0;
+            margin-top: 5px;
+        }
+        
+        .documento-content {
+            padding: 30px;
+        }
+        
+        /* Visualizador de documentos */
+        .documento-iframe {
+            width: 100%;
+            height: 700px;
+            border: none;
+            border-radius: 15px;
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Visualizador directo */
+        .visualizador-directo {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .documento-iframe-container {
+            background: #ffffff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Contenedor principal mejorado */
+        .document-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 95vh;
+            padding: 5px 1px;
+            background: #f8f9fa;
+            overflow-x: auto;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* Contenedor de documentos centrado */
+        .document-container-wrapper {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0 10px;
+        }
+        
+        /* Contenedor de opciones */
+        .opciones-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .opciones-titulo {
+            font-size: 1.2em;
+            color: #3b82f6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .opciones-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn-opcion {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 15px 20px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            text-align: center;
+        }
+        
+        .btn-opcion:hover {
+            background: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .btn-opcion-danger {
+            background: rgba(220, 38, 38, 0.1) !important;
+            color: #dc2626 !important;
+            border-color: rgba(220, 38, 38, 0.3) !important;
+        }
+        
+        .btn-opcion-danger:hover {
+            background: rgba(220, 38, 38, 0.2) !important;
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2) !important;
+            color: #b91c1c !important;
+        }
+        
+        /* Mensaje sin documentos */
+        /* Estilos para el visor de documentos */
+        .documentos-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .navegacion-documentos {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 25px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .btn-nav {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-nav:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-nav:not(:disabled):hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .documento-vista {
+            display: none;
+            padding: 25px;
+        }
+
+        .documento-vista.activo {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .documento-titulo {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .contenido-documento {
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        /* Estilos para el visor de PDF */
+        .visor-pdf {
+            width: 100%;
+            background: #525659;
+            padding: 20px 0;
+        }
+
+        .controles-pdf {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            background: #2c2c2c;
+            color: white;
+        }
+
+        .btn-control {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-control:hover {
+            background: #2563eb;
+        }
+
+        .zoom-controls {
+            margin-left: 15px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .pdf-container {
+            max-width: 100%;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pdf-canvas {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        .pdf-page {
+            margin: 0 auto;
+            background: white;
+            width: auto;
+            height: auto;
+        }
+
+        .pdf-page canvas {
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pdf-pages {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            padding: 20px;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            background: #e5e7eb;
+            padding: 5px 1px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: auto;
+            overflow-y: visible;
+            min-height: 95vh;
+            /* Permitir que el visor ocupe todo el espacio disponible */
+            max-width: 100%;
+        }
+        
+        .pdf-pages {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 5px 1px;
+            width: 100%;
+            max-width: 100%;
+            /* Asegurar que las páginas mantengan su tamaño natural y se centren */
+            min-width: fit-content;
+            margin: 0 auto;
+        }
+        
+        .pdf-page-container {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 0 auto 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95%;
+            width: auto;
+            page-break-after: always;
+            page-break-inside: avoid;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        
+        .pdf-page-container {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin: 0 auto 15px;
+            padding: 2px;
+            border-radius: 4px;
+            max-width: 100%;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /* Hacer que el contenedor sea más grande y ocupe más espacio */
+            width: fit-content;
+            min-width: 0;
+            /* Centrar horizontalmente */
+            margin-left: auto;
+            margin-right: auto;
+            /* Permitir que el contenedor crezca más */
+            max-width: 99%;
+        }
+        
+        .pdf-page-container canvas {
+            display: block;
+            margin: 0;
+            width: auto !important;
+            height: auto !important;
+            max-width: 100% !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: high-quality;
+            object-fit: contain;
+            /* Permitir que el canvas ocupe todo el espacio disponible */
+        }
+
+        /* Estilos para el visor de imágenes */
+        .visor-imagen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            background: #f1f5f9;
+            min-height: 400px;
+        }
+
+        .imagen-documento {
+            max-width: 100%;
+            max-height: 85vh;
+            width: auto;
+            height: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: high-quality;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .img-preview {
+            max-width: 98%;
+            max-height: 95vh;
+            width: auto;
+            height: auto;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: high-quality;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            /* Asegurar que mantenga proporciones naturales */
+            aspect-ratio: auto;
+        }
+        
+        /* Contenedor de imagen mejorado */
+        .image-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 10px;
+            background: #f8f9fa;
+            min-height: 80vh;
+            width: 100%;
+        }
+        
+        .imagen-documento {
+            max-width: 98%;
+            max-height: 95vh;
+            width: auto;
+            height: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            image-rendering: high-quality;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Estilos para documentos no soportados */
+        .documento-no-soportado {
+            text-align: center;
+            padding: 50px 20px;
+            color: #64748b;
+        }
+
+        .documento-no-soportado h3 {
+            margin: 15px 0 10px;
+            color: #334155;
+        }
+
+        .btn-descargar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+
+        .btn-descargar:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sin-documentos {
+            text-align: center;
+            padding: 100px 20px;
+            color: #64748b;
+        }
+        
+        .sin-documentos h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #3b82f6;
+        }
+        
+        .sin-documentos p {
+            font-size: 1.3em;
+            opacity: 0.8;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 0 20px 30px;
+            }
+            
+            .documento-content {
+                padding: 20px;
+            }
+            
+            .documento-iframe {
+                height: 500px;
+            }
+            
+            .opciones-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-volver {
+                position: relative;
+                top: auto;
+                left: auto;
+                margin-bottom: 20px;
+            }
+        }
+        
+        /* Animaciones */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .documento {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .btn-volver, .btn-opcion {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Estilos para el visor de documentos */
+        .document-viewer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .document-container {
+            width: 100%;
+            max-width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+            /* Hacer que el contenedor ocupe todo el espacio disponible */
+            padding: 0;
+        }
+        
+        .document-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .document-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #495057;
+            margin: 5px 0 8px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.3;
+        }
+        
+        .document-meta {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .header-subtitle {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 8px;
+            font-weight: 400;
+        }
+        
+        .document-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            margin: 0 auto;
+            background: #f8f9fa;
+            padding: 20px;
+            min-height: 100px;
+            overflow-x: auto;
+        }
+        
+        .image-viewer img {
+            max-width: 100%;
+            max-height: 80vh;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .unsupported-document {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .document-navigation {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 900px;
+            margin: 20px 0;
+        }
+        
+        .btn-nav-doc {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+        
+        .btn-nav-doc:hover {
+            background: #2563eb;
+        }
+        
+        .btn-nav-doc:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        
+        .document-counter {
+            background: #e9ecef;
+            color: #495057;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0;
+            letter-spacing: 0.2px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .expediente-number {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #495057;
+            margin: 10px 0 5px;
+            letter-spacing: 0.2px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Estilos para imagen en pantalla completa */
+        .img-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            cursor: zoom-out;
+            padding: 2rem;
+        }
+        
+        .img-fullscreen img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                <div>
+                    <a href="{% url 'expedientes:detalle' expediente.pk %}" class="btn-volver">
+                        <i class="bi bi-arrow-left"></i>
+                        Volver al expediente
+                    </a>
+                    <div class="expediente-number">EXP-{{ expediente.numero_expediente }}</div>
+                    <h1 class="document-title">{{ expediente.titulo|default:expediente.numero_expediente }}</h1>
+                    <p class="header-subtitle mb-0">Todos los documentos dentro del expediente</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button id="downloadCurrentDocument" class="download-btn" title="Descargar todos los documentos como PDF">
+                        <i class="bi bi-download"></i>
+                        <span>Descargar todo</span>
+                    </button>
+                    <div class="document-counter">
+                        <i class="bi bi-files me-1"></i>
+                        {{ documentos|length }} documento{{ documentos|length|pluralize }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="document-viewer">
+            {% if documentos %}
+                <div class="document-container-wrapper">
+                    {% for doc_info in documentos %}
+                    <div class="document-container {% if not forloop.first %}d-none{% endif %}" data-index="{{ forloop.counter0 }}">
+                        <div class="card shadow-lg border-0" style="border-radius: 12px; overflow: hidden; width: 100%; max-width: 100%;">
+                            <div class="card-header" style="background: #f8f9fa; border: 1px solid #dee2e6; border-bottom: none; padding: 15px 20px;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center" style="color: #495057;">
+                                        {% with ext=doc_info.documento.archivo.name|lower|slice:'-4:' %}
+                                            {% if ext == '.pdf' %}
+                                                <i class="bi bi-file-pdf-fill me-2" style="font-size: 1.5rem; color: #dc3545;"></i>
+                                            {% elif ext == '.jpg' or ext == 'jpeg' or ext == '.png' or ext == '.gif' %}
+                                                <i class="bi bi-file-image-fill me-2" style="font-size: 1.5rem; color: #198754;"></i>
+                                            {% elif ext == '.doc' or ext == 'docx' %}
+                                                <i class="bi bi-file-word-fill me-2" style="font-size: 1.5rem; color: #0d6efd;"></i>
+                                            {% elif ext == 'xlsx' or ext == '.xls' %}
+                                                <i class="bi bi-file-excel-fill me-2" style="font-size: 1.5rem; color: #198754;"></i>
+                                            {% elif ext == 'pptx' or ext == '.ppt' %}
+                                                <i class="bi bi-file-ppt-fill me-2" style="font-size: 1.5rem; color: #dc3545;"></i>
+                                            {% else %}
+                                                <i class="bi bi-file-earmark-text-fill me-2" style="font-size: 1.5rem; color: #6c757d;"></i>
+                                            {% endif %}
+                                        {% endwith %}
+                                        <div>
+                                            <h1 class="h5 mb-1 fw-bold" style="color: #495057;">{{ doc_info.documento.nombre_documento|default:"Documento sin título" }}</h1>
+                                            <small class="d-flex align-items-center gap-2" style="font-size: 0.8rem; color: #6c757d;">
+                                                <i class="bi bi-file-earmark"></i>
+                                                <span>{{ doc_info.documento.archivo.size|filesizeformat }}</span>
+                                                <span>•</span>
+                                                <span>{{ doc_info.documento.archivo.name|slice:'-4:'|upper }}</span>
+                                                <span>•</span>
+                                                <i class="bi bi-calendar3"></i>
+                                                <span>{{ doc_info.documento.fecha_subida|date:"d/m/Y H:i" }}</span>
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <a href="{{ doc_info.documento.archivo.url }}" download class="btn btn-sm" style="background: #6c757d; color: white; border: none;">
+                                        <i class="bi bi-download me-1"></i>Descargar
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                {% with ext=doc_info.documento.archivo.name|lower|slice:'-4:' %}
+                                    <div class="document-content">
+                                        {% if ext == '.jpg' or ext == 'jpeg' or ext == '.png' or ext == '.gif' %}
+                                            <div class="image-container">
+                                                <img src="{{ doc_info.documento.archivo.url }}" 
+                                                     class="img-preview" 
+                                                     alt="{{ doc_info.documento.nombre_documento }}"
+                                                     onclick="toggleZoom(this)"
+                                                     style="cursor: zoom-in;"
+                                                     loading="lazy"
+                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                                <div style="display: none; text-align: center; padding: 20px;">
+                                                    <p class="text-muted">Error al cargar la imagen. <a href="{{ doc_info.documento.archivo.url }}" download>Descargar archivo</a></p>
+                                                </div>
+                                            </div>
+                                        {% elif ext == '.pdf' %}
+                                            <div id="pdf-viewer-{{ doc_info.documento.id }}" class="pdf-viewer">
+                                                <div class="pdf-pages"></div>
+                                                <div class="text-center py-5" style="width: 100%;">
+                                                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                                        <span class="visually-hidden">Cargando documento...</span>
+                                                    </div>
+                                                    <p class="mt-3 text-muted">Cargando documento...</p>
+                                                </div>
+                                            </div>
+                                            <script>
+                                                // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
+                                                document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', '{{ doc_info.documento.archivo.url }}');
+                                            </script>
+                                        {% else %}
+                                            <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 400px;">
+                                                <div class="bg-light p-4 rounded-circle mb-3">
+                                                    {% if ext == '.doc' or ext == 'docx' %}
+                                                        <i class="bi bi-file-word" style="font-size: 3rem; color: #0d6efd;"></i>
+                                                    {% elif ext == 'xlsx' or ext == '.xls' %}
+                                                        <i class="bi bi-file-excel" style="font-size: 3rem; color: #198754;"></i>
+                                                    {% elif ext == 'pptx' or ext == '.ppt' %}
+                                                        <i class="bi bi-file-ppt" style="font-size: 3rem; color: #dc3545;"></i>
+                                                    {% else %}
+                                                        <i class="bi bi-file-earmark" style="font-size: 3rem; color: #6c757d;"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <h4 class="text-muted mb-3">Vista previa no disponible</h4>
+                                                <a href="{{ doc_info.documento.archivo.url }}" download class="btn btn-primary">
+                                                    <i class="bi bi-download me-2"></i>Descargar archivo
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5 my-5">
+                    <div class="display-1 text-muted mb-3">
+                        <i class="bi bi-folder-x"></i>
+                    </div>
+                    <h2 class="mb-3">No hay documentos subidos</h2>
+                    <p class="lead text-muted">Este expediente aún no tiene documentos cargados.</p>
+                    <a href="{% url 'expedientes:detalle' expediente.pk %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-arrow-left"></i> Volver al expediente
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <script>
+            // Cargar PDFs de forma optimizada
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostrar todos los documentos inmediatamente
+            const documents = document.querySelectorAll('.document-container');
+            documents.forEach(doc => doc.classList.remove('d-none'));
+            
+            // Cargar PDFs con prioridad para los visibles
+            const loadVisiblePDFs = () => {
+                document.querySelectorAll('.pdf-viewer:not([data-loaded])').forEach(viewer => {
+                    const rect = viewer.getBoundingClientRect();
+                    if (rect.top < window.innerHeight + 500) { // Cargar 500px antes de que sea visible
+                        const pdfUrl = viewer.getAttribute('data-pdf-url');
+                        if (pdfUrl) {
+                            loadPDF(pdfUrl, viewer.id);
+                            viewer.setAttribute('data-loaded', 'true');
+                        }
+                    }
+                });
+            };
+            
+            // Cargar PDFs visibles al inicio
+            loadVisiblePDFs();
+            
+            // Cargar más PDFs al hacer scroll
+            let isScrolling;
+            window.addEventListener('scroll', () => {
+                window.clearTimeout(isScrolling);
+                isScrolling = setTimeout(loadVisiblePDFs, 100);
+            }, { passive: true });
+            
+            // Función para abrir un documento en una nueva pestaña
+            window.openInNewTab = function(url) {
+                if (url) window.open(url, '_blank');
+            };
+            // Función para cargar y mostrar un PDF de forma optimizada
+            async function loadPDF(pdfUrl, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container || !pdfUrl) return;
+                
+                try {
+                    // Mostrar indicador de carga
+                    container.innerHTML = `
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando documento...</span>
+                            </div>
+                            <p class="mt-2">Cargando documento...</p>
+                        </div>
+                    `;
+                    
+                    // Asegurar que la URL sea absoluta
+                    const absoluteUrl = pdfUrl.startsWith('http') ? pdfUrl : window.location.origin + pdfUrl;
+                    
+                    // Cargar el documento PDF
+                    const loadingTask = pdfjsLib.getDocument({
+                        url: absoluteUrl,
+                        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+                        cMapPacked: true
+                    });
+                    
+                    const pdf = await loadingTask.promise;
+                    
+                    // Crear contenedor de páginas
+                    const pagesContainer = document.createElement('div');
+                    pagesContainer.className = 'pdf-pages';
+                    container.innerHTML = '';
+                    container.appendChild(pagesContainer);
+                    
+                    // Función para renderizar una página en tamaño grande y centrado con alta calidad
+                    const renderPage = async (pageNum) => {
+                        const page = await pdf.getPage(pageNum);
+                        
+                        // Obtener el viewport natural de la página (escala 1.0 = tamaño real)
+                        const naturalViewport = page.getViewport({ scale: 1.0 });
+                        
+                        // Calcular el scale para tamaño NORMAL notablemente más grande
+                        const maxWidth = window.innerWidth * 0.99; // 99% del ancho de la ventana
+                        const maxHeight = window.innerHeight * 0.92; // 92% de la altura de la ventana
+                        
+                        // Calcular el scale máximo sin distorsión (permitir hasta 6.0x para tamaño normal grande)
+                        const scaleX = maxWidth / naturalViewport.width;
+                        const scaleY = maxHeight / naturalViewport.height;
+                        const displayScale = Math.min(scaleX, scaleY, 6.0); // Hasta 6.0x para tamaño normal grande
+                        
+                        // Asegurar un tamaño mínimo notable (mínimo 2.5x si es muy pequeño)
+                        let finalScale = Math.max(displayScale, Math.min(2.5, scaleX, scaleY));
+                        
+                        // Si el documento es pequeño, forzar un tamaño mínimo más grande
+                        if (naturalViewport.width < 600) {
+                            const minScale = 3.0;
+                            if (finalScale < minScale) {
+                                const forcedScale = Math.min(minScale, scaleX, scaleY);
+                                if (forcedScale > finalScale) {
+                                    finalScale = forcedScale;
+                                }
+                            }
+                        }
+                        
+                        // Crear viewport con el scale calculado (mantiene proporciones)
+                        const viewport = page.getViewport({ scale: finalScale });
+                        
+                        // Crear contenedor para la página
+                        const pageContainer = document.createElement('div');
+                        pageContainer.className = 'pdf-page-container';
+                        
+                        // Crear canvas para renderizar la página con alta resolución
+                        const canvas = document.createElement('canvas');
+                        const context = canvas.getContext('2d');
+                        
+                        // Configurar el canvas con alta resolución para pantallas Retina (solo para calidad, no para tamaño)
+                        const devicePixelRatio = window.devicePixelRatio || 1;
+                        const renderScale = Math.min(devicePixelRatio, 5.0); // Hasta 5.0x para mejor calidad con tamaño normal grande
+                        
+                        // Tamaño del canvas en píxeles (alta resolución para calidad)
+                        canvas.width = Math.floor(viewport.width * renderScale);
+                        canvas.height = Math.floor(viewport.height * renderScale);
+                        
+                        // Tamaño visual del canvas (tamaño grande de visualización)
+                        canvas.style.width = Math.floor(viewport.width) + 'px';
+                        canvas.style.height = Math.floor(viewport.height) + 'px';
+                        canvas.style.maxWidth = '99%';
+                        canvas.style.maxHeight = '95vh';
+                        canvas.style.margin = '0';
+                        
+                        // Escalar el contexto para renderizado de alta calidad
+                        context.scale(renderScale, renderScale);
+                        
+                        // Configurar renderizado de alta calidad
+                        context.imageSmoothingEnabled = true;
+                        context.imageSmoothingQuality = 'high';
+                        
+                        // Renderizar la página manteniendo proporciones naturales
+                        await page.render({
+                            canvasContext: context,
+                            viewport: viewport,
+                            intent: 'display'
+                        }).promise;
+                        
+                        // Agregar el canvas al contenedor
+                        pageContainer.appendChild(canvas);
+                        
+                        // Agregar número de página si hay más de una
+                        if (pdf.numPages > 1) {
+                            const pageNumber = document.createElement('div');
+                            pageNumber.className = 'text-center py-2 text-muted small';
+                            pageNumber.textContent = `Página ${pageNum} de ${pdf.numPages}`;
+                            pageContainer.appendChild(pageNumber);
+                        }
+                        
+                        return pageContainer;
+                    };
+                    
+                    // Renderizar todas las páginas
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const pageContainer = await renderPage(i);
+                        pagesContainer.appendChild(pageContainer);
+                    }
+                    
+                } catch (error) {
+                    console.error('Error cargando PDF:', error);
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Error al cargar el documento. Por favor, intente nuevamente.
+                        </div>
+                    `;
+                }
+            }
+            
+            // Funciones para el visor de imágenes
+            function zoomIn(button) {
+                const img = button.closest('.imagen-container').querySelector('.img-preview');
+                const currentWidth = img.offsetWidth;
+                img.style.width = (currentWidth * 1.2) + 'px';
+            }
+            
+            // Función para alternar el zoom de la imagen
+            window.toggleZoom = function(img) {
+                img.classList.toggle('zoom-in');
+            };
+            
+            // Función para alternar pantalla completa
+            window.toggleFullscreen = function(img) {
+                if (!document.fullscreenElement) {
+                    // Entrar en pantalla completa
+                    if (img.requestFullscreen) {
+                        img.requestFullscreen();
+                    } else if (img.webkitRequestFullscreen) { /* Safari */
+                        img.webkitRequestFullscreen();
+                    } else if (img.msRequestFullscreen) { /* IE11 */
+                        img.msRequestFullscreen();
+                    }
+                } else {
+                    // Salir de pantalla completa
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    } else if (document.webkitExitFullscreen) { /* Safari */
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) { /* IE11 */
+                        document.msExitFullscreen();
+                    }
+                }
+            };
+        });
+
+        // Función para descargar todos los documentos como un solo PDF
+        document.getElementById('downloadCurrentDocument').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            try {
+                // Cambiar el estado del botón
+                btn.disabled = true;
+                btn.classList.add('loading');
+                btn.innerHTML = `
+                    <span class="download-icon">
+                        <i class="bi bi-hourglass"></i>
+                    </span>
+                    <span class="download-text">Procesando...</span>
+                `;
+                
+                // Crear un nuevo PDF
+                const doc = new jsPDF();
+                const documents = document.querySelectorAll('.document-container');
+                let promiseChain = Promise.resolve();
+                
+                // Procesar cada documento
+                for (let i = 0; i < documents.length; i++) {
+                    const docInfo = documents[i];
+                    const img = docInfo.querySelector('img');
+                    const pdfViewer = docInfo.querySelector('.pdf-viewer');
+                    
+                    if (img) {
+                        // Procesar imagen
+                        promiseChain = promiseChain.then(() => {
+                            return new Promise((resolve) => {
+                                const imgElement = new Image();
+                                imgElement.crossOrigin = 'Anonymous';
+                                imgElement.src = img.src;
+                                
+                                imgElement.onload = function() {
+                                    // Solo agregar nueva página si no es el primer documento
+                                    if (doc.internal.getNumberOfPages() > 0) {
+                                        doc.addPage();
+                                    }
+                                    
+                                    // Calcular dimensiones manteniendo la relación de aspecto
+                                    const imgAspect = imgElement.naturalWidth / imgElement.naturalHeight;
+                                    const pdfAspect = doc.internal.pageSize.getWidth() / doc.internal.pageSize.getHeight();
+                                    
+                                    let width, height, x = 0, y = 0;
+                                    
+                                    if (imgAspect > pdfAspect) {
+                                        // La imagen es más ancha que el PDF
+                                        width = doc.internal.pageSize.getWidth();
+                                        height = width / imgAspect;
+                                        y = (doc.internal.pageSize.getHeight() - height) / 2;
+                                    } else {
+                                        // La imagen es más alta que el PDF
+                                        height = doc.internal.pageSize.getHeight();
+                                        width = height * imgAspect;
+                                        x = (doc.internal.pageSize.getWidth() - width) / 2;
+                                    }
+                                    
+                                    // Agregar la imagen al PDF con máxima calidad
+                                    doc.addImage(
+                                        imgElement,
+                                        'JPEG',
+                                        x,
+                                        y,
+                                        width,
+                                        height,
+                                        '',
+                                        'SLOW', // Usar 'SLOW' para mejor calidad de compresión
+                                        0
+                                    );
+                                    resolve();
+                                };
+                                
+                                imgElement.onerror = function() {
+                                    console.error('Error al cargar la imagen:', img.src);
+                                    resolve();
+                                };
+                            });
+                        });
+                    } else if (pdfViewer) {
+                        // Procesar PDF (todas las páginas)
+                        const pdfUrl = pdfViewer.getAttribute('data-pdf-url');
+                        if (pdfUrl) {
+                            promiseChain = promiseChain.then(async () => {
+                                await loadPdfPages(doc, pdfUrl, i > 0, 
+                                    docInfo.querySelector('h1.h3')?.textContent || `Documento ${i + 1}`);
+                            });
+                        }
+                    }
+                }
+                
+                // Cuando todos los documentos se hayan procesado, guardar el PDF
+                await promiseChain;
+                doc.save(`expediente-{{ expediente.numero_expediente }}-${new Date().toISOString().split('T')[0]}.pdf`);
+                
+            } catch (error) {
+                console.error('Error al generar el PDF:', error);
+                alert('Ocurrió un error al generar el PDF. Por favor, intente nuevamente.');
+            } finally {
+                // Restaurar el botón
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                btn.innerHTML = `
+                    <i class="bi bi-download"></i>
+                    <span>Descargar todo</span>
+                `;
+            }
+        });
+        
+        // Función auxiliar para cargar todas las páginas de un PDF en el documento
+        async function loadPdfPages(doc, url, addNewPage, title) {
+            try {
+                // Obtener el documento PDF
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                const totalPages = pdf.numPages;
+                
+                // Procesar cada página del PDF
+                for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                    // Agregar nueva página si no es la primera página del primer documento
+                    if (addNewPage || pageNum > 1) {
+                        doc.addPage();
+                    }
+                    
+                    // No agregar títulos a las páginas
+                    
+                    // Obtener la página actual
+                    const page = await pdf.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: 1.0 });
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    // Configuración de renderizado de máxima calidad
+                    const outputScale = 3.0; // Alta resolución para mejor calidad
+                    const outputViewport = page.getViewport({ scale: outputScale });
+                    
+                    // Crear un canvas con mayor resolución
+                    const outputCanvas = document.createElement('canvas');
+                    const outputCtx = outputCanvas.getContext('2d');
+                    
+                    // Configurar para pantallas de alta densidad
+                    const devicePixelRatio = window.devicePixelRatio || 1;
+                    outputCanvas.width = Math.floor(outputViewport.width * devicePixelRatio);
+                    outputCanvas.height = Math.floor(outputViewport.height * devicePixelRatio);
+                    outputCanvas.style.width = outputViewport.width + 'px';
+                    outputCanvas.style.height = outputViewport.height + 'px';
+                    
+                    // Escalar el contexto
+                    outputCtx.scale(devicePixelRatio, devicePixelRatio);
+                    
+                    // Configurar renderizado de alta calidad
+                    outputCtx.imageSmoothingEnabled = true;
+                    outputCtx.imageSmoothingQuality = 'high';
+                    
+                    // Renderizar la página del PDF en el canvas con máxima calidad
+                    await page.render({
+                        canvasContext: outputCtx,
+                        viewport: outputViewport,
+                        intent: 'display'
+                    }).promise;
+                    
+                    // Calcular dimensiones manteniendo la relación de aspecto
+                    const imgAspect = outputCanvas.width / outputCanvas.height;
+                    const pdfAspect = doc.internal.pageSize.getWidth() / doc.internal.pageSize.getHeight();
+                    
+                    let width, height, x = 0, y = 0;
+                    
+                    if (imgAspect > pdfAspect) {
+                        // La imagen es más ancha que el PDF
+                        width = doc.internal.pageSize.getWidth();
+                        height = width / imgAspect;
+                        y = (doc.internal.pageSize.getHeight() - height) / 2;
+                    } else {
+                        // La imagen es más alta que el PDF
+                        height = doc.internal.pageSize.getHeight();
+                        width = height * imgAspect;
+                        x = (doc.internal.pageSize.getWidth() - width) / 2;
+                    }
+                    
+                    // Agregar la imagen al PDF con máxima calidad
+                    doc.addImage(
+                        outputCanvas,
+                        'JPEG',
+                        x,
+                        y,
+                        width,
+                        height,
+                        '',
+                        'SLOW', // Usar 'SLOW' para mejor calidad de compresión
+                        0
+                    );
+                }
+            } catch (error) {
+                console.error('Error al procesar PDF:', error);
+                // Agregar un mensaje de error en el PDF
+                doc.addPage();
+                doc.setFontSize(14);
+                doc.text('Error al cargar el documento:', 10, 20);
+                doc.text(title, 10, 30);
+                doc.text(error.message, 10, 45, { maxWidth: 190 });
+            }
+        }
+    </script>
+</body>
+</html>

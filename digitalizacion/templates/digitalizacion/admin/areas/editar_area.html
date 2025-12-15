@@ -1,0 +1,281 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Editar Área - Sistema de Digitalización{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid #e3e6f0;
+        border-radius: 8px;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>
+                        Editar Área
+                    </h4>
+                    <p class="text-muted mb-0">
+                        Modifica los detalles del área "{{ area.titulo }}"
+                    </p>
+                </div>
+                <a href="{% url 'areas:gestionar_tipo' area.tipo_expediente %}?subtipo={{ area.subtipo_expediente }}" 
+                   class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i>
+                    Volver a Gestión
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Información del Área
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <!-- Información del tipo -->
+                            <div class="col-md-6">
+                                <label class="form-label">Tipo de Expediente</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ area.get_tipo_expediente_display }}" readonly>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Subtipo</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ area.subtipo_expediente|title }}" readonly>
+                            </div>
+                            
+                            <!-- Datos editables -->
+                            <div class="col-md-8">
+                                <label for="titulo" class="form-label">
+                                    <i class="bi bi-card-text me-1"></i>
+                                    Título del Área *
+                                </label>
+                                <input type="text" class="form-control" id="titulo" name="titulo" 
+                                       value="{{ area.titulo }}" required>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="orden" class="form-label">
+                                    <i class="bi bi-list-ol me-1"></i>
+                                    Orden *
+                                </label>
+                                <input type="number" class="form-control" id="orden" name="orden" 
+                                       value="{{ area.orden }}" min="1" required>
+                            </div>
+                            
+                            <div class="col-12">
+                                <label for="descripcion" class="form-label">
+                                    <i class="bi bi-text-paragraph me-1"></i>
+                                    Descripción
+                                </label>
+                                <textarea class="form-control" id="descripcion" name="descripcion" 
+                                          rows="3" placeholder="Descripción opcional del área">{{ area.descripcion }}</textarea>
+                            </div>
+                            
+                            <!-- Tipo de área -->
+                            <div class="col-md-6">
+                                <label for="tipo_area" class="form-label">
+                                    <i class="bi bi-collection me-1"></i>
+                                    Tipo de Área *
+                                </label>
+                                <select class="form-select" id="tipo_area" name="tipo_area" required>
+                                    <option value="texto" {% if area.tipo_area == 'texto' %}selected{% endif %}>
+                                        Solo Texto
+                                    </option>
+                                    <option value="archivo" {% if area.tipo_area == 'archivo' %}selected{% endif %}>
+                                        Solo Archivos
+                                    </option>
+                                    <option value="mixto" {% if area.tipo_area == 'mixto' %}selected{% endif %}>
+                                        Texto y Archivos
+                                    </option>
+                                </select>
+                            </div>
+                            
+                            <!-- Configuraciones adicionales -->
+                            <div class="col-md-6">
+                                <label class="form-label">Configuración</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="obligatoria" 
+                                           name="obligatoria" {% if area.obligatoria %}checked{% endif %}>
+                                    <label class="form-check-label" for="obligatoria">
+                                        Área obligatoria
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="activa" 
+                                           name="activa" {% if area.activa %}checked{% endif %}>
+                                    <label class="form-check-label" for="activa">
+                                        Área activa
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Configuración de archivos -->
+                            <div class="col-12" id="config-archivos" style="display: none;">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-file-earmark me-2"></i>
+                                            Configuración de Archivos
+                                        </h6>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="tipos_archivo_permitidos" class="form-label">
+                                                    Tipos de archivo permitidos
+                                                </label>
+                                                <input type="text" class="form-control" 
+                                                       id="tipos_archivo_permitidos" name="tipos_archivo_permitidos"
+                                                       value="{{ area.tipos_archivo_permitidos }}"
+                                                       placeholder="pdf,docx,xlsx,jpg,png">
+                                                <small class="text-muted">
+                                                    Separados por comas (ej: pdf,docx,xlsx)
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="col-md-6">
+                                                <label for="tamaño_max_archivo" class="form-label">
+                                                    Tamaño máximo (MB)
+                                                </label>
+                                                <input type="number" class="form-control" 
+                                                       id="tamaño_max_archivo" name="tamaño_max_archivo"
+                                                       value="{{ area.tamaño_max_archivo }}" 
+                                                       min="1" max="100" step="0.1">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones de acción -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'areas:gestionar_tipo' area.tipo_expediente %}?subtipo={{ area.subtipo_expediente }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-1"></i>
+                                Cancelar
+                            </a>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel de información -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Información del Área
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">Creada</small>
+                        <div>{{ area.created_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    
+                    {% if area.updated_at %}
+                    <div class="mb-3">
+                        <small class="text-muted">Última modificación</small>
+                        <div>{{ area.updated_at|date:"d/m/Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <small class="text-muted">Estado</small>
+                        <div>
+                            {% if area.activa %}
+                                <span class="badge bg-success">Activa</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactiva</span>
+                            {% endif %}
+                            
+                            {% if area.obligatoria %}
+                                <span class="badge bg-warning text-dark">Obligatoria</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Enlace a gestión de campos -->
+                    <div class="d-grid">
+                        <a href="{% url 'areas:campos' area.id %}" class="btn btn-outline-primary">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            Gestionar Campos Personalizados
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoAreaSelect = document.getElementById('tipo_area');
+    const configArchivos = document.getElementById('config-archivos');
+    
+    function toggleConfigArchivos() {
+        const valor = tipoAreaSelect.value;
+        if (valor === 'archivo' || valor === 'mixto') {
+            configArchivos.style.display = 'block';
+        } else {
+            configArchivos.style.display = 'none';
+        }
+    }
+    
+    // Inicializar
+    toggleConfigArchivos();
+    
+    // Escuchar cambios
+    tipoAreaSelect.addEventListener('change', toggleConfigArchivos);
+});
+</script>
+{% endblock %}

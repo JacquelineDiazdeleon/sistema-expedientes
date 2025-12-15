@@ -1,0 +1,116 @@
+{% extends "digitalizacion/base.html" %}
+{% load static %}
+
+{% block title %}Crear Área - {{ tipo_info }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="bi bi-plus-circle"></i> Crear Nueva Área</h2>
+            <p class="text-muted">Tipo de expediente: {{ tipo_info }}</p>
+        </div>
+        <div>
+            <a href="{% url 'areas:gestionar_tipo' tipo=tipo %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-plus"></i> Nueva Área</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="nombre" class="form-label">Nombre interno *</label>
+                                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                    <small class="form-text text-muted">Sin espacios, se convertirá a minúsculas</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="titulo" class="form-label">Título visible *</label>
+                                    <input type="text" class="form-control" id="titulo" name="titulo" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descripcion" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+                        </div>
+
+                        {% if subtipos_disponibles %}
+                        <div class="mb-3">
+                            <label for="subtipo" class="form-label">Subtipo de expediente *</label>
+                            <select class="form-select" id="subtipo" name="subtipo" required>
+                                {% for subtipo_key, subtipo_display in subtipos_disponibles %}
+                                <option value="{{ subtipo_key }}" {% if subtipo_key == subtipo %}selected{% endif %}>
+                                    {{ subtipo_display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Selecciona el subtipo específico para este tipo de expediente</small>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tipo_area" class="form-label">Tipo de área *</label>
+                                    <select class="form-select" id="tipo_area" name="tipo_area" required>
+                                        {% for value, label in tipo_area_choices %}
+                                        <option value="{{ value }}" {% if value == 'mixto' %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="tamaño_max_archivo" class="form-label">Tamaño máx. archivo (MB)</label>
+                                    <input type="number" class="form-control" id="tamaño_max_archivo" name="tamaño_max_archivo" value="10" min="1" max="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tipos_archivo_permitidos" class="form-label">Tipos de archivo permitidos</label>
+                            <input type="text" class="form-control" id="tipos_archivo_permitidos" name="tipos_archivo_permitidos" 
+                                   value="pdf,docx,xlsx,doc,xls,jpg,jpeg,png" 
+                                   placeholder="Separados por comas">
+                            <small class="form-text text-muted">Ejemplo: pdf,docx,xlsx,jpg,png</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="obligatoria" name="obligatoria" checked>
+                                <label class="form-check-label" for="obligatoria">
+                                    Área obligatoria
+                                </label>
+                                <small class="form-text text-muted d-block">Si está marcada, será requerida para completar el expediente</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'areas:gestionar_tipo' tipo=tipo %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Crear Área
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

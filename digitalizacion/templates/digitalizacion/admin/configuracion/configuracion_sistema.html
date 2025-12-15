@@ -1,0 +1,481 @@
+{% extends 'digitalizacion/admin/areas/base_sin_nav.html' %}
+{% load static %}
+
+{% block title %}Configuración del Sistema - Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <!-- Botón de regreso -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <a href="{% url 'digitalizacion:panel_administracion' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver al Panel de Administración
+                </a>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'digitalizacion:panel_administracion' %}" class="text-emerald-400 text-decoration-none">Panel de Administración</a>
+                    </li>
+                    <li class="breadcrumb-item active">Configuración del Sistema</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold mb-1">Configuración del Sistema</h1>
+                    <p class="mb-0">Gestiona parámetros y configuraciones del sistema</p>
+                </div>
+                <button type="button" class="btn btn-emerald-600" data-bs-toggle="modal" data-bs-target="#modalCrearConfig">
+                    <i class="bi bi-plus-circle me-1"></i>Agregar Configuración
+                </button>
+            </div>
+        </div>
+
+        <!-- Lista de Configuraciones -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>Configuraciones del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if configuraciones %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Clave</th>
+                                    <th>Valor</th>
+                                    <th>Descripción</th>
+                                    <th>Estado</th>
+                                    <th>Última Actualización</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for config in configuraciones %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <div class="avatar-sm bg-blue-600 rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    <i class="bi bi-gear text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0">{{ config.clave }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span>
+                                            {{ config.valor|truncatechars:50 }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span>
+                                            {{ config.descripcion|truncatechars:60|default:"Sin descripción" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if config.activo %}
+                                            <span class="badge bg-success">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>
+                                            {{ config.fecha_actualizacion|date:"d/m/Y H:i" }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    onclick="editarConfiguracion({{ config.id }}, '{{ config.clave }}', '{{ config.valor }}', '{{ config.descripcion }}', {{ config.activo|yesno:'true,false' }})"
+                                                    title="Editar configuración">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="eliminarConfiguracion({{ config.id }}, '{{ config.clave }}')"
+                                                    title="Eliminar configuración">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-gear fs-1"></i>
+                        <h5 class="mt-3 mb-2">No hay configuraciones</h5>
+                        <p class="mb-4">Agrega la primera configuración del sistema</p>
+                        <button type="button" class="btn btn-emerald-600" data-bs-toggle="modal" data-bs-target="#modalCrearConfig">
+                            <i class="bi bi-plus-circle me-1"></i>Agregar Configuración
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Crear Configuración -->
+<div class="modal fade" id="modalCrearConfig" tabindex="-1" aria-labelledby="modalCrearConfigLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCrearConfigLabel">
+                    <i class="bi bi-plus-circle me-2"></i>Agregar Configuración
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="crear">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="clave" class="form-label">Clave *</label>
+                            <input type="text" class="form-control" 
+                                   id="clave" name="clave" required 
+                                   placeholder="Ej: max_file_size">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="valor" class="form-label">Valor *</label>
+                            <input type="text" class="form-control" 
+                                   id="valor" name="valor" required 
+                                   placeholder="Ej: 10485760">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" 
+                                  id="descripcion" name="descripcion" rows="3"
+                                  placeholder="Describe el propósito de esta configuración"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-emerald-600">Crear Configuración</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Configuración -->
+<div class="modal fade" id="modalEditarConfig" tabindex="-1" aria-labelledby="modalEditarConfigLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalEditarConfigLabel">
+                    <i class="bi bi-pencil me-2"></i>Editar Configuración
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="accion" value="editar">
+                <input type="hidden" name="config_id" id="edit_config_id">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_clave" class="form-label">Clave *</label>
+                            <input type="text" class="form-control" 
+                                   id="edit_clave" name="clave" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_valor" class="form-label">Valor *</label>
+                            <input type="text" class="form-control" 
+                                   id="edit_valor" name="valor" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" 
+                                  id="edit_descripcion" name="descripcion" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_activo" name="activo">
+                            <label class="form-check-label" for="edit_activo">
+                                Configuración activa
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-emerald-600">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editarConfiguracion(id, clave, valor, descripcion, activo) {
+    document.getElementById('edit_config_id').value = id;
+    document.getElementById('edit_clave').value = clave;
+    document.getElementById('edit_valor').value = valor;
+    document.getElementById('edit_descripcion').value = descripcion;
+    document.getElementById('edit_activo').checked = activo;
+    
+    new bootstrap.Modal(document.getElementById('modalEditarConfig')).show();
+}
+
+function eliminarConfiguracion(id, clave) {
+    if (confirm(`¿Estás seguro de que quieres eliminar la configuración "${clave}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="eliminar">
+            <input type="hidden" name="config_id" value="${id}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ==================== VARIABLES Y CONFIGURACIÓN GLOBAL ==================== */
+    :root {
+        /* Tema claro */
+        --light-bg-primary: #ffffff;
+        --light-bg-secondary: #f8fafc;
+        --light-border: #e2e8f0;
+        --light-text-primary: #1a202c;
+        --light-text-secondary: #4a5568;
+        --light-text-muted: #718096;
+        --light-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        --light-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.15);
+        
+        /* Colores de acento */
+        --accent-blue: #3182ce;
+        --accent-blue-light: #4299e1;
+        --accent-green: #38a169;
+        --accent-orange: #dd6b20;
+        --accent-red: #e53e3e;
+        --accent-purple: #805ad5;
+        --accent-emerald: #10b981;
+    }
+
+    /* ==================== ESTILOS BASE PARA TEMA CLARO ==================== */
+    body {
+        background: var(--light-bg-secondary);
+        margin: 0;
+        padding: 0;
+        color: var(--light-text-primary);
+    }
+
+    .min-h-screen {
+        min-height: 100vh;
+        background: var(--light-bg-secondary);
+        padding: 20px;
+    }
+
+    .container {
+        background: var(--light-bg-primary);
+        border-radius: 12px;
+        box-shadow: var(--light-shadow);
+        padding: 30px;
+    }
+
+    /* Cards */
+    .card {
+        background: var(--light-bg-primary);
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        box-shadow: var(--light-shadow);
+        transition: all 0.2s ease;
+    }
+
+    .card:hover {
+        box-shadow: var(--light-shadow-lg);
+        transform: translateY(-1px);
+    }
+
+    .card-header {
+        background: var(--light-bg-primary);
+        border-bottom: 1px solid var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .card-body {
+        background: var(--light-bg-primary);
+        color: var(--light-text-primary);
+    }
+
+    /* Botones */
+    .btn-emerald-600 {
+        background: var(--accent-emerald);
+        border: none;
+        color: white;
+        transition: all 0.2s ease;
+    }
+
+    .btn-emerald-600:hover {
+        background: #059669;
+        transform: translateY(-1px);
+        box-shadow: var(--light-shadow-lg);
+    }
+
+    /* Breadcrumb */
+    .breadcrumb {
+        background: var(--light-bg-secondary);
+        border: 1px solid var(--light-border);
+        border-radius: 8px;
+        padding: 12px 16px;
+    }
+
+    .breadcrumb-item a {
+        color: var(--accent-emerald) !important;
+        text-decoration: none;
+    }
+
+    .breadcrumb-item.active {
+        color: var(--light-text-muted);
+    }
+
+    /* Textos */
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--light-text-primary);
+    }
+
+    p, small {
+        color: var(--light-text-secondary);
+    }
+
+    .text-muted {
+        color: var(--light-text-muted) !important;
+    }
+
+    /* Tablas */
+    .table {
+        background: var(--light-bg-primary);
+        color: var(--light-text-primary);
+    }
+
+    .table th {
+        background: var(--light-bg-secondary);
+        border-color: var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .table td {
+        border-color: var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    /* Modales */
+    .modal-content {
+        background: var(--light-bg-primary);
+        border: 1px solid var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .modal-header {
+        background: var(--light-bg-primary);
+        border-bottom: 1px solid var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .modal-body {
+        background: var(--light-bg-primary);
+        color: var(--light-text-primary);
+    }
+
+    .modal-footer {
+        background: var(--light-bg-primary);
+        border-top: 1px solid var(--light-border);
+    }
+
+    /* Formularios */
+    .form-control, .form-select {
+        background: var(--light-bg-primary);
+        border-color: var(--light-border);
+        color: var(--light-text-primary);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--accent-emerald);
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+    }
+
+    /* Utilidades */
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .btn-group .btn {
+        margin-right: 2px;
+    }
+
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--accent-emerald);
+        border-color: var(--accent-emerald);
+    }
+
+    /* Solucionar problemas de modales */
+    .modal {
+        z-index: 1055 !important;
+    }
+
+    .modal-backdrop {
+        z-index: 1050 !important;
+        pointer-events: none !important;
+    }
+
+    .modal-content {
+        pointer-events: auto !important;
+        z-index: 1056 !important;
+    }
+
+    .modal-dialog {
+        z-index: 1057 !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container {
+            padding: 20px;
+        }
+        
+        .min-h-screen {
+            padding: 10px;
+        }
+    }
+
+/* Asegurar que los elementos del modal sean interactivos */
+.modal input,
+.modal select,
+.modal textarea,
+.modal button {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1058 !important;
+}
+</style>
+{% endblock %}

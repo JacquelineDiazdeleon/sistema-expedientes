@@ -1,0 +1,144 @@
+{% extends 'digitalizacion/base_auth.html' %}
+{% load static %}
+
+{% block title %}Política de Privacidad - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Header -->
+                <div class="text-center mb-5">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb justify-content-center">
+                            <li class="breadcrumb-item">
+                                <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                            </li>
+                            <li class="breadcrumb-item active">Política de Privacidad</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h2 mb-3 text-zinc-50">
+                        <i class="bi bi-shield-lock text-emerald-400 me-3"></i>
+                        Política de Privacidad
+                    </h1>
+                    <p class="text-zinc-400">Última actualización: {{ "now"|date:"d/m/Y" }}</p>
+                </div>
+
+                <!-- Contenido -->
+                <div class="card bg-zinc-900 border-zinc-800">
+                    <div class="card-body p-4">
+                        <div class="text-zinc-300">
+                            <h3 class="h4 text-emerald-400 mb-4">1. Información que Recopilamos</h3>
+                            <p class="mb-4">
+                                Recopilamos la siguiente información personal cuando usted se registra en el sistema:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Nombre(s) y apellidos</li>
+                                <li>Correo electrónico institucional</li>
+                                <li>Departamento y puesto</li>
+                                <li>Información de rol y permisos</li>
+                                <li>Datos de actividad en el sistema</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">2. Uso de la Información</h3>
+                            <p class="mb-4">
+                                Utilizamos su información personal para:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Gestionar su acceso al sistema</li>
+                                <li>Asignar permisos y roles apropiados</li>
+                                <li>Mantener la seguridad del sistema</li>
+                                <li>Generar reportes y estadísticas</li>
+                                <li>Cumplir con obligaciones legales</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">3. Protección de Datos</h3>
+                            <p class="mb-4">
+                                Implementamos medidas de seguridad técnicas y organizativas para proteger su información personal:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Encriptación de datos sensibles</li>
+                                <li>Acceso restringido a personal autorizado</li>
+                                <li>Monitoreo continuo de seguridad</li>
+                                <li>Copias de seguridad regulares</li>
+                                <li>Auditorías de seguridad periódicas</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">4. Compartir Información</h3>
+                            <p class="mb-4">
+                                No vendemos, alquilamos o compartimos su información personal con terceros, excepto:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Cuando sea requerido por ley</li>
+                                <li>Para proteger los derechos y seguridad del sistema</li>
+                                <li>Con su consentimiento expreso</li>
+                                <li>Para cumplir con obligaciones gubernamentales</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">5. Retención de Datos</h3>
+                            <p class="mb-4">
+                                Conservamos su información personal mientras su cuenta esté activa y durante el período 
+                                necesario para cumplir con nuestras obligaciones legales, resolver disputas y hacer cumplir 
+                                nuestros acuerdos.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">6. Sus Derechos</h3>
+                            <p class="mb-4">
+                                Usted tiene derecho a:
+                            </p>
+                            <ul class="mb-4">
+                                <li>Acceder a su información personal</li>
+                                <li>Corregir información inexacta</li>
+                                <li>Solicitar la eliminación de su cuenta</li>
+                                <li>Oponerse al procesamiento de sus datos</li>
+                                <li>Recibir una copia de sus datos</li>
+                            </ul>
+
+                            <h3 class="h4 text-emerald-400 mb-4">7. Cookies y Tecnologías Similares</h3>
+                            <p class="mb-4">
+                                Utilizamos cookies y tecnologías similares para mejorar su experiencia en el sistema, 
+                                mantener sesiones activas y analizar el uso del sistema. Puede configurar su navegador 
+                                para rechazar cookies, aunque esto puede afectar la funcionalidad del sistema.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">8. Seguridad</h3>
+                            <p class="mb-4">
+                                Nos comprometemos a proteger su información personal. Sin embargo, ningún método de 
+                                transmisión por internet o almacenamiento electrónico es 100% seguro. Le recomendamos 
+                                mantener sus credenciales de acceso seguras y reportar cualquier actividad sospechosa.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">9. Cambios en la Política</h3>
+                            <p class="mb-4">
+                                Podemos actualizar esta política de privacidad ocasionalmente. Le notificaremos sobre 
+                                cualquier cambio significativo a través del sistema o por correo electrónico.
+                            </p>
+
+                            <h3 class="h4 text-emerald-400 mb-4">10. Contacto</h3>
+                            <p class="mb-4">
+                                Si tiene preguntas sobre esta política de privacidad o sobre el manejo de sus datos 
+                                personales, contacte al administrador del sistema o envíe un correo electrónico a 
+                                la Secretaría de Servicios Públicos.
+                            </p>
+
+                            <div class="alert alert-info border-info mt-4">
+                                <i class="bi bi-info-circle me-2"></i>
+                                <strong>Nota:</strong> Al utilizar este sistema, usted confirma que ha leído y 
+                                entendido esta política de privacidad.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de regreso -->
+                <div class="text-center mt-4">
+                    <a href="{% url 'digitalizacion:register' %}" class="btn btn-outline-emerald-400">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Registro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

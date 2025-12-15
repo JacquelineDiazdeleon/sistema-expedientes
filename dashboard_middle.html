@@ -1,0 +1,136 @@
+﻿                       <h2>{{ expedientes_rechazados|floatformat:0|intcomma }}</h2>
+                            <small>Requieren atenciÃ³n</small>
+                        </div>
+                    </div>
+
+                    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar Tema">
+                        <svg class="theme-icon" id="themeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Activity Chart -->
+                <div class="glass-card chart-card">
+                    <div class="card-header">
+                        <h2>Actividad de la Semana</h2>
+                    </div>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                    
+                    <!-- Monthly Expedientes Chart -->
+                    <div style="margin-top: 30px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="color: var(--text-primary); margin: 0;">Expedientes por Mes</h3>
+                            <button id="refreshMonthlyBtn" class="refresh-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="chart-container" style="height: 250px;">
+                            <canvas id="monthlyExpedientesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Cards -->
+                <div class="sidebar-cards">
+                    <!-- Documents Uploaded Today -->
+                    <div class="glass-card">
+                        <div class="card-header" style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                            <h2 class="card-title" style="margin: 0;">Documentos Subidos Hoy</h2>
+                            <span class="badge bg-primary">{{ documentos_hoy|length }}</span>
+                        </div>
+                        
+                        {% if documentos_hoy %}
+                            <div class="documents-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 10px;">
+                                {% for documento in documentos_hoy %}
+                                    <div class="document-item" style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid var(--glass-border);">
+                                        <div style="margin-right: 12px;">
+                                            {% if documento.archivo.name|lower|slice:'-4:' == '.pdf' %}
+                                                <i class="fas fa-file-pdf" style="font-size: 24px; color: #e74c3c;"></i>
+                                            {% elif documento.archivo.name|lower|slice:'-5:' == '.docx' or documento.archivo.name|lower|slice:'-4:' == '.doc' %}
+                                                <i class="fas fa-file-word" style="font-size: 24px; color: #2b579a;"></i>
+                                            {% elif documento.archivo.name|lower|slice:'-5:' == '.xlsx' or documento.archivo.name|lower|slice:'-4:' == '.xls' %}
+                                                <i class="fas fa-file-excel" style="font-size: 24px; color: #217346;"></i>
+                                            {% else %}
+                                                <i class="fas fa-file" style="font-size: 24px; color: var(--text-muted);"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div style="flex: 1; min-width: 0;">
+                                            <div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ documento.nombre|default:documento.archivo.name|basename }}">
+                                                {{ documento.nombre|default:documento.archivo.name|basename|truncatechars:30 }}
+                                            </div>
+                                            <div style="font-size: 0.8em; color: var(--text-muted);">
+                                                {{ documento.fecha_subida|timesince }} â€¢ 
+                                                {{ documento.archivo.size|filesizeformat }}
+                                            </div>
+                                            <div style="font-size: 0.8em; color: var(--text-muted);">
+                                                <a href="{% url 'expedientes:detalle' documento.expediente.id %}" class="text-primary">
+                                                    Exp. {{ documento.expediente.numero }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-icon" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ documento.archivo.url }}" target="_blank">
+                                                        <i class="fas fa-eye me-2"></i>Ver
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" href="{{ documento.archivo.url }}" download>
+                                                        <i class="fas fa-download me-2"></i>Descargar
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox" style="font-size: 2em; opacity: 0.5; margin-bottom: 10px;"></i>
+                                <p style="color: var(--text-muted);">No hay documentos subidos hoy</p>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="storage-footer" style="margin-top: 10px;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <div style="display: flex; align-items: center;">
+                                    <svg class="footer-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 16px; height: 16px; margin-right: 5px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                    </svg>
+                                    <span>{% if tiempo_ultima_subida == 'Nunca' %}{{ tiempo_ultima_subida }}{% else %}Ãšltima subida {{ tiempo_ultima_subida }}{% endif %}</span>
+                                </div>
+                                <div style="font-size: 0.9em; color: var(--text-muted);">
+                                    {{ documentos_hoy|length|default:"0" }} documentos â€¢ {{ total_tamano_hoy_mb|default:"0" }} MB
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="glass-card">
+                        <h2 class="card-title">Accesos RÃ¡pidos</h2>
+                        <div class="quick-actions">
+                            {% if user.perfil.rol.puede_crear_expedientes %}
+                            <a href="{% url 'expedientes:seleccionar_tipo' %}" class="quick-action-btn primary">
+                                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                                <span>Nuevo Expediente</span>
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'expedientes:lista' %}" class="quick-action-btn secondary">
+                                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="r

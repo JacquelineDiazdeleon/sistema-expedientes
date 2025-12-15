@@ -1,0 +1,390 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Expedientes - Sistema de Digitalización{% endblock %}
+{% block description %}Dashboard de expedientes con búsqueda, filtros y vistas{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-950">
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 fw-bold text-zinc-100 mb-1">Dashboard de Expedientes</h1>
+                <p class="text-zinc-400 mb-0">Listado, búsqueda, filtros y vistas.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="viewType" id="cardsView" autocomplete="off" checked>
+                    <label class="btn btn-outline-light btn-sm" for="cardsView">
+                        <i class="bi bi-grid me-1"></i>Tarjetas
+                    </label>
+                    
+                    <input type="radio" class="btn-check" name="viewType" id="tableView" autocomplete="off">
+                    <label class="btn btn-outline-light btn-sm" for="tableView">
+                        <i class="bi bi-list me-1"></i>Tabla
+                    </label>
+                </div>
+                <a href="{% url 'digitalizacion:crear_documento' %}" class="btn btn-emerald-600">
+                    <i class="bi bi-plus-circle me-2"></i>Crear expediente
+                </a>
+            </div>
+        </div>
+
+        <!-- Filtros y búsqueda -->
+        <div class="card bg-zinc-900 border-zinc-800 mb-4">
+            <div class="card-header border-zinc-800">
+                <h5 class="card-title text-zinc-100 mb-0">
+                    <i class="bi bi-search me-2"></i>Buscar
+                </h5>
+                <small class="text-zinc-400">Combina filtros para encontrar expedientes.</small>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <!-- Búsqueda principal -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="position-relative">
+                                <input type="text" 
+                                       name="q" 
+                                       value="{{ filtros_actuales.busqueda|default:'' }}"
+                                       class="form-control ps-5" 
+                                       placeholder="Buscar por título, número, descripción...">
+                                <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-zinc-400"></i>
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex gap-2">
+                            <button type="submit" class="btn btn-emerald-600">
+                                <i class="bi bi-search me-1"></i>Buscar
+                            </button>
+                            <a href="{% url 'digitalizacion:lista_documentos' %}" class="btn btn-outline-light">
+                                <i class="bi bi-x-circle me-1"></i>Limpiar
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <select name="tipo" class="form-select">
+                                <option value="">Todos los tipos</option>
+                                {% for tipo in tipos_documento %}
+                                <option value="{{ tipo.id }}" {% if filtros_actuales.tipo == tipo.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ tipo.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="departamento" class="form-select">
+                                <option value="">Todos los departamentos</option>
+                                {% for depto in departamentos %}
+                                <option value="{{ depto.id }}" {% if filtros_actuales.departamento == depto.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ depto.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="estado" class="form-select">
+                                <option value="">Todos los estados</option>
+                                {% for estado_code, estado_name in estados %}
+                                <option value="{{ estado_code }}" {% if filtros_actuales.estado == estado_code %}selected{% endif %}>
+                                    {{ estado_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center text-zinc-400">
+                                <small>Usa los filtros combinados para refinar resultados</small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Vista de tarjetas -->
+        <div id="cardsContainer">
+            <div class="row g-4">
+                {% for documento in page_obj %}
+                <div class="col-md-6 col-xl-4">
+                    <div class="card bg-zinc-950 border-zinc-900 h-100 hover-card">
+                        <div class="card-header border-zinc-800">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <h6 class="card-title text-zinc-100 mb-0 text-truncate">{{ documento.titulo }}</h6>
+                                <span class="badge {% if documento.estado == 'verificado' %}bg-success{% elif documento.estado == 'digitalizado' %}bg-info{% elif documento.estado == 'en_proceso' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    {{ documento.get_estado_display }}
+                                </span>
+                            </div>
+                            <small class="text-zinc-400">
+                                {{ documento.tipo_documento.nombre }} • {{ documento.departamento.nombre }}
+                            </small>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-zinc-400">Progreso</small>
+                                    <small class="text-zinc-400">
+                                        {% if documento.estado == 'verificado' %}100{% elif documento.estado == 'digitalizado' %}75{% elif documento.estado == 'en_proceso' %}50{% else %}25{% endif %}%
+                                    </small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-emerald-600" 
+                                         style="width: {% if documento.estado == 'verificado' %}100{% elif documento.estado == 'digitalizado' %}75{% elif documento.estado == 'en_proceso' %}50{% else %}25{% endif %}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-zinc-400">
+                                    <i class="bi bi-person me-1"></i>
+                                    {{ documento.creado_por.get_full_name|default:documento.creado_por.username }}
+                                </small>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'digitalizacion:detalle_documento' documento.pk %}" 
+                                       class="text-emerald-400 text-decoration-none">
+                                        Abrir
+                                    </a>
+                                    <!-- Modal trigger para info rápida -->
+                                    <button type="button" 
+                                            class="btn btn-link btn-sm text-zinc-300 p-0" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#infoModal{{ documento.id }}">
+                                        <i class="bi bi-info-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de información rápida -->
+                <div class="modal fade" id="infoModal{{ documento.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content bg-zinc-900 border-zinc-800">
+                            <div class="modal-header border-zinc-800">
+                                <h5 class="modal-title text-zinc-100">{{ documento.titulo }}</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <small class="text-zinc-400">Tipo:</small>
+                                        <div class="text-zinc-300">{{ documento.tipo_documento.nombre }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-zinc-400">Departamento:</small>
+                                        <div class="text-zinc-300">{{ documento.departamento.nombre }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-zinc-400">Estado:</small>
+                                        <div class="text-zinc-300">{{ documento.get_estado_display }}</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-zinc-400">Prioridad:</small>
+                                        <div class="text-zinc-300">{{ documento.get_prioridad_display }}</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-zinc-400">Creado por:</small>
+                                        <div class="text-zinc-300">{{ documento.creado_por.get_full_name|default:documento.creado_por.username }}</div>
+                                    </div>
+                                    {% if documento.descripcion %}
+                                    <div class="col-12">
+                                        <small class="text-zinc-400">Descripción:</small>
+                                        <div class="text-zinc-300">{{ documento.descripcion|truncatewords:20 }}</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="modal-footer border-zinc-800">
+                                <div class="d-flex w-100 gap-2">
+                                    <a href="{% url 'digitalizacion:detalle_documento' documento.pk %}" class="btn btn-emerald-600 flex-fill">
+                                        Abrir expediente
+                                    </a>
+                                    <button type="button" class="btn btn-outline-light" onclick="copyToClipboard('{{ request.build_absolute_uri }}{% url 'digitalizacion:detalle_documento' documento.pk %}')">
+                                        <i class="bi bi-share me-1"></i>Compartir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="card bg-zinc-950 border-zinc-900">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-folder-x text-zinc-600" style="font-size: 3rem;"></i>
+                            <h5 class="text-zinc-400 mt-3 mb-2">Sin resultados</h5>
+                            <p class="text-zinc-500 mb-3">No se encontraron expedientes con los filtros aplicados</p>
+                            <a href="{% url 'digitalizacion:lista_documentos' %}" class="btn btn-outline-light me-2">
+                                Limpiar filtros
+                            </a>
+                            <a href="{% url 'digitalizacion:crear_documento' %}" class="btn btn-emerald-600">
+                                Crear expediente
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Vista de tabla -->
+        <div id="tableContainer" style="display: none;">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-zinc-800">
+                                <tr>
+                                    <th class="text-zinc-300">Título</th>
+                                    <th class="text-zinc-300">Tipo</th>
+                                    <th class="text-zinc-300">Departamento</th>
+                                    <th class="text-zinc-300">Estado</th>
+                                    <th class="text-zinc-300">Progreso</th>
+                                    <th class="text-zinc-300">Creado por</th>
+                                    <th class="text-zinc-300 text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for documento in page_obj %}
+                                <tr class="hover-row">
+                                    <td class="text-zinc-100 fw-medium">{{ documento.titulo }}</td>
+                                    <td class="text-zinc-300">{{ documento.tipo_documento.nombre }}</td>
+                                    <td class="text-zinc-300">{{ documento.departamento.nombre }}</td>
+                                    <td>
+                                        <span class="badge {% if documento.estado == 'verificado' %}bg-success{% elif documento.estado == 'digitalizado' %}bg-info{% elif documento.estado == 'en_proceso' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ documento.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td class="text-zinc-300">
+                                        {% if documento.estado == 'verificado' %}100{% elif documento.estado == 'digitalizado' %}75{% elif documento.estado == 'en_proceso' %}50{% else %}25{% endif %}%
+                                    </td>
+                                    <td class="text-zinc-300">{{ documento.creado_por.get_full_name|default:documento.creado_por.username }}</td>
+                                    <td class="text-end">
+                                        <a href="{% url 'digitalizacion:detalle_documento' documento.pk %}" 
+                                           class="btn btn-outline-light btn-sm">
+                                            Abrir <i class="bi bi-arrow-right ms-1"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-zinc-400 py-4">
+                                        Sin resultados
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link bg-zinc-800 border-zinc-700 text-zinc-300" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link bg-zinc-800 border-zinc-700 text-zinc-300" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link bg-emerald-600 border-emerald-600">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link bg-zinc-800 border-zinc-700 text-zinc-300" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link bg-zinc-800 border-zinc-700 text-zinc-300" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link bg-zinc-800 border-zinc-700 text-zinc-300" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                            <i class="bi bi-chevron-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Cambio de vista entre tarjetas y tabla
+    const cardsView = document.getElementById('cardsView');
+    const tableView = document.getElementById('tableView');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const tableContainer = document.getElementById('tableContainer');
+    
+    cardsView.addEventListener('change', function() {
+        if (this.checked) {
+            cardsContainer.style.display = 'block';
+            tableContainer.style.display = 'none';
+        }
+    });
+    
+    tableView.addEventListener('change', function() {
+        if (this.checked) {
+            cardsContainer.style.display = 'none';
+            tableContainer.style.display = 'block';
+        }
+    });
+    
+    // Auto-submit del formulario al cambiar filtros
+    const filterSelects = document.querySelectorAll('#filterForm select');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+});
+
+// Función para copiar al portapapeles
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Mostrar notificación de éxito
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        alert.style.top = '20px';
+        alert.style.right = '20px';
+        alert.style.zIndex = '9999';
+        alert.innerHTML = `
+            <i class="bi bi-check-circle me-2"></i>
+            Enlace copiado al portapapeles
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+        
+        // Auto-remove después de 3 segundos
+        setTimeout(() => {
+            alert.remove();
+        }, 3000);
+    });
+}
+</script>
+{% endblock %}
+

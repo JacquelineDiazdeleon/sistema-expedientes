@@ -1,0 +1,290 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Editar Perfil - Sistema de Digitalización{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 text-zinc-100 fw-bold mb-1">Editar Mi Perfil</h1>
+                    <p class="text-zinc-400 mb-0">Actualiza tu información personal y foto de perfil</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'digitalizacion:perfil_usuario' %}" class="btn btn-outline-emerald-600">
+                        <i class="bi bi-arrow-left me-2"></i>Volver al Perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-zinc-900 border-zinc-800">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h5 class="text-zinc-100 mb-0">
+                        <i class="bi bi-person-gear me-2"></i>Información del Perfil
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Foto de Perfil -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-photo-container mb-3">
+                                    {% if user.perfil.foto_perfil %}
+                                        <img src="{{ user.perfil.foto_perfil.url }}" 
+                                             alt="Foto de perfil" 
+                                             class="profile-photo-preview"
+                                             id="profilePhotoPreview">
+                                    {% else %}
+                                        <div class="profile-photo-placeholder" id="profilePhotoPreview">
+                                            <i class="bi bi-person-circle text-emerald-400"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="foto_perfil" class="form-label text-zinc-300">
+                                        <i class="bi bi-camera me-2"></i>Foto de Perfil
+                                    </label>
+                                    <input type="file" 
+                                           class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                           id="foto_perfil" 
+                                           name="foto_perfil"
+                                           accept="image/*">
+                                    <div class="form-text text-zinc-400">
+                                        Formatos: JPG, PNG, GIF. Máximo 5MB
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <!-- Información Básica -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label text-zinc-300">
+                                            <i class="bi bi-person me-2"></i>Nombre
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                               id="first_name" 
+                                               name="first_name" 
+                                               value="{{ user.first_name }}"
+                                               required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label text-zinc-300">
+                                            <i class="bi bi-person me-2"></i>Apellidos
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                               id="last_name" 
+                                               name="last_name" 
+                                               value="{{ user.last_name }}"
+                                               required>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label text-zinc-300">
+                                        <i class="bi bi-envelope me-2"></i>Correo Electrónico
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ user.email }}"
+                                           required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="username" class="form-label text-zinc-300">
+                                        <i class="bi bi-person-badge me-2"></i>Usuario
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control bg-zinc-800 border-zinc-700 text-zinc-400" 
+                                           id="username" 
+                                           value="{{ user.username }}"
+                                           readonly>
+                                    <div class="form-text text-zinc-500">
+                                        El nombre de usuario no se puede cambiar
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información del Perfil -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="puesto" class="form-label text-zinc-300">
+                                    <i class="bi bi-briefcase me-2"></i>Puesto
+                                </label>
+                                <input type="text" 
+                                       class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                       id="puesto" 
+                                       name="puesto" 
+                                       value="{{ user.perfil.puesto|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="telefono" class="form-label text-zinc-300">
+                                    <i class="bi bi-telephone me-2"></i>Teléfono
+                                </label>
+                                <input type="tel" 
+                                       class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                       id="telefono" 
+                                       name="telefono" 
+                                       value="{{ user.perfil.telefono|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="extension" class="form-label text-zinc-300">
+                                    <i class="bi bi-telephone-plus me-2"></i>Extensión
+                                </label>
+                                <input type="text" 
+                                       class="form-control bg-zinc-800 border-zinc-700 text-zinc-100" 
+                                       id="extension" 
+                                       name="extension" 
+                                       value="{{ user.perfil.extension|default:'' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label text-zinc-300">
+                                    <i class="bi bi-shield-check me-2"></i>Rol
+                                </label>
+                                <input type="text" 
+                                       class="form-control bg-zinc-800 border-zinc-700 text-zinc-400" 
+                                       value="{{ user.perfil.rol.nombre|default:'Sin rol' }}"
+                                       readonly>
+                                <div class="form-text text-zinc-500">
+                                    El rol solo puede ser cambiado por un administrador
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botones -->
+                        <div class="d-flex gap-3 justify-content-end">
+                            <a href="{% url 'digitalizacion:perfil_usuario' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Acciones Adicionales -->
+            <div class="card bg-zinc-900 border-zinc-800 mt-4">
+                <div class="card-header bg-zinc-800 border-zinc-700">
+                    <h5 class="text-zinc-100 mb-0">
+                        <i class="bi bi-gear me-2"></i>Acciones Adicionales
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{% url 'digitalizacion:cambiar_password' %}" class="btn btn-outline-warning w-100">
+                                <i class="bi bi-key me-2"></i>Cambiar Contraseña
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'digitalizacion:perfil_usuario' %}" class="btn btn-outline-info w-100">
+                                <i class="bi bi-eye me-2"></i>Ver Mi Perfil
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-photo-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-photo-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #10b981;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.profile-photo-placeholder {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background-color: #374151;
+    border: 3px solid #10b981;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.form-control:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+}
+
+.form-control[readonly] {
+    background-color: #1f2937 !important;
+    color: #9ca3af !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fotoInput = document.getElementById('foto_perfil');
+    const preview = document.getElementById('profilePhotoPreview');
+    
+    fotoInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tamaño (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La imagen es demasiado grande. Máximo 5MB.');
+                this.value = '';
+                return;
+            }
+            
+            // Validar tipo
+            if (!file.type.startsWith('image/')) {
+                alert('Por favor selecciona una imagen válida.');
+                this.value = '';
+                return;
+            }
+            
+            // Mostrar preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (preview.tagName === 'IMG') {
+                    preview.src = e.target.result;
+                } else {
+                    // Reemplazar placeholder con imagen
+                    preview.outerHTML = `<img src="${e.target.result}" alt="Foto de perfil" class="profile-photo-preview" id="profilePhotoPreview">`;
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Gestionar Usuarios - Secretaría de Servicios Públicos{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Ocultar notificaciones en esta página */
+    .notification-bell,
+    .notification-dropdown {
+        display: none !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                        </li>
+                        <li class="breadcrumb-item active">Gestionar Usuarios</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-2 text-zinc-50">
+                    <i class="bi bi-people-fill me-2 text-emerald-400"></i>
+                    Gestionar Usuarios
+                </h1>
+                <p class="text-zinc-400 mb-0">Administra los usuarios del sistema</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'digitalizacion:solicitudes_pendientes' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-person-plus me-2"></i>Solicitudes Pendientes
+                </a>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-zinc-900 border-zinc-800">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <i class="bi bi-people text-emerald-400 fs-1"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h3 class="mb-0 text-zinc-50">{{ total_usuarios }}</h3>
+                                <p class="text-zinc-400 mb-0">Usuarios Activos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Usuarios -->
+        <div class="card bg-zinc-900 border-zinc-800">
+            <div class="card-header bg-zinc-800 border-zinc-700">
+                <h5 class="mb-0 text-zinc-50">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Usuarios del Sistema
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if usuarios %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-zinc-800 text-zinc-300">
+                                <tr>
+                                    <th class="border-0">Usuario</th>
+                                    <th class="border-0">Información</th>
+                                    <th class="border-0">Rol</th>
+                                    <th class="border-0">Estado</th>
+                                    <th class="border-0 text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for usuario in usuarios %}
+                                <tr class="text-zinc-300">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3">
+                                                <div class="avatar-title bg-emerald-100 text-emerald-600 rounded-circle">
+                                                    {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 text-zinc-50">{{ usuario.get_full_name }}</h6>
+                                                <small class="text-zinc-400">{{ usuario.username }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div class="text-zinc-50">{{ usuario.email }}</div>
+                                            {% if usuario.perfil.departamento %}
+                                                <small class="text-zinc-400">{{ usuario.perfil.departamento.nombre }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if usuario.perfil.rol %}
+                                            <span class="badge bg-{% if usuario.perfil.rol.nombre == 'administrador' %}danger{% elif usuario.perfil.rol.nombre == 'editor' %}warning{% else %}info{% endif %}">
+                                                {{ usuario.perfil.rol.get_nombre_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Sin rol</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if usuario.is_active %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>Activo
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Inactivo
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    data-bs-toggle="tooltip" title="Ver detalles">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <a href="{% url 'digitalizacion:cambiar_password_usuario' usuario.id %}" 
+                                               class="btn btn-sm btn-outline-warning"
+                                               data-bs-toggle="tooltip" title="Cambiar contraseña">
+                                                <i class="bi bi-key"></i>
+                                            </a>
+                                            {% if usuario.username != 'jacquelinediazdeleon045@gmail.com' %}
+                                                <a href="{% url 'digitalizacion:eliminar_usuario' usuario.id %}" 
+                                                   class="btn btn-sm btn-outline-danger"
+                                                   data-bs-toggle="tooltip" title="Eliminar usuario">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-people text-zinc-600" style="font-size: 3rem;"></i>
+                        <h5 class="text-zinc-400 mt-3">No hay usuarios registrados</h5>
+                        <p class="text-zinc-500">Los usuarios aparecerán aquí una vez que se registren en el sistema.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-sm {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+</style>
+{% endblock %}

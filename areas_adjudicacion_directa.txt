@@ -1,0 +1,356 @@
+Áreas de adjudicación directa en la base de datos:
+--------------------------------------------------------------------------------
+
+ID: 837
+  Nombre: solicitud_suficiencia
+  Título: Solicitud de suficiencia presupuestal y autorización de compromiso de pago
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 1
+--------------------------------------------------------------------------------
+
+ID: 838
+  Nombre: solicitud_compromiso_pago
+  Título: Solicitud y contestación de compromiso de pago
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 2
+--------------------------------------------------------------------------------
+
+ID: 839
+  Nombre: oficio_contraloria_adj
+  Título: Oficio y contestación de control patrimonial, TIC´s o capital humano
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 3
+--------------------------------------------------------------------------------
+
+ID: 840
+  Nombre: solicitud_avaluo
+  Título: Solicitud de avalúo en caso de ser renta de algún vehículo
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 4
+--------------------------------------------------------------------------------
+
+ID: 841
+  Nombre: solicitud_requisicion_adj
+  Título: Solicitud de requisición del área
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 5
+--------------------------------------------------------------------------------
+
+ID: 842
+  Nombre: analisis_costo_beneficio
+  Título: Análisis costo beneficio
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 6
+--------------------------------------------------------------------------------
+
+ID: 843
+  Nombre: requisicion_adj
+  Título: Requisición
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 7
+--------------------------------------------------------------------------------
+
+ID: 844
+  Nombre: cotizacion_adj
+  Título: Cotización
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 8
+--------------------------------------------------------------------------------
+
+ID: 845
+  Nombre: tres_cotizaciones
+  Título: 3 o más cotizaciones
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 9
+--------------------------------------------------------------------------------
+
+ID: 846
+  Nombre: avaluo
+  Título: Avalúo en caso de ser requerido
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 10
+--------------------------------------------------------------------------------
+
+ID: 847
+  Nombre: documentos_vehiculo
+  Título: En caso de ser vehículos: facturas, seguro, chofer responsable
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 11
+--------------------------------------------------------------------------------
+
+ID: 848
+  Nombre: invitacion_comite
+  Título: Invitación al comité de adquisiciones
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 12
+--------------------------------------------------------------------------------
+
+ID: 849
+  Nombre: solicitud_dictamen_adjudicacion
+  Título: Solicitud y dictamen de la adjudicación
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 13
+--------------------------------------------------------------------------------
+
+ID: 850
+  Nombre: acta_sesion_comite
+  Título: Acta de sesión de comité
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 14
+--------------------------------------------------------------------------------
+
+ID: 851
+  Nombre: contrato_adj
+  Título: Contrato
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 15
+--------------------------------------------------------------------------------
+
+ID: 852
+  Nombre: constancia_proveedor
+  Título: Constancia de proveedor
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 16
+--------------------------------------------------------------------------------
+
+ID: 853
+  Nombre: constancia_situacion_fiscal
+  Título: Constancia de situación fiscal
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 17
+--------------------------------------------------------------------------------
+
+ID: 854
+  Nombre: comprobante_domicilio_fiscal
+  Título: Comprobante de domicilio fiscal
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 18
+--------------------------------------------------------------------------------
+
+ID: 855
+  Nombre: apertura_establecimiento
+  Título: Apertura de establecimiento (si aplica)
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 19
+--------------------------------------------------------------------------------
+
+ID: 856
+  Nombre: comprobante_domicilio_establecimiento
+  Título: Comprobante de domicilio de establecimiento comercial (si aplica)
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 20
+--------------------------------------------------------------------------------
+
+ID: 857
+  Nombre: opinion_sat
+  Título: Opinión de cumplimiento de SAT positiva
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 21
+--------------------------------------------------------------------------------
+
+ID: 858
+  Nombre: opinion_imss
+  Título: Opinión de cumplimiento de IMSS
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 22
+--------------------------------------------------------------------------------
+
+ID: 859
+  Nombre: opinion_infonavit
+  Título: Opinión de cumplimiento de INFONAVIT
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 23
+--------------------------------------------------------------------------------
+
+ID: 860
+  Nombre: opinion_finanzas
+  Título: Opinión de cumplimiento finanzas del estado
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 24
+--------------------------------------------------------------------------------
+
+ID: 861
+  Nombre: acta_constitutiva
+  Título: Acta constitutiva (personas morales)
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 25
+--------------------------------------------------------------------------------
+
+ID: 862
+  Nombre: poder_notarial
+  Título: Poder notarial (en caso de aplicar)
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 26
+--------------------------------------------------------------------------------
+
+ID: 863
+  Nombre: ine
+  Título: Copia INE
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 27
+--------------------------------------------------------------------------------
+
+ID: 864
+  Nombre: carta_no_sancion
+  Título: Carta de no sanción
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 28
+--------------------------------------------------------------------------------
+
+ID: 865
+  Nombre: carta_no_cargo_publico
+  Título: Carta de no cargo público
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 29
+--------------------------------------------------------------------------------
+
+ID: 866
+  Nombre: carta_compromiso
+  Título: Carta compromiso
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 30
+--------------------------------------------------------------------------------
+
+ID: 867
+  Nombre: curriculum_empresarial
+  Título: Currículum empresarial
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 31
+--------------------------------------------------------------------------------
+
+ID: 868
+  Nombre: solicitud_pago_adj
+  Título: Solicitud de pago
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 32
+--------------------------------------------------------------------------------
+
+ID: 869
+  Nombre: factura_xml_adj
+  Título: Factura, XML y validación
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 33
+--------------------------------------------------------------------------------
+
+ID: 870
+  Nombre: orden_compra_adj
+  Título: Orden de compra
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 34
+--------------------------------------------------------------------------------
+
+ID: 871
+  Nombre: vale_entrada_adj
+  Título: Vale de entrada
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 35
+--------------------------------------------------------------------------------
+
+ID: 872
+  Nombre: acta_entrega_ine_adj
+  Título: Acta de entrega con INE de proveedor y persona que recibe
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 36
+--------------------------------------------------------------------------------
+
+ID: 873
+  Nombre: acta_entrega_proveedor_adj
+  Título: Acta de entrega de proveedor
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 37
+--------------------------------------------------------------------------------
+
+ID: 874
+  Nombre: oficio_conformidad_adj
+  Título: Oficio de conformidad y evidencia fotográfica
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 38
+--------------------------------------------------------------------------------
+
+ID: 875
+  Nombre: anexos_adjudicacion
+  Título: Anexos de adjudicación
+  Tipo: adjudicacion_directa
+  Subtipo: adjudicacion_directa
+  Activa: True
+  Orden: 39
+--------------------------------------------------------------------------------
+
+
+Total de áreas de adjudicación directa: 39

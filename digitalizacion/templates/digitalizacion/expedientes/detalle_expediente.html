@@ -1,0 +1,3040 @@
+{% load dict_extras %}
+{% load estado_filters %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user" content="{{ user.get_full_name|default:user.username }}" />
+    <meta http-equiv="Content-Language" content="es-mx">
+    <meta http-equiv="Content-Script-Type" content="text/javascript; charset=UTF-8">
+    <meta http-equiv="Content-Style-Type" content="text/css; charset=UTF-8">
+    <title>{{ expediente.numero_expediente }} - Sistema de Digitalización</title>
+    
+    <!-- Hojas de estilo CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="{% static 'digitalizacion/css/progress.css' %}" rel="stylesheet">
+    <link href="{% static 'digitalizacion/css/expediente.css' %}" rel="stylesheet">
+    <style>
+        /* Estilos para el sidebar de áreas */
+        .areas-sidebar {
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 1rem;
+            position: fixed;
+            transition: all 0.3s ease;
+            width: 300px;
+            z-index: 1000;
+        }
+        
+        .area-item {
+            border-left: 4px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .area-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        .area-item.active {
+            background-color: #e9ecef;
+            border-left-color: #0d6efd;
+            font-weight: 500;
+        }
+        
+        .area-item.completed {
+            background-color: #e8f5e9;
+            border-left-color: #198754;
+        }
+        
+        .area-item.completed .badge {
+            background-color: #198754;
+        }
+        
+        .area-item .badge {
+            font-size: 0.65em;
+            margin-left: 0.5rem;
+            position: absolute;
+            right: 0.75rem;
+            top: 0.75rem;
+        }
+        
+        .area-desc {
+            color: #6c757d;
+            font-size: 0.85em;
+            margin-top: 0.25rem;
+        }
+        
+        .area-actions {
+            margin-top: 0.5rem;
+        }
+        
+        .area-actions .btn {
+            font-size: 0.8rem;
+            padding: 0.15rem 0.5rem;
+        }
+        
+        /* Estilos para el botón de descarga */
+        .btn-download {
+            background-color: #198754;
+            border: none;
+            color: white;
+        }
+        
+        .btn-download:hover {
+            background-color: #157347;
+            color: white;
+        }
+        
+        /* Estilos mejorados para la sección de información del expediente */
+        .card-body {
+            padding: 1.5rem !important;
+        }
+        
+        .bg-light {
+            background-color: #f8f9fa !important;
+            border: 1px solid #e9ecef !important;
+        }
+        
+        .bg-light .text-primary {
+            color: #0d6efd !important;
+        }
+        
+        /* Ocultar porcentaje blanco superpuesto - solución directa */
+        .bg-light::before,
+        .bg-light::after,
+        .col-lg-7::before,
+        .col-lg-7::after {
+            display: none !important;
+            content: none !important;
+        }
+        
+        /* Ocultar cualquier elemento con porcentaje blanco o texto blanco superpuesto */
+        .bg-light *[style*="opacity"][style*="0"],
+        .bg-light *[class*="opacity"],
+        .bg-light *[style*="color: white"],
+        .bg-light *[style*="color: #fff"],
+        .bg-light *[style*="color:#fff"],
+        .bg-light *[style*="color:white"],
+        .col-lg-7 *[style*="opacity"][style*="0"],
+        .col-lg-7 *[style*="color: white"],
+        .col-lg-7 *[style*="color: #fff"] {
+            display: none !important;
+        }
+        
+        /* Mejorar espaciado de los elementos de información - formato horizontal compacto */
+        .bg-light {
+            padding: 1rem !important;
+        }
+        
+        .bg-light .col-md-3 {
+            padding: 0.5rem;
+        }
+        
+        .bg-light .d-flex.align-items-start {
+            padding: 0.5rem 0.75rem;
+            background-color: #ffffff;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            height: 100%;
+            transition: all 0.2s ease;
+        }
+        
+        .bg-light .d-flex.align-items-start:hover {
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-color: #dee2e6;
+        }
+        
+        .bg-light .d-flex.align-items-start i {
+            min-width: 18px;
+            font-size: 0.9rem;
+        }
+        
+        .bg-light .d-flex.align-items-start small {
+            font-size: 0.75rem;
+            line-height: 1.2;
+        }
+        
+        .bg-light .d-flex.align-items-start p {
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+        
+        /* Mejorar los botones de acción */
+        .btn-azul-oscuro {
+            transition: all 0.2s ease;
+        }
+        
+        .btn-azul-oscuro:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Mejorar la barra de progreso */
+        .progress {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            transition: width 0.6s ease;
+        }
+        
+        /* Estilos para los botones de acciones de documentos (blancos y negros) */
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .btn-action {
+            background: white;
+            border: 1.5px solid #212529;
+            color: #212529;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        .btn-action:hover {
+            background: #212529;
+            color: white;
+            border-color: #212529;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-action i {
+            font-size: 1rem;
+        }
+        
+        .btn-action.btn-view:hover {
+            background: #212529;
+            color: white;
+        }
+        
+        .btn-action.btn-download:hover {
+            background: #212529;
+            color: white;
+            border-color: #212529;
+        }
+        
+        .btn-action.btn-delete:hover {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        
+        /* Estilos para el check de completado */
+        .check-completed {
+            color: #198754;
+            margin-right: 0.5rem;
+        }
+        
+        /* Estilos para el tema oscuro - DESHABILITADOS, siempre en modo claro */
+        /* Los estilos oscuros han sido deshabilitados para mantener siempre el modo claro */
+    </style>
+    <style>
+        /* Estilos para la interfaz de escaneo */
+        .camera-preview-container {
+            position: relative;
+            min-height: 300px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .camera-placeholder {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        #video-preview {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        #preview-imagenes .imagen-preview {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+        
+        #preview-imagenes .imagen-preview img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+        }
+        
+        #preview-imagenes .imagen-preview .badge {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        #preview-imagenes .imagen-preview .btn-eliminar-imagen {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(220, 53, 69, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        #preview-imagenes .imagen-preview .btn-eliminar-imagen:hover {
+            background: rgba(220, 53, 69, 1);
+        }
+        
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            border: 1px solid transparent;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-color: #dee2e6;
+            color: #0d6efd;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            background-color: #fff;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        
+        .scan-controls button {
+            transition: all 0.3s ease;
+        }
+        
+        .scan-controls button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* ========================================================================
+           ESTILOS MODERNOS PARA ESCANEO AUTOMÁTICO
+           ======================================================================== */
+        
+        .scanner-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .scanner-section:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+        }
+        
+        .scanner-header {
+            margin-bottom: 1rem;
+        }
+        
+        .scanner-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .scanner-status {
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .scanner-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            background: #6b7280;
+            animation: pulse 2s infinite;
+        }
+        
+        .scanner-status-indicator.active {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+        
+        .scanner-status-indicator.inactive {
+            background: #ef4444;
+            animation: none;
+        }
+        
+        .scanner-status-text {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+        
+        /* Botón moderno de escaneo */
+        .btn-scan-modern {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 0.875rem 1.5rem;
+            font-weight: 600;
+            font-size: 1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-scan-modern::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-scan-modern:hover::before {
+            left: 100%;
+        }
+        
+        .btn-scan-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        }
+        
+        .btn-scan-modern:active {
+            transform: translateY(0);
+        }
+        
+        .btn-scan-modern:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-scan-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-scan-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .btn-scan-icon {
+            font-size: 1.25rem;
+        }
+        
+        .btn-scan-text {
+            font-size: 1rem;
+            letter-spacing: 0.3px;
+        }
+        
+        .scanner-instructions {
+            margin-top: 1rem;
+        }
+        
+        .alert-info-light {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #212529;
+        }
+        
+        .alert-info-light ol {
+            padding-left: 1.25rem;
+            margin-bottom: 0;
+        }
+        
+        .alert-info-light ol li {
+            margin-bottom: 0.25rem;
+        }
+        
+        .alert-info-light ol li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .scanner-progress {
+            margin-top: 1rem;
+        }
+        
+        .progress-modern {
+            height: 8px;
+            border-radius: 10px;
+            background: #e9ecef;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-modern .progress-bar {
+            background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .scanner-section {
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @media (max-width: 576px) {
+            .scanner-icon-wrapper {
+                width: 40px;
+                height: 40px;
+                font-size: 1.25rem;
+            }
+            
+            .btn-scan-modern {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+    <style>
+        /* Forzar siempre modo claro - sobrescribir cualquier estilo oscuro */
+        :root {
+            --bg-color: #f8f9fa !important;
+            --text-color: #000000 !important;
+            --border-color: #dee2e6 !important;
+            --card-bg: #ffffff !important;
+            --card-header-bg: #f8f9fa !important;
+            --card-border: #dee2e6 !important;
+            --sidebar-bg: #ffffff !important;
+            --sidebar-text: #000000 !important;
+            --sidebar-hover: rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        html {
+            background-color: #f8f9fa !important;
+            color: #000000 !important;
+        }
+        
+        body {
+            background-color: #f8f9fa !important;
+            color: #000000 !important;
+        }
+        
+        body * {
+            color: #000000 !important;
+        }
+        
+        .min-h-screen {
+            background-color: #f8f9fa !important;
+            color: #000000 !important;
+        }
+        
+        /* Asegurar que el contenido principal tenga fondo claro */
+        .main-content {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        /* Deshabilitar todos los estilos de tema oscuro */
+        [data-theme="dark"],
+        [data-theme="dark"] * {
+            background-color: inherit !important;
+            color: #000000 !important;
+        }
+        
+        /* Forzar colores claros en todos los elementos principales */
+        .card {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .card * {
+            color: #000000 !important;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa !important;
+            color: #000000 !important;
+        }
+        
+        .card-header * {
+            color: #000000 !important;
+        }
+        
+        .card-body {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        .card-body * {
+            color: #000000 !important;
+        }
+        
+        /* Asegurar que todos los textos sean negros */
+        h1, h2, h3, h4, h5, h6,
+        p, span, div, a, label, input, textarea, select,
+        .text-muted, .text-secondary, .text-dark,
+        .badge, .btn, .form-control, .form-label {
+            color: #000000 !important;
+        }
+        
+        /* Excepciones para elementos que deben mantener su color (botones, badges, etc.) */
+        .btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-info {
+            color: #ffffff !important;
+        }
+        
+        .badge.bg-primary, .badge.bg-success, .badge.bg-danger, .badge.bg-warning, .badge.bg-info {
+            color: #ffffff !important;
+        }
+        
+        /* Sidebar con texto negro */
+        .areas-sidebar {
+            color: #000000 !important;
+        }
+        
+        .areas-sidebar * {
+            color: #000000 !important;
+        }
+        
+        .area-item {
+            color: #000000 !important;
+        }
+        
+        .area-item * {
+            color: #000000 !important;
+        }
+        
+        .area-desc {
+            color: #000000 !important;
+        }
+        
+        /* Links en negro pero con subrayado para distinguirlos */
+        a {
+            color: #000000 !important;
+            text-decoration: underline;
+        }
+        
+        a:hover {
+            color: #0d6efd !important;
+        }
+        
+        
+        /* Botones del modal con texto visible */
+        .btn-primary {
+            color: #ffffff !important;
+        }
+        
+        .btn-primary:hover {
+            color: #ffffff !important;
+        }
+        
+        .btn-azul-oscuro {
+            color: #ffffff !important;
+        }
+        
+        .btn-secondary {
+            color: #ffffff !important;
+        }
+        
+        /* Asegurar que los botones dentro del modal tengan texto visible */
+        .modal .btn {
+            color: #ffffff !important;
+        }
+        
+        .modal .btn-primary {
+            color: #ffffff !important;
+        }
+        
+        .modal .btn-outline-primary {
+            color: #0d6efd !important;
+            border-color: #0d6efd !important;
+        }
+        
+        .modal .btn-outline-primary:hover {
+            color: #ffffff !important;
+            background-color: #0d6efd !important;
+        }
+    </style>
+    <script>
+    // Ocultar porcentaje blanco superpuesto
+    document.addEventListener('DOMContentLoaded', function() {
+        // Buscar y ocultar elementos con porcentaje blanco
+        const bgLightElements = document.querySelectorAll('.bg-light, .col-lg-7');
+        bgLightElements.forEach(function(element) {
+            const allChildren = element.querySelectorAll('*');
+            allChildren.forEach(function(child) {
+                const style = window.getComputedStyle(child);
+                const text = child.textContent || '';
+                // Si el elemento tiene texto que es solo un porcentaje y es blanco o tiene opacidad baja
+                if ((text.trim().match(/^\d+%$/) || text.trim() === '0%') && 
+                    (style.color === 'rgb(255, 255, 255)' || style.color === '#ffffff' || 
+                     parseFloat(style.opacity) < 0.5)) {
+                    child.style.display = 'none';
+                }
+            });
+        });
+    });
+    </script>
+</head>
+<body style="background-color: #f8f9fa !important; color: #000000 !important;">
+    <div class="min-h-screen">
+        <!-- Sidebar Toggle Button (Mobile) -->
+      
+        
+        <!-- Sidebar de áreas -->
+        <div class="areas-sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">Áreas</h5>
+            </div>
+            <div class="list-group">
+                {% for area in areas_etapas %}
+                {% with valor=valores_areas|get_item:area.id|default:None %}
+                <div class="area-item {% if forloop.first %}active{% endif %} {% if valor %}completed{% endif %}" 
+                     data-area-id="{{ area.id }}" 
+                     data-area-nombre="{{ area.titulo|escapejs }}"
+                     onclick="cargarArea('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                           
+                            <span>{{ area.titulo }}</span>
+                        </div>
+                        {% if valor %}
+                            <span class="badge bg-success">Completado</span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if area.descripcion %}
+                    <div class="area-desc">{{ area.descripcion|truncatechars:60 }}</div>
+                    {% endif %}
+                    
+                    {% if valor %}
+                    <div class="area-actions mt-2">
+                        {% if area.tipo_area == 'archivo' and valor.archivo %}
+                            <a href="{{ valor.archivo.url }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-download"
+                               title="Descargar archivo">
+                                <i class="bi bi-download me-1"></i>Ver archivo
+                            </a>
+                        {% elif area.tipo_area == 'mixto' and valor.archivo %}
+                            <a href="{{ valor.archivo.url }}" 
+                               target="_blank" 
+                               class="btn btn-sm btn-download"
+                               title="Descargar archivo">
+                                <i class="bi bi-download me-1"></i>Ver archivo
+                            </a>
+                            {% if valor.texto %}
+                                <div class="text-muted small mt-2">
+                                    <div class="fw-bold">Notas:</div>
+                                    <div class="text-truncate">{{ valor.texto }}</div>
+                                </div>
+                            {% endif %}
+                        {% elif area.tipo_area == 'texto' and valor.texto %}
+                            <div class="text-muted small">
+                                <div class="fw-bold">Contenido:</div>
+                                <div class="text-truncate">{{ valor.texto }}</div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="text-muted small mt-1">
+                            <i class="bi bi-clock-history"></i> 
+                            Actualizado: {{ valor.fecha_actualizacion|date:"d/m/Y H:i"|default:"No especificado" }}
+                        </div>
+                    </div>
+                    {% else %}
+                    {% if area.documentos_count > 0 %}
+                    <div class="area-actions">
+                        <span class="position-absolute top-0 end-0 translate-middle badge rounded-pill" style="background-color: #0d6efd; font-size: 0.6em; padding: 0.2em 0.4em;">
+                            {{ area.documentos_count }}
+                        </span>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                {% endwith %}
+                {% empty %}
+                <div class="alert alert-info">
+                    No hay áreas configuradas para este tipo de expediente.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="main-content">
+            <div class="container-fluid py-4">
+                <!-- Header del expediente -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">{{ expediente.numero_expediente }} - {{ expediente.titulo }}</h4>
+                            <div class="d-flex align-items-center mt-2">
+                                <span class="me-3">
+                                    <i class="bi bi-person-vcard"></i> Creado por: {{ expediente.creado_por.get_full_name|default:expediente.creado_por.username }}
+                                </span>
+                                
+                                <!-- Mostrar estado con colores según el estado actual -->
+                                {% with estado=expediente.estado|default:expediente.estado_actual|default:'en_proceso' %}
+                                <span class="badge 
+                                    {% if estado == 'completado' or estado == 'finalizado' or estado == 'aprobado' %}bg-success
+                                    {% elif estado == 'rechazado' %}bg-danger
+                                    {% elif estado == 'en_proceso' or estado == 'proceso' %}bg-primary
+                                    {% else %}bg-secondary
+                                    {% endif %} me-3">
+                                    {{ expediente.get_estado_display|default:estado|upper }}
+                                </span>
+                                {% endwith %}
+                                
+                                <!-- Mostrar motivo de rechazo si existe -->
+                                {% with motivo=expediente.razon_rechazo|default:expediente.motivo_rechazo|default:'' %}
+                                    {% if motivo and expediente.estado == 'rechazado' %}
+                                    <span class="text-danger">
+                                        <i class="bi bi-exclamation-triangle-fill"></i> {{ motivo }}
+                                    </span>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                       
+                    </div>
+                    <div class="card-body p-3">
+                        <div class="row g-3">
+                            <!-- Columna izquierda: Progreso y acciones -->
+                            <div class="col-lg-5">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="small fw-semibold text-muted">Progreso del expediente</span>
+                                        <span id="porcentaje-progreso" class="fw-bold text-primary">{{ progreso|default:0 }}%</span>
+                                    </div>
+                                    <div class="progress mb-1" style="height: 6px;">
+                                        <div class="progress-bar bg-primary" role="progressbar" data-progress="{{ progreso|default:0 }}" aria-valuenow="{{ progreso|default:0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div id="texto-progreso" class="text-end small text-muted">
+                                        {{ progreso_detalle.completadas|default:0 }}/{{ progreso_detalle.total|default:0 }} áreas completadas
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-nowrap gap-1 mb-3">
+                                    <button class="btn btn-azul-oscuro" id="btn-guardar-expediente" onclick="guardarExpediente()" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-building-gear me-1"></i>Guardar
+                                    </button>
+                                    {% if expediente.estado_actual != 'rechazado' %}
+                                    <button class="btn btn-azul-oscuro" id="btn-rechazar-expediente" onclick="rechazarExpediente()" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-slash-circle me-1"></i> Rechazar
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-azul-oscuro" id="btn-descargar-zip" onclick="descargarZip()" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-file-earmark-zip-fill me-1"></i> ZIP
+                                    </button>
+                                    <a href="/expedientes/{{ expediente.id }}/documentos/" class="btn btn-azul-oscuro" id="btn-ver-documentos" target="_blank" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                                        <i class="bi bi-collection-play me-1"></i> Ver Docs
+                                    </a>
+                                </div>
+                                
+                                <!-- Estadísticas relevantes -->
+                                <div class="row g-2 mt-2">
+                                    <div class="col-6">
+                                        <div class="bg-light rounded text-center border d-flex flex-column align-items-center justify-content-center" style="height: 80px; padding: 0.5rem;">
+                                            <div class="small text-muted mb-0 d-flex align-items-center justify-content-center" style="margin-top: -0.5rem;">
+                                                <i class="bi bi-file-earmark-text me-1"></i> Total Documentos
+                                            </div>
+                                            <div class="fw-bold text-dark fs-5 text-center w-100" style="margin-top: -1rem; line-height: 1;">{{ expediente.documentos.count|default:0 }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="bg-light rounded text-center border d-flex flex-column align-items-center justify-content-center" style="height: 80px; padding: 0.5rem;">
+                                            <div class="small text-muted mb-1 d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-clock-history me-1"></i> Áreas Pendientes
+                                            </div>
+                                            <div class="fw-bold text-dark fs-5 text-center w-100" id="areas-pendientes" 
+                                                 data-total="{{ progreso_detalle.total|default:0 }}" 
+                                                 data-completadas="{{ progreso_detalle.completadas|default:0 }}">
+                                                <script>
+                                                    (function() {
+                                                        const element = document.getElementById('areas-pendientes');
+                                                        if (element) {
+                                                            const total = parseInt(element.getAttribute('data-total') || '0', 10);
+                                                            const completadas = parseInt(element.getAttribute('data-completadas') || '0', 10);
+                                                            const pendientes = Math.max(0, total - completadas);
+                                                            element.textContent = pendientes;
+                                                        }
+                                                    })();
+                                                </script>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Columna derecha: Información del expediente -->
+                            <div class="col-lg-7">
+                                <div class="bg-light border rounded-3 p-3">
+                                    <div class="row g-2">
+                                        <!-- Fila 1 -->
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-calendar2-date text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Fecha de creación</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.fecha_creacion|date:"d/m/Y H:i"|default:"No especificada" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-arrow-clockwise text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Última actualización</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.fecha_actualizacion|date:"d/m/Y H:i"|default:"No actualizado" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-cash-coin text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Fuente de financiamiento</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.get_fuente_financiamiento_display|default:"No especificada" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-briefcase text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Tipo de adquisición</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.get_tipo_adquisicion_display|default:"No especificado" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Fila 2 -->
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-folder2-open text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Tipo de expediente</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.get_tipo_expediente_display|default:"No especificado" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-building text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Departamento</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.departamento|default:"No especificado" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-credit-card text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Giro</small>
+                                                    <p class="mb-0 fw-medium small">{{ expediente.giro|default:"No especificado" }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-hash text-muted me-2 mt-1"></i>
+                                                <div>
+                                                    <small class="text-muted d-block">Número SIMA</small>
+                                                    <div class="d-flex align-items-center">
+                                                        <p class="mb-0 fw-medium small me-1" id="numero-sima">
+                                                            {% if expediente.numero_sima %}
+                                                                {{ expediente.numero_sima }}
+                                                            {% else %}
+                                                                <span class="text-muted">No asignado</span>
+                                                            {% endif %}
+                                                        </p>
+                                                        <button class="btn btn-sm btn-link text-decoration-none p-0" 
+                                                                data-bs-toggle="modal" 
+                                                                data-bs-target="#editarSimaModal" 
+                                                                title="{% if expediente.numero_sima %}Editar{% else %}Agregar{% endif %} número SIMA">
+                                                            <i class="bi bi-pencil-square"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+              
+
+                <!-- Modal para editar número SIMA -->
+                <div class="modal fade" id="editarSimaModal" tabindex="-1" aria-labelledby="editarSimaModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editarSimaModalLabel">Editar Número SIMA</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                            <form id="form-editar-sima" data-url="{% url 'expedientes:agregar_sima' expediente.id %}">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="numero_sima" class="form-label">Número SIMA</label>
+                                        <input type="text" class="form-control" id="numero_sima" name="numero_sima" 
+                                               value="{{ expediente.numero_sima|default:'' }}" 
+                                               placeholder="Ingrese el número SIMA">
+                                        <div class="form-text">Deje en blanco para eliminar el número SIMA.</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary">Guardar</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Script para manejar el formulario SIMA -->
+                <script src="{% static 'digitalizacion/js/sima.js' %}?v=2.0"></script>
+
+                <!-- Contenido de documentos -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 id="titulo-area-seleccionada" class="mb-0">
+                            {% if areas_etapas %}{{ areas_etapas.0.titulo }}{% else %}Seleccione un área{% endif %}
+                        </h5>
+                        
+                    </div>
+                    <div class="card-body" id="contenido-documentos">
+                        <!-- Pantalla de bienvenida -->
+                        <div id="bienvenida-area" class="text-center py-5">
+                            <div class="animate__animated animate__fadeIn">
+                                <div class="mb-4">
+                                    <i class="bi bi-folder2-open display-1 text-primary"></i>
+                                    <i class="bi bi-arrow-right-circle mx-3 text-muted" style="font-size: 2.5rem;"></i>
+                                    <i class="bi bi-cloud-arrow-up display-1" style="color: rgba(0, 86, 179, 0.8);"></i>
+                                </div>
+                                <h3 class="mb-3">¡Bienvenido al Expediente {{ expediente.numero_expediente }}!</h3>
+                                <p class="text-muted mb-4">Selecciona un área del menú lateral para ver o subir documentos.</p>
+                                {% if areas_etapas %}
+                                    <div class="d-flex justify-content-center gap-3">
+                                        {% for area in areas_etapas|slice:":3" %}
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-azul-oscuro" 
+                                                    onclick="ExpedienteApp.cargarDocumentosArea('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                                                <i class="bi bi-folder"></i> {{ area.titulo }}
+                                            </button>
+                                            <button type="button" class="btn btn-azul-oscuro dropdown-toggle dropdown-toggle-split" 
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                <span class="visually-hidden">Opciones</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" 
+                                                    onclick="abrirModalSubirDocumento('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                                                    <i class="bi bi-upload me-2"></i>Subir Documento
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if areas_etapas|length > 3 %}
+                                    <div class="mt-3">
+                                        <button class="btn btn-azul-oscuro btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#masAreas" aria-expanded="false" aria-controls="masAreas">
+                                            <i class="bi bi-chevron-double-down"></i> Ver más áreas
+                                        </button>
+                                        <div class="collapse mt-2" id="masAreas">
+                                            <div class="d-flex flex-wrap justify-content-center gap-2">
+                                                {% for area in areas_etapas|slice:"3:" %}
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-azul-oscuro btn-sm" 
+                                                            onclick="ExpedienteApp.cargarDocumentosArea('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                                                        {{ area.titulo }}
+                                                    </button>
+                                                    <button type="button" class="btn btn-azul-oscuro btn-sm dropdown-toggle dropdown-toggle-split" 
+                                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <span class="visually-hidden">Opciones</span>
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li><a class="dropdown-item" href="#" 
+                                                            onclick="abrirModalSubirDocumento('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                                                            <i class="bi bi-upload me-2"></i>Subir Documento
+                                                        </a></li>
+                                                    </ul>
+                                                </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        No hay áreas configuradas para este tipo de expediente.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Contenido del área seleccionada -->
+                        <div id="contenido-area" class="d-none">
+                            {% if areas_etapas %}
+                                {% for area in areas_etapas %}
+                                <div class="area-content d-none" id="area-{{ area.id }}">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <button class="btn btn-azul-oscuro btn-sm me-2" onclick="volverABienvenida()" title="Volver a la pantalla de inicio">
+                                            <i class="bi bi-arrow-left"></i> Volver
+                                        </button>
+                                        <h4 class="d-inline-block mb-0">{{ area.titulo }}</h4>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-primary" onclick="abrirModalSubirDocumento('{{ area.id }}', '{{ area.titulo|escapejs }}')">
+                                            <i class="bi bi-upload me-1"></i>Subir Documento
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                               
+                                {% if area.descripcion %}
+                                <div class="alert alert-info mb-4">
+                                    {{ area.descripcion }}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="documentos-area">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="mb-0">Documentos en esta área:</h6>
+                                        <div class="input-group" style="max-width: 400px;">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   id="buscar-documentos-{{ area.id }}" 
+                                                   placeholder="Buscar por palabra o frase..." 
+                                                   data-area-id="{{ area.id }}"
+                                                   data-expediente-id="{{ expediente.id }}">
+                                            <button class="btn btn-outline-secondary btn-sm" 
+                                                    type="button" 
+                                                    id="btn-buscar-{{ area.id }}"
+                                                    onclick="buscarDocumentosEnExpediente('{{ area.id }}', '{{ expediente.id }}')">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm d-none" 
+                                                    type="button" 
+                                                    id="btn-limpiar-busqueda-{{ area.id }}"
+                                                    onclick="limpiarBusquedaDocumentos('{{ area.id }}')">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="resultados-busqueda-{{ area.id }}" class="d-none mb-3"></div>
+                                    <div class="list-group" id="lista-documentos-{{ area.id }}">
+                                        {% for documento in documentos_por_area|get_item:area.id %}
+                                        <div class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <i class="bi {{ documento.archivo.name|get_icono }} me-2" style="font-size: 1.5rem;"></i>
+                                                        <div class="flex-grow-1">
+                                                            <div class="d-flex align-items-center gap-2 mb-1">
+                                                                <strong>{{ documento.nombre_documento }}</strong>
+                                                                <span class="badge bg-secondary">{{ documento.archivo.name|get_tipo_archivo }}</span>
+                                                            </div>
+                                                            <div class="small text-muted">
+                                                                <div class="d-flex flex-wrap gap-3 mb-1">
+                                                                    <span><i class="bi bi-calendar3 me-1"></i>{{ documento.fecha_subida|date:"d/m/Y H:i" }}</span>
+                                                                    <span><i class="bi bi-person-circle me-1"></i>{{ documento.subido_por.get_full_name|default:documento.subido_por.username }}</span>
+                                                                </div>
+                                                                {% if documento.descripcion %}
+                                                                <div class="mt-1">
+                                                                    <i class="bi bi-chat-left-text me-1"></i><em>{{ documento.descripcion }}</em>
+                                                                </div>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="document-actions ms-3">
+                                                    <!-- Botón de vista previa (solo vista) -->
+                                                    <button class="btn-action btn-view"
+                                                            onclick="event.preventDefault(); verDocumento('{{ documento.archivo.url }}', '{{ documento.nombre_documento|escapejs }}')"
+                                                            title="Vista previa">
+                                                        <i class="bi bi-eye-fill"></i>
+                                                    </button>
+                                                    
+                                                    <!-- Botón de descarga -->
+                                                    <a href="{{ documento.archivo.url }}" 
+                                                       class="btn-action btn-download" 
+                                                       download
+                                                       title="Descargar">
+                                                        <i class="bi bi-cloud-arrow-down-fill"></i>
+                                                    </a>
+                                                    
+                                                    {% if perms.digitalizacion.delete_documentoexpediente %}
+                                                    <!-- Botón de eliminar -->
+                                                    <button class="btn-action btn-delete"
+                                                            data-documento-id="{{ documento.id }}"
+                                                            data-documento-nombre="{{ documento.nombre_documento|escapejs }}"
+                                                            title="Eliminar">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% empty %}
+                                        <div class="alert alert-warning">
+                                            No hay documentos en esta área. Haz clic en "Agregar Documento" para comenzar.
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                
+                                {% if area.tipo_area == 'texto' or area.tipo_area == 'mixto' %}
+                                <div class="mt-4">
+                                    <h6>Contenido de texto:</h6>
+                                    <div class="p-3 bg-light rounded">
+                                        {% if valores_areas %}
+                                            {% with valor=valores_areas|get_item:area.id %}
+                                                {% if valor and valor.valor_texto %}
+                                                    {{ valor.valor_texto|linebreaks }}
+                                                {% else %}
+                                                    <p class="text-muted">No hay contenido de texto disponible.</p>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            <p class="text-muted">No hay contenido de texto disponible.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="bi bi-folder2-open" style="font-size: 3rem;"></i>
+                                <p class="mt-3">No hay áreas configuradas para este tipo de expediente</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script para definir la función de subida ANTES del modal -->
+    <script>
+        // Función global para subir documento - debe estar disponible antes del modal
+        window.ejecutarSubidaDocumento = function() {
+            console.log('=== EJECUTANDO SUBIDA DE DOCUMENTO ===');
+            
+            // Obtener elementos del formulario
+            const formularioSubida = document.getElementById('form-subir-documento');
+            const inputArchivo = document.getElementById('documento');
+            const nombreDocumento = document.getElementById('nombreDocumento');
+            const areaIdInput = document.getElementById('area_id');
+            
+            // Validaciones básicas
+            if (!formularioSubida) {
+                alert('Error: No se encontró el formulario de subida.');
+                return false;
+            }
+            
+            // Validar archivo con más detalle
+            console.log('🔍 Validando archivo...');
+            console.log('inputArchivo:', inputArchivo);
+            console.log('inputArchivo.files:', inputArchivo ? inputArchivo.files : 'input no existe');
+            console.log('inputArchivo.files.length:', inputArchivo && inputArchivo.files ? inputArchivo.files.length : 'N/A');
+            console.log('inputArchivo.value:', inputArchivo ? inputArchivo.value : 'N/A');
+            
+            if (!inputArchivo) {
+                console.error('❌ No se encontró el input de archivo');
+                alert('Error: No se encontró el campo de archivo. Por favor, recarga la página.');
+                return false;
+            }
+            
+            if (!inputArchivo.files) {
+                console.error('❌ inputArchivo.files es null o undefined');
+                alert('Error: El campo de archivo no está disponible. Por favor, recarga la página.');
+                return false;
+            }
+            
+            if (inputArchivo.files.length === 0) {
+                console.error('❌ No hay archivos seleccionados (length = 0)');
+                alert('Por favor, selecciona un archivo para subir.');
+                inputArchivo.focus();
+                return false;
+            }
+            
+            if (!inputArchivo.files[0]) {
+                console.error('❌ inputArchivo.files[0] es null o undefined');
+                alert('Por favor, selecciona un archivo para subir.');
+                inputArchivo.focus();
+                return false;
+            }
+            
+            console.log('✅ Archivo validado correctamente:', inputArchivo.files[0].name, 'Tamaño:', inputArchivo.files[0].size, 'bytes');
+            
+            if (!nombreDocumento || !nombreDocumento.value || !nombreDocumento.value.trim()) {
+                alert('Por favor, ingresa un nombre para el documento.');
+                if (nombreDocumento) nombreDocumento.focus();
+                return false;
+            }
+            
+            // Si no hay areaId en el formulario, intentar obtenerlo automáticamente
+            if (!areaIdInput || !areaIdInput.value || areaIdInput.value === '') {
+                console.log('area_id no está establecido, intentando obtener automáticamente...');
+                
+                // Intentar obtener del área activa
+                const areaActiva = document.querySelector('.area-item.active');
+                if (areaActiva) {
+                    const areaId = areaActiva.getAttribute('data-area-id');
+                    if (areaId) {
+                        const areaIdNum = parseInt(areaId, 10);
+                        if (!isNaN(areaIdNum) && areaIdNum > 0) {
+                            areaIdInput.value = areaIdNum;
+                            window.areaSeleccionada = { 
+                                id: areaIdNum, 
+                                nombre: areaActiva.getAttribute('data-area-nombre') 
+                            };
+                            console.log('Área establecida automáticamente desde área activa:', areaIdNum);
+                        }
+                    }
+                } else if (window.areaSeleccionada && window.areaSeleccionada.id) {
+                    areaIdInput.value = window.areaSeleccionada.id;
+                    console.log('Área establecida automáticamente desde window.areaSeleccionada:', window.areaSeleccionada);
+                } else if (typeof DocumentosApp !== 'undefined' && DocumentosApp.areaActual && DocumentosApp.areaActual.id) {
+                    areaIdInput.value = DocumentosApp.areaActual.id;
+                    console.log('Área establecida automáticamente desde DocumentosApp.areaActual:', DocumentosApp.areaActual);
+                }
+            }
+            
+            // Validar nuevamente después de intentar establecer automáticamente
+            if (!areaIdInput || !areaIdInput.value || areaIdInput.value === '') {
+                console.error('ERROR: area_id no está establecido después de intentar obtenerlo automáticamente');
+                console.log('areaIdInput:', areaIdInput);
+                console.log('Área activa:', document.querySelector('.area-item.active'));
+                console.log('window.areaSeleccionada:', window.areaSeleccionada);
+                console.log('DocumentosApp.areaActual:', typeof DocumentosApp !== 'undefined' ? DocumentosApp.areaActual : 'DocumentosApp no disponible');
+                alert('Error: No se pudo determinar el área. Por favor, selecciona un área primero y luego intenta subir un documento.');
+                return false;
+            }
+            
+            // Obtener valores
+            const areaId = parseInt(areaIdInput.value, 10);
+            
+            // Validar que el areaId sea un número válido
+            if (isNaN(areaId) || areaId <= 0) {
+                console.error('ERROR: areaId no es válido:', areaId, 'valor original:', areaIdInput.value);
+                alert('Error: No se pudo determinar el área. Por favor, selecciona un área primero y luego intenta subir un documento.');
+                return false;
+            }
+            
+            console.log('✅ VALIDACIÓN EXITOSA - area_id:', areaId, 'tipo:', typeof areaId);
+            
+            // Extraer expedienteId de la URL de forma más robusta
+            const pathParts = window.location.pathname.split('/').filter(p => p);
+            let expedienteId = null;
+            const expedienteIndex = pathParts.indexOf('expedientes');
+            if (expedienteIndex !== -1 && pathParts[expedienteIndex + 1]) {
+                expedienteId = pathParts[expedienteIndex + 1];
+            }
+            
+            if (!expedienteId || isNaN(expedienteId)) {
+                alert('Error: No se pudo determinar el expediente actual.');
+                return false;
+            }
+            
+            // Crear FormData
+            const formData = new FormData();
+            formData.append('documento', inputArchivo.files[0]);
+            formData.append('nombre_documento', nombreDocumento.value.trim());
+            formData.append('area_id', areaId.toString()); // ✅ AGREGAR EL area_id AL FORMDATA
+            
+            const observaciones = document.getElementById('observaciones');
+            if (observaciones && observaciones.value) {
+                formData.append('descripcion', observaciones.value);
+            }
+            
+            // Verificar que el area_id esté en el FormData antes de enviar
+            const areaIdEnFormData = formData.get('area_id');
+            if (!areaIdEnFormData || areaIdEnFormData === '') {
+                console.error('ERROR CRÍTICO: area_id no está en el FormData antes de enviar');
+                alert('Error crítico: No se pudo incluir el área en el formulario. Por favor, recarga la página e intenta nuevamente.');
+                return false;
+            }
+            
+            console.log('✅ FormData preparado correctamente con area_id:', areaIdEnFormData);
+            console.log('📦 Contenido del FormData:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}:`, value instanceof File ? `[Archivo: ${value.name}]` : value);
+            }
+            
+            // Obtener token CSRF
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+            
+            const csrfToken = getCookie('csrftoken');
+            if (!csrfToken) {
+                alert('Error: No se pudo obtener el token de seguridad. Por favor, recarga la página.');
+                return false;
+            }
+            
+            // Mostrar indicador de carga
+            const btnSubir = document.getElementById('btn-subir-documento');
+            const spinner = document.getElementById('uploadSpinner');
+            if (btnSubir) btnSubir.disabled = true;
+            if (spinner) spinner.classList.remove('d-none');
+            
+            // Realizar la petición
+            const url = `/expedientes/${expedienteId}/etapa/${areaId}/subir-documento/`;
+            console.log('Enviando a URL:', url);
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || 'Error al subir el documento');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Documento subido exitosamente:', data);
+                
+                // Limpiar formulario pero preservar area_id
+                if (formularioSubida) {
+                    const areaIdPreservar = document.getElementById('area_id')?.value;
+                    formularioSubida.reset();
+                    if (areaIdPreservar) {
+                        document.getElementById('area_id').value = areaIdPreservar;
+                        console.log('area_id preservado después de reset:', areaIdPreservar);
+                    }
+                }
+                
+                // Cerrar modal
+                const modalElement = document.getElementById('subirDocumentoModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement);
+                    if (modal) modal.hide();
+                }
+                
+                // Mostrar mensaje de éxito
+                if (window.mostrarNotificacion) {
+                    window.mostrarNotificacion('Documento subido exitosamente', 'success');
+                } else if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Éxito',
+                        text: 'Documento subido exitosamente',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert('Documento subido exitosamente');
+                }
+                
+                // Recargar documentos si DocumentosApp está disponible
+                if (typeof DocumentosApp !== 'undefined' && DocumentosApp.cargarDocumentosArea) {
+                    const areaNombre = areaIdInput.getAttribute('data-area-nombre') || 'el área';
+                    DocumentosApp.cargarDocumentosArea(areaId, areaNombre);
+                } else {
+                    // Recargar página como último recurso
+                    setTimeout(() => location.reload(), 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error al subir el documento:', error);
+                alert('Error al subir el documento: ' + (error.message || 'Error desconocido'));
+            })
+            .finally(() => {
+                if (btnSubir) btnSubir.disabled = false;
+                if (spinner) spinner.classList.add('d-none');
+            });
+            
+            return false;
+        };
+    </script>
+    
+    <!-- Modal para subir documento -->
+    <div class="modal fade" id="subirDocumentoModal" tabindex="-1" aria-labelledby="subirDocumentoModalLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-dark bg-opacity-10">
+                    <h1 class="modal-title h5" id="subirDocumentoModalLabel">
+                        <i class="bi bi-cloud-upload me-2"></i>Subir Documento
+                    </h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form id="form-subir-documento" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="area_id" name="area_id" value="">
+                    <input type="hidden" id="expediente_id" name="expediente_id" value="{{ expediente.id }}">
+                    <div class="modal-body">
+                        <div id="contenedor-alertas"></div>
+                        
+                        <!-- Pestañas para elegir método de carga -->
+                        <ul class="nav nav-tabs mb-4" id="uploadTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="upload-file-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#upload-file" type="button" role="tab" aria-controls="upload-file" 
+                                    aria-selected="true">
+                                    <i class="bi bi-upload me-1"></i>Subir Archivo
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="escanear-archivo-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#escanear-archivo" type="button" role="tab" 
+                                    aria-controls="escanear-archivo" aria-selected="false">
+                                    <i class="bi bi-camera me-1"></i>Escanear Archivo
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="uploadTabsContent">
+                            <!-- Pestaña de subir archivo -->
+                            <div class="tab-pane fade show active" id="upload-file" role="tabpanel" aria-labelledby="upload-file-tab">
+                                <div class="mb-3">
+                                    <label for="nombreDocumento" class="form-label">Nombre del documento</label>
+                                    <input type="text" class="form-control" id="nombreDocumento" name="nombre_documento" 
+                                           placeholder="Ej. Contrato de servicios, Factura de compra, etc." 
+                                           aria-required="true" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="documento" class="form-label">Seleccionar archivo <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input class="form-control" type="file" id="documento" name="documento" 
+                                               accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png" 
+                                               aria-required="true" required>
+                                    </div>
+                                    <div class="form-text">Formatos permitidos: PDF, Word, Excel, JPG, PNG (Máx. 10MB)</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pestaña de escanear archivo -->
+                            <div class="tab-pane fade" id="escanear-archivo" role="tabpanel" aria-labelledby="escanear-archivo-tab">
+                                <div class="mb-3">
+                                    <label for="nombreDocumentoScan" class="form-label">Nombre del documento <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="nombreDocumentoScan" name="nombre_documento_scan" 
+                                           placeholder="Ej. Contrato de servicios, Factura de compra, etc." 
+                                           aria-required="true" required>
+                                </div>
+                                
+                                <!-- Sección de Escaneo Automático -->
+                                <div class="scanner-section mb-3">
+                                    <div class="scanner-header">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <div class="scanner-icon-wrapper me-2">
+                                                <i class="bi bi-scanner"></i>
+                                            </div>
+                                            <div>
+                                                <label class="form-label mb-0 fw-semibold">Escaneo Automático</label>
+                                                <small class="d-block text-muted">HP ScanJet Pro 2600 f1</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Estado del servicio -->
+                                    <div id="scanner-status" class="scanner-status mb-3">
+                                        <div class="d-flex align-items-center">
+                                            <span class="scanner-status-indicator" id="scanner-status-indicator"></span>
+                                            <small class="scanner-status-text" id="scanner-status-text">Verificando servicio...</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Opción de escaneo dúplex (dos lados) -->
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" role="switch" id="escaneo-duplex" style="cursor: pointer;">
+                                        <label class="form-check-label" for="escaneo-duplex" style="cursor: pointer;">
+                                            <i class="bi bi-file-earmark-break me-1"></i>
+                                            Escanear por ambos lados (dúplex)
+                                        </label>
+                                    </div>
+                                    
+                                    <!-- Botón de escanear -->
+                                    <div class="d-grid">
+                                        <button type="button" 
+                                                class="btn btn-scan-modern" 
+                                                id="btn-escanear-detalle"
+                                                data-expediente-id="{{ expediente.id }}"
+                                                onclick="iniciarEscaneoDetalle()">
+                                            <span class="btn-scan-content">
+                                                <i class="bi bi-camera-fill btn-scan-icon"></i>
+                                                <span class="btn-scan-text">Escanear Documento</span>
+                                            </span>
+                                            <span class="btn-scan-loading d-none">
+                                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                                <span>Escaneando... por favor espere</span>
+                                            </span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Instrucciones -->
+                                    <div class="scanner-instructions mt-3">
+                                        <div class="alert alert-info-light mb-0">
+                                            <div class="d-flex align-items-start">
+                                                <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                                                <div>
+                                                    <strong class="d-block mb-1">Instrucciones:</strong>
+                                                    <ol class="mb-0 small">
+                                                        <li>Coloca los documentos en el alimentador del escáner</li>
+                                                        <li>Haz clic en "Escanear Documento"</li>
+                                                        <li>Espera mientras se escanea y sube automáticamente</li>
+                                                    </ol>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Progreso del escaneo (oculto por defecto) -->
+                                    <div id="scanner-progress-detalle" class="scanner-progress mt-3 d-none">
+                                        <div class="progress progress-modern">
+                                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                                 role="progressbar" 
+                                                 style="width: 0%"
+                                                 id="scanner-progress-bar-detalle">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted d-block mt-2 text-center" id="scanner-progress-text-detalle">
+                                            Preparando escaneo...
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">Observaciones (opcional)</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" 
+                                     rows="3" aria-describedby="observacionesHelp"></textarea>
+                            <div id="observacionesHelp" class="form-text">Agregue cualquier información adicional sobre el documento.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-lg me-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-azul-oscuro" id="btn-subir-documento" onclick="ejecutarSubidaDocumento(); return false;">
+                            <i class="bi bi-upload me-1"></i>
+                            <span class="btn-text">Subir Documento</span>
+                            <span class="spinner-border spinner-border-sm d-none" id="uploadSpinner" role="status" aria-hidden="true"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>    
+    
+    <!-- Scripts de terceros -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Scripts de la aplicación (cargar primero utils.js) -->
+    <script src="{% static 'digitalizacion/js/utils.js' %}"></script>
+    
+    <!-- Scripts principales -->
+    <script src="{% static 'digitalizacion/js/areas.js' %}"></script>
+    <script src="{% static 'digitalizacion/js/documentos.js' %}?v=2.1"></script>
+    <script src="{% static 'digitalizacion/js/progreso.js' %}"></script>
+    <script src="{% static 'digitalizacion/js/expediente.js' %}?v=2.1"></script>
+    <script src="{% static 'digitalizacion/js/escaneo.js' %}?v=1.0"></script>
+    
+    <!-- Script para corregir el problema de subida de documentos y manejo de pestañas -->
+    <script>
+        // Manejar el cambio de pestañas para ajustar campos requeridos
+        document.addEventListener('DOMContentLoaded', function() {
+            const nombreDocumento = document.getElementById('nombreDocumento');
+            const documentoInput = document.getElementById('documento');
+            const formSubirDocumento = document.getElementById('form-subir-documento');
+            
+            // Validar formulario antes de enviar
+            if (formSubirDocumento) {
+                formSubirDocumento.addEventListener('submit', function(e) {
+                    // Validar campos de subida normalmente
+                    if (!nombreDocumento || !nombreDocumento.value.trim()) {
+                        e.preventDefault();
+                        alert('Por favor ingrese el nombre del documento');
+                        if (nombreDocumento) nombreDocumento.focus();
+                        return false;
+                    }
+                    if (!documentoInput || !documentoInput.files || documentoInput.files.length === 0) {
+                        e.preventDefault();
+                        alert('Por favor seleccione un archivo');
+                        if (documentoInput) documentoInput.focus();
+                        return false;
+                    }
+                });
+            }
+        });
+        
+        // La función ejecutarSubidaDocumento ya está definida arriba antes del modal
+        // No es necesario duplicarla aquí
+        
+        // Usar delegación de eventos para capturar clics en el botón (funciona incluso si el modal se crea después)
+        document.addEventListener('click', function(e) {
+            console.log('Click detectado en:', e.target, 'ID:', e.target.id, 'Clases:', e.target.className);
+            
+            // Verificar si el clic fue en el botón de subir documento o en sus elementos hijos
+            let btnSubir = null;
+            
+            // Intentar encontrar el botón de diferentes formas
+            if (e.target.id === 'btn-subir-documento') {
+                btnSubir = e.target;
+            } else if (e.target.closest) {
+                btnSubir = e.target.closest('#btn-subir-documento');
+            } else {
+                // Fallback: buscar en el padre
+                let elemento = e.target;
+                while (elemento && elemento !== document.body) {
+                    if (elemento.id === 'btn-subir-documento') {
+                        btnSubir = elemento;
+                        break;
+                    }
+                    elemento = elemento.parentElement;
+                }
+            }
+            
+            if (btnSubir) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('✅ Click detectado en botón Subir Documento', btnSubir);
+                ejecutarSubidaDocumento();
+                return false;
+            }
+        }, true); // Usar capture phase para capturar antes que otros listeners
+        
+        // También agregar listener directo cuando el modal se muestra (por si acaso)
+        // Listener para cuando el modal se VA A MOSTRAR (antes de mostrarse)
+        // Esto asegura que el área esté establecida incluso si el modal se abre directamente con Bootstrap
+        document.addEventListener('show.bs.modal', function(e) {
+            const modalElement = e.target;
+            if (modalElement && modalElement.id === 'subirDocumentoModal') {
+                console.log('Evento show.bs.modal detectado para subirDocumentoModal');
+                
+                // Verificar si el area_id ya está establecido
+                const areaIdInput = document.getElementById('area_id');
+                if (!areaIdInput || !areaIdInput.value || areaIdInput.value === '') {
+                    console.log('area_id no está establecido, intentando obtener del área activa...');
+                    
+                    // Intentar obtener del área activa
+                    const areaActiva = document.querySelector('.area-item.active');
+                    if (areaActiva) {
+                        const areaId = areaActiva.getAttribute('data-area-id');
+                        const areaNombre = areaActiva.getAttribute('data-area-nombre');
+                        
+                        if (areaId) {
+                            const areaIdNum = parseInt(areaId, 10);
+                            if (!isNaN(areaIdNum) && areaIdNum > 0) {
+                                areaIdInput.value = areaIdNum;
+                                window.areaSeleccionada = { id: areaIdNum, nombre: areaNombre };
+                                console.log('Área establecida desde área activa:', areaIdNum, areaNombre);
+                            }
+                        }
+                    } else if (window.areaSeleccionada && window.areaSeleccionada.id) {
+                        areaIdInput.value = window.areaSeleccionada.id;
+                        console.log('Área establecida desde window.areaSeleccionada:', window.areaSeleccionada);
+                    } else if (typeof DocumentosApp !== 'undefined' && DocumentosApp.areaActual && DocumentosApp.areaActual.id) {
+                        areaIdInput.value = DocumentosApp.areaActual.id;
+                        console.log('Área establecida desde DocumentosApp.areaActual:', DocumentosApp.areaActual);
+                    } else {
+                        console.warn('No se pudo determinar el área automáticamente');
+                        // No cancelamos el modal aquí, solo registramos la advertencia
+                        // El error se mostrará cuando se intente enviar el formulario
+                    }
+                } else {
+                    console.log('area_id ya está establecido:', areaIdInput.value);
+                }
+            }
+        });
+        
+        // Variable para almacenar el area_id cuando se abre el modal
+        let areaIdGuardadoEnModal = null;
+        
+        document.addEventListener('shown.bs.modal', function(e) {
+            if (e.target && e.target.id === 'subirDocumentoModal') {
+                console.log('Modal de subir documento abierto, agregando listener directo');
+                
+                // Guardar el area_id actual antes de cualquier reset
+                const areaIdInput = document.getElementById('area_id');
+                if (areaIdInput && areaIdInput.value) {
+                    areaIdGuardadoEnModal = areaIdInput.value;
+                    console.log('area_id guardado al abrir modal:', areaIdGuardadoEnModal);
+                }
+                
+                const btnSubir = document.getElementById('btn-subir-documento');
+                if (btnSubir) {
+                    // Remover listeners previos
+                    const nuevoBtn = btnSubir.cloneNode(true);
+                    btnSubir.parentNode.replaceChild(nuevoBtn, btnSubir);
+                    
+                    // Agregar listener directo
+                    nuevoBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Click directo en botón Subir Documento');
+                        ejecutarSubidaDocumento();
+                        return false;
+                    });
+                }
+            }
+        });
+        
+        // Listener para cuando el modal se cierra - restaurar area_id si se perdió
+        document.addEventListener('hidden.bs.modal', function(e) {
+            if (e.target && e.target.id === 'subirDocumentoModal') {
+                console.log('Modal de subir documento cerrado');
+                const areaIdInput = document.getElementById('area_id');
+                if (areaIdInput && areaIdGuardadoEnModal && !areaIdInput.value) {
+                    areaIdInput.value = areaIdGuardadoEnModal;
+                    console.log('area_id restaurado después de cerrar modal:', areaIdGuardadoEnModal);
+                }
+            }
+        });
+        
+        // También manejar el submit del formulario
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+            if (form && form.id === 'form-subir-documento') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Submit detectado en formulario, usando DocumentosApp.subirDocumento');
+                if (typeof DocumentosApp !== 'undefined' && typeof DocumentosApp.subirDocumento === 'function') {
+                    DocumentosApp.subirDocumento();
+                } else {
+                    ejecutarSubidaDocumento();
+                }
+                return false;
+            }
+        });
+        
+        // NO sobrescribir DocumentosApp.subirDocumento - usar la función original de documentos.js
+        // NO sobrescribir ejecutarSubidaDocumento si ya está definida y funciona
+        // La función original (definida arriba) ya valida el archivo y maneja todo el proceso
+        // Solo verificar que DocumentosApp esté disponible como respaldo
+        if (typeof DocumentosApp !== 'undefined' && typeof DocumentosApp.subirDocumento === 'function') {
+            console.log('✅ DocumentosApp.subirDocumento está disponible como respaldo');
+        } else {
+            console.warn('⚠️ DocumentosApp.subirDocumento no está disponible');
+        }
+        
+        // Código antiguo eliminado - ya no se sobrescribe DocumentosApp.subirDocumento
+        if (false) { // Deshabilitado - usar DocumentosApp.subirDocumento de documentos.js
+            DocumentosApp.subirDocumento = function() {
+                console.log('=== SUBIR DOCUMENTO CORREGIDO ===');
+                console.log('DocumentosApp disponible:', typeof DocumentosApp !== 'undefined');
+                
+                // Función auxiliar para obtener cookie
+                const getCookie = (name) => {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                };
+                
+                // Función auxiliar para mostrar alertas
+                const mostrarAlerta = (mensaje, tipo = 'info') => {
+                    if (window.mostrarNotificacion) {
+                        window.mostrarNotificacion(mensaje, tipo);
+                    } else if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: tipo === 'error' ? 'error' : tipo === 'success' ? 'success' : 'info',
+                            title: tipo === 'error' ? 'Error' : tipo === 'success' ? 'Éxito' : 'Información',
+                            text: mensaje,
+                            timer: tipo === 'success' ? 2000 : 3000
+                        });
+                    } else {
+                        alert(mensaje);
+                    }
+                };
+                
+                const formularioSubida = document.getElementById('form-subir-documento');
+                const inputArchivo = document.getElementById('documento');
+                const btnSubir = document.getElementById('btn-subir-documento');
+                const spinner = document.getElementById('uploadSpinner');
+                
+                // Validación mejorada
+                if (!formularioSubida) {
+                    console.error('No se encontró el formulario');
+                    mostrarAlerta('Error: No se encontró el formulario de subida.', 'error');
+                    return;
+                }
+                
+                if (!inputArchivo || !inputArchivo.files || !inputArchivo.files[0]) {
+                    console.log('No hay archivo seleccionado');
+                    mostrarAlerta('Por favor, selecciona un archivo para subir.', 'error');
+                    return;
+                }
+                
+                // Validar nombre del documento
+                const nombreDocDisabled = document.getElementById('nombreDocumento');
+                if (!nombreDocDisabled || !nombreDocDisabled.value || !nombreDocDisabled.value.trim()) {
+                    mostrarAlerta('Por favor, ingresa un nombre para el documento.', 'error');
+                    return;
+                }
+                
+                // Obtener areaId directamente del formulario
+                const areaIdInput = document.getElementById('area_id');
+                console.log('areaIdInput encontrado:', areaIdInput);
+                console.log('areaIdInput.value:', areaIdInput ? areaIdInput.value : 'N/A (elemento no existe)');
+                console.log('Todos los inputs del formulario:');
+                const allInputs = formularioSubida.querySelectorAll('input');
+                allInputs.forEach((input, index) => {
+                    console.log(`  Input ${index}: id="${input.id}", name="${input.name}", value="${input.value}"`);
+                });
+                
+                let areaId = null;
+                
+                if (areaIdInput && areaIdInput.value) {
+                    areaId = parseInt(areaIdInput.value, 10);
+                    console.log('areaId CORREGIDO obtenido del formulario:', areaId, 'tipo:', typeof areaId);
+                } else {
+                    console.error('No se encontró el campo area_id o está vacío');
+                    // Intentar obtener el areaId de otros lugares
+                    console.log('Intentando obtener areaId de otras fuentes...');
+                    
+                    // Intentar del data-attribute del modal
+                    const modal = document.getElementById('subirDocumentoModal');
+                    if (modal) {
+                        const modalAreaId = modal.getAttribute('data-area-id');
+                        console.log('Modal data-area-id:', modalAreaId);
+                        if (modalAreaId) {
+                            areaId = parseInt(modalAreaId, 10);
+                            console.log('areaId obtenido del modal:', areaId);
+                        }
+                    }
+                    
+                    // Intentar del área activa
+                    if (!areaId) {
+                        const activeArea = document.querySelector('.area-item.active');
+                        if (activeArea) {
+                            const activeAreaId = activeArea.getAttribute('data-area-id');
+                            console.log('Área activa data-area-id:', activeAreaId);
+                            if (activeAreaId) {
+                                areaId = parseInt(activeAreaId, 10);
+                                console.log('areaId obtenido del área activa:', areaId);
+                            }
+                        }
+                    }
+                    
+                    if (!areaId) {
+                        mostrarAlerta('No se pudo determinar el área. Por favor, seleccione un área e intente nuevamente.', 'error');
+                        return;
+                    }
+                }
+                
+                if (isNaN(areaId) || areaId === null || areaId === undefined) {
+                    console.error('areaId CORREGIDO no válido:', areaId);
+                    mostrarAlerta('ID de área no válido', 'error');
+                    return;
+                }
+                
+                // Obtener expedienteId de la URL
+                const pathParts = window.location.pathname.split('/').filter(p => p);
+                let expedienteId = null;
+                const expedienteIndex = pathParts.indexOf('expedientes');
+                if (expedienteIndex !== -1 && pathParts[expedienteIndex + 1]) {
+                    expedienteId = pathParts[expedienteIndex + 1];
+                }
+                
+                if (!expedienteId || isNaN(expedienteId)) {
+                    mostrarAlerta('No se pudo determinar el expediente actual.', 'error');
+                    return;
+                }
+                
+                // Construir URL
+                const url = `/expedientes/${expedienteId}/etapa/${areaId}/subir-documento/`;
+                console.log('URL CORREGIDA:', url);
+                
+                // Crear FormData
+                const formData = new FormData();
+                formData.append('documento', inputArchivo.files[0]);
+                formData.append('area_id', areaId.toString()); // ✅ AGREGAR EL area_id AL FORMDATA
+                
+                // Obtener otros campos - usar el ID correcto
+                const nombreDocDisabled2 = document.getElementById('nombreDocumento');
+                const observaciones = document.getElementById('observaciones');
+                
+                if (nombreDocDisabled2 && nombreDocDisabled2.value && nombreDocDisabled2.value.trim()) {
+                    formData.append('nombre_documento', nombreDocDisabled2.value.trim());
+                } else {
+                    // Si no hay nombre, usar el nombre del archivo
+                    if (inputArchivo.files[0]) {
+                        formData.append('nombre_documento', inputArchivo.files[0].name);
+                    }
+                }
+                if (observaciones && observaciones.value) {
+                    formData.append('descripcion', observaciones.value);
+                }
+                
+                console.log('FormData preparado con area_id:', formData.get('area_id'));
+                
+                // Mostrar estado de carga
+                if (btnSubir) btnSubir.disabled = true;
+                if (spinner) spinner.classList.remove('d-none');
+                
+                // Hacer la petición
+                const csrfToken = getCookie('csrftoken');
+                if (!csrfToken) {
+                    mostrarAlerta('Error: No se pudo obtener el token de seguridad. Por favor, recarga la página.', 'error');
+                    return;
+                }
+                
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || 'Error al subir el documento');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Documento subido exitosamente:', data);
+                    if (formularioSubida) formularioSubida.reset();
+                    
+                    // Cerrar modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('subirDocumentoModal'));
+                    if (modal) modal.hide();
+                    
+                    // Recargar documentos - usar el área actual o el área del formulario
+                    const areaIdParaRecargar = this.areaActual ? this.areaActual.id : areaId;
+                    const areaNombreParaRecargar = this.areaActual ? this.areaActual.nombre : 'el área';
+                    
+                    if (areaIdParaRecargar) {
+                        // Si DocumentosApp está disponible, usarlo
+                        if (typeof DocumentosApp !== 'undefined' && DocumentosApp.cargarDocumentosArea) {
+                            DocumentosApp.cargarDocumentosArea(areaIdParaRecargar, areaNombreParaRecargar);
+                        } else if (typeof ExpedienteApp !== 'undefined' && ExpedienteApp.cargarDocumentosArea) {
+                            ExpedienteApp.cargarDocumentosArea(areaIdParaRecargar, areaNombreParaRecargar);
+                        } else {
+                            // Recargar la página como último recurso
+                            location.reload();
+                        }
+                    } else {
+                        location.reload();
+                    }
+                    
+                    // Mostrar mensaje de éxito
+                    mostrarAlerta('Documento subido exitosamente', 'success');
+                })
+                .catch(error => {
+                    console.error('Error al subir el documento:', error);
+                    
+                    // Verificar si el error es 'database is locked' pero el archivo se subió correctamente
+                    if (error.message && error.message.includes('database is locked')) {
+                        console.log('Advertencia: La base de datos está bloqueada, pero el archivo se subió correctamente.');
+                        
+                        // Limpiar el formulario
+                        if (formularioSubida) formularioSubida.reset();
+                        
+                        // Cerrar el modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('subirDocumentoModal'));
+                        if (modal) modal.hide();
+                        
+                        // Recargar documentos del área actual
+                        const areaIdParaRecargar = this.areaActual ? this.areaActual.id : areaId;
+                        const areaNombreParaRecargar = this.areaActual ? this.areaActual.nombre : 'el área';
+                        
+                        if (areaIdParaRecargar) {
+                            if (typeof DocumentosApp !== 'undefined' && DocumentosApp.cargarDocumentosArea) {
+                                DocumentosApp.cargarDocumentosArea(areaIdParaRecargar, areaNombreParaRecargar);
+                            } else if (typeof ExpedienteApp !== 'undefined' && ExpedienteApp.cargarDocumentosArea) {
+                                ExpedienteApp.cargarDocumentosArea(areaIdParaRecargar, areaNombreParaRecargar);
+                            } else {
+                                location.reload();
+                            }
+                        } else {
+                            location.reload();
+                        }
+                        
+                        return; // Salir sin mostrar mensaje de error
+                    }
+                    
+                    // Mostrar mensaje de error para otros errores
+                    mostrarAlerta('Error al subir el documento: ' + (error.message || 'Error desconocido'), 'error');
+                })
+                .finally(() => {
+                    if (btnSubir) btnSubir.disabled = false;
+                    if (spinner) spinner.classList.add('d-none');
+                });
+            };
+        }
+    </script>
+    
+    <!-- Inicialización de Bootstrap -->
+    <script>
+        // Asegurarse de que Bootstrap esté disponible
+        window.bootstrap = window.bootstrap || {};
+        
+        // Función para obtener una instancia del modal de forma segura
+        function getModalInstance(modalElement) {
+            try {
+                // Verificar si el elemento existe
+                if (!modalElement || !(modalElement instanceof HTMLElement)) {
+                    console.error('Elemento de modal no válido');
+                    return null;
+                }
+                
+                // Verificar si Bootstrap está cargado
+                if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                    console.error('Bootstrap no está cargado correctamente');
+                    return null;
+                }
+                
+                // Obtener instancia existente o crear una nueva
+                let modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (!modalInstance) {
+                    // Configuración predeterminada del modal
+                    const defaultOptions = {
+                        backdrop: true,
+                        keyboard: true,
+                        focus: true
+                    };
+                    modalInstance = new bootstrap.Modal(modalElement, defaultOptions);
+                }
+                
+                return modalInstance;
+            } catch (error) {
+                console.error('Error al obtener instancia del modal:', error);
+                return null;
+            }
+        }
+    </script>
+    
+    <!-- Script de inicialización -->
+    <script>
+        // Función para cargar el contenido de un área
+        function cargarArea(areaId, areaNombre) {
+            console.log('cargarArea llamada con:', areaId, areaNombre);
+            
+            // Convertir areaId a número si es necesario
+            let areaIdNum = areaId;
+            if (typeof areaId === 'string') {
+                areaIdNum = parseInt(areaId, 10);
+            }
+            
+            // Actualizar variables globales para que estén disponibles cuando se abra el modal
+            if (typeof window !== 'undefined') {
+                window.areaSeleccionada = { id: areaIdNum, nombre: areaNombre };
+                console.log('window.areaSeleccionada actualizado:', window.areaSeleccionada);
+            }
+            
+            // También actualizar DocumentosApp si está disponible
+            if (typeof DocumentosApp !== 'undefined' && DocumentosApp.areaActual !== undefined) {
+                DocumentosApp.areaActual = { id: areaIdNum, nombre: areaNombre };
+                console.log('DocumentosApp.areaActual actualizado:', DocumentosApp.areaActual);
+            }
+            
+            // Actualizar el título del área seleccionada
+            const tituloArea = document.getElementById('titulo-area-seleccionada');
+            if (tituloArea) {
+                tituloArea.textContent = areaNombre;
+            }
+            
+            // Actualizar la clase activa en el sidebar
+            const areaItems = document.querySelectorAll('.area-item');
+            if (areaItems) {
+                areaItems.forEach(item => {
+                    if (item && item.classList) {
+                        item.classList.remove('active');
+                        // Comparar como string para asegurar que coincida
+                        const itemAreaId = item.getAttribute('data-area-id') || item.dataset.areaId;
+                        if (itemAreaId && String(itemAreaId) === String(areaIdNum)) {
+                            item.classList.add('active');
+                            // Asegurar que los atributos estén correctamente establecidos
+                            if (!item.getAttribute('data-area-id')) {
+                                item.setAttribute('data-area-id', areaIdNum);
+                            }
+                            if (!item.getAttribute('data-area-nombre')) {
+                                item.setAttribute('data-area-nombre', areaNombre);
+                            }
+                            // Desplazar el área a la vista si es necesario
+                            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        }
+                    }
+                });
+            }
+            
+            // Mostrar el contenido del área seleccionada
+            const areaContents = document.querySelectorAll('.area-content');
+            if (areaContents) {
+                areaContents.forEach(content => {
+                    if (content && content.classList) {
+                        content.classList.add('d-none');
+                    }
+                });
+            }
+            
+            const areaContent = document.getElementById('area-' + areaId);
+            if (areaContent && areaContent.classList) {
+                areaContent.classList.remove('d-none');
+                areaContent.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Ocultar la pantalla de bienvenida
+            const bienvenidaArea = document.getElementById('bienvenida-area');
+            const contenidoArea = document.getElementById('contenido-area');
+            
+            if (bienvenidaArea && bienvenidaArea.classList) {
+                bienvenidaArea.classList.add('d-none');
+            }
+            if (contenidoArea && contenidoArea.classList) {
+                contenidoArea.classList.remove('d-none');
+            }
+        }
+        
+        // Inicializar la aplicación cuando el DOM esté completamente cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cargar la primera área por defecto si existe
+            const primeraArea = document.querySelector('.area-item');
+            if (primeraArea) {
+                const areaId = primeraArea.dataset.areaId;
+                const areaNombre = primeraArea.dataset.areaNombre;
+                cargarArea(areaId, areaNombre);
+            }
+            console.log('Inicializando aplicación...');
+            
+            // Inicializar tooltips de Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Inicializar popovers
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+            
+            // Establecer el ancho de la barra de progreso desde el atributo data-progress
+            const progressBar = document.querySelector('.progress-bar[data-progress]');
+            if (progressBar) {
+                const progressValue = parseFloat(progressBar.getAttribute('data-progress')) || 0;
+                progressBar.style.width = progressValue + '%';
+            }
+            
+            // Inicializar la aplicación principal si está disponible
+            if (typeof ExpedienteApp !== 'undefined' && typeof ExpedienteApp.init === 'function') {
+                ExpedienteApp.init();
+            } else {
+                console.error('Error: No se pudo inicializar la aplicación. ExpedienteApp no está definido o no tiene el método init.');
+            }
+            
+            // Inicializar el manejador de documentos si está disponible
+            if (typeof DocumentosApp !== 'undefined' && typeof DocumentosApp.init === 'function') {
+                DocumentosApp.init();
+            } else {
+                console.warn('Advertencia: No se pudo inicializar el módulo de documentos.');
+            }
+            
+            console.log('Aplicación inicializada correctamente');
+        });
+        
+        // Función para cambiar entre tema claro/oscuro - Deshabilitada, siempre en modo claro
+        function cambiarTema() {
+            // Forzar siempre modo claro
+            const html = document.documentElement;
+            const nuevoTema = 'light';
+            
+            // Actualizar el atributo data-theme
+            html.setAttribute('data-theme', nuevoTema);
+            
+            // Guardar preferencia en localStorage
+            localStorage.setItem('tema', nuevoTema);
+            
+            // Actualizar íconos
+            const iconoClaro = document.getElementById('icono-tema-claro');
+            const iconoOscuro = document.getElementById('icono-tema-oscuro');
+            
+            // Siempre mostrar icono de modo oscuro (para indicar que está en modo claro)
+            if (iconoClaro) iconoClaro.classList.remove('d-none');
+            if (iconoOscuro) iconoOscuro.classList.add('d-none');
+        }
+        
+        // Función para abrir el modal de subir documento (compatibilidad)
+        window.abrirModalSubirDocumento = function(areaId, areaNombre) {
+            console.log('Abriendo modal para área:', areaId, areaNombre);
+            
+            // Si no se proporcionó un areaId, intentar obtenerlo del área activa
+            if (!areaId || areaId === 'undefined' || areaId === 'null' || areaId === '') {
+                console.log('No se proporcionó areaId, intentando obtener del área activa...');
+                const areaActiva = document.querySelector('.area-item.active');
+                if (areaActiva) {
+                    areaId = areaActiva.getAttribute('data-area-id');
+                    areaNombre = areaNombre || areaActiva.getAttribute('data-area-nombre');
+                    console.log('Área activa encontrada:', areaId, areaNombre);
+                } else {
+                    // Intentar obtener de la variable global areaSeleccionada
+                    if (window.areaSeleccionada && window.areaSeleccionada.id) {
+                        areaId = window.areaSeleccionada.id;
+                        areaNombre = areaNombre || window.areaSeleccionada.nombre;
+                        console.log('Área obtenida de areaSeleccionada:', areaId, areaNombre);
+                    } else {
+                        console.error('Error: No se proporcionó un ID de área válido y no hay área activa');
+                        alert('Error: No se pudo determinar el área. Por favor, selecciona un área primero y luego intenta subir un documento.');
+                        return;
+                    }
+                }
+            }
+            
+            // Convertir areaId a número si es necesario
+            let areaIdNum = areaId;
+            if (typeof areaId === 'string') {
+                areaIdNum = parseInt(areaId, 10);
+                if (isNaN(areaIdNum)) {
+                    console.error('Error: El ID de área no es un número válido:', areaId);
+                    alert('Error: No se pudo determinar el área. Por favor, cierra el modal y vuelve a abrirlo desde un área.');
+                    return;
+                }
+            }
+            
+            // Verificar si Bootstrap está disponible
+            if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                console.error('Bootstrap no está disponible');
+                mostrarErrorModal('Error: La biblioteca de interfaz de usuario no se cargó correctamente. Por favor, recarga la página.');
+                return;
+            }
+            
+            try {
+                // Actualizar el título del modal
+                const modalTitulo = document.getElementById('subirDocumentoModalLabel');
+                if (modalTitulo) {
+                    modalTitulo.textContent = `Subir documento a ${areaNombre || 'el área seleccionada'}`;
+                } else {
+                    console.warn('No se encontró el título del modal');
+                }
+                
+                // Actualizar el campo oculto con el ID del área
+                const areaIdInput = document.getElementById('area_id');
+                if (areaIdInput) {
+                    areaIdInput.value = areaIdNum;
+                    console.log('ID de área establecido en el formulario:', areaIdInput.value);
+                    
+                    // También actualizar la variable global para futuras referencias
+                    if (typeof window !== 'undefined') {
+                        window.areaSeleccionada = { id: areaIdNum, nombre: areaNombre };
+                        console.log('window.areaSeleccionada actualizado:', window.areaSeleccionada);
+                    }
+                } else {
+                    console.error('No se encontró el campo oculto del área');
+                    alert('Error: No se pudo determinar el área. Por favor, cierra el modal y vuelve a abrirlo desde un área.');
+                    return;
+                }
+                
+                // Obtener el elemento del modal
+                const modalElement = document.getElementById('subirDocumentoModal');
+                if (!modalElement) {
+                    throw new Error('No se encontró el elemento del modal');
+                }
+                
+                // Obtener o crear instancia del modal de forma segura
+                const modal = getModalInstance(modalElement);
+                if (!modal) {
+                    throw new Error('No se pudo crear la instancia del modal');
+                }
+                
+                // Resetear el formulario (pero mantener el area_id)
+                const form = modalElement.querySelector('form');
+                if (form) {
+                    const areaIdGuardado = areaIdInput.value; // Guardar el area_id antes de resetear
+                    form.reset();
+                    areaIdInput.value = areaIdGuardado; // Restaurar el area_id después del reset
+                    console.log('Formulario reseteado, area_id restaurado:', areaIdInput.value);
+                }
+                
+                // Mostrar el modal
+                modal.show();
+                
+                // Enfocar el primer campo del formulario después de que el modal se muestre
+                setTimeout(() => {
+                    try {
+                        const firstInput = modalElement.querySelector('input[type="text"], input[type="file"]');
+                        if (firstInput) {
+                            firstInput.focus();
+                        }
+                    } catch (focusError) {
+                        console.warn('No se pudo enfocar el campo de entrada:', focusError);
+                    }
+                }, 100);
+                
+            } catch (error) {
+                console.error('Error al abrir el modal:', error);
+                mostrarErrorModal('No se pudo abrir el formulario de subida de documentos. Por favor, inténtalo de nuevo.');
+            }
+            
+            // Función auxiliar para mostrar errores
+            function mostrarErrorModal(mensaje) {
+                console.error('Error en abrirModalSubirDocumento:', mensaje);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: mensaje,
+                        confirmButtonText: 'Aceptar'
+                    });
+                } else if (typeof showAlert === 'function') {
+                    showAlert(mensaje, 'error');
+                } else {
+                    alert('ERROR: ' + mensaje);
+                }
+            }
+        };
+    </script>
+    
+    <!-- Animación de carga de documentos -->
+    <div id="uploadAnimationContainer" class="upload-animation-container">
+        <div class="upload-animation">
+            <div class="upload-loader">
+                <div class="upload-loader-circle"></div>
+                <div class="upload-loader-circle"></div>
+                <div class="upload-loader-circle"></div>
+            </div>
+            <h3>Subiendo documento</h3>
+            <p>Por favor espera mientras se sube tu archivo...</p>
+            <div class="upload-progress">
+                <div class="upload-progress-bar" id="uploadProgressBar"></div>
+            </div>
+            <div class="upload-success" id="uploadSuccess">
+                <div class="upload-checkmark">
+                    <div class="upload-checkmark-circle"></div>
+                    <div class="upload-checkmark-check"></div>
+                </div>
+                <p>¡Documento subido con éxito!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Función para mostrar la animación de carga
+        function showUploadAnimation() {
+            const container = document.getElementById('uploadAnimationContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const uploadSuccess = document.getElementById('uploadSuccess');
+            
+            // Resetear animación
+            container.classList.add('visible');
+            container.querySelector('.upload-animation').classList.add('visible');
+            progressBar.style.width = '0%';
+            uploadSuccess.classList.remove('visible');
+            
+            // Simular progreso (esto se reemplazará con el progreso real)
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 90) {
+                    clearInterval(progressInterval);
+                }
+                progressBar.style.width = `${Math.min(progress, 90)}%`;
+            }, 200);
+            
+            return {
+                updateProgress: (newProgress) => {
+                    progressBar.style.width = `${newProgress}%`;
+                },
+                complete: () => {
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    // Mostrar animación de éxito
+                    setTimeout(() => {
+                        uploadSuccess.classList.add('visible');
+                        
+                        // Crear efecto de confeti
+                        createConfetti();
+                        
+                        // Cerrar automáticamente después de 2 segundos
+                        setTimeout(() => {
+                            container.classList.remove('visible');
+                            setTimeout(() => {
+                                uploadSuccess.classList.remove('visible');
+                            }, 300);
+                        }, 2000);
+                    }, 500);
+                },
+                error: (message) => {
+                    clearInterval(progressInterval);
+                    container.classList.remove('visible');
+                    // Mostrar mensaje de error
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: message || 'Error al subir el documento',
+                        confirmButtonColor: '#3085d6',
+                    });
+                }
+            };
+        }
+
+        // Función para crear efecto de confeti
+        function createConfetti() {
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = `${Math.random() * 10 + 5}px`;
+                confetti.style.height = confetti.style.width;
+                confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                
+                document.body.appendChild(confetti);
+                
+                // Eliminar el confeti después de la animación
+                setTimeout(() => {
+                    if (confetti.parentNode) {
+                        confetti.remove();
+                    }
+                }, 5000);
+            }
+        }
+    </script>
+    
+    <!-- Script para búsqueda de documentos dentro del expediente -->
+    <script>
+        // Función para buscar documentos en el expediente
+        function buscarDocumentosEnExpediente(areaId, expedienteId) {
+            const inputBusqueda = document.getElementById(`buscar-documentos-${areaId}`);
+            const btnLimpiar = document.getElementById(`btn-limpiar-busqueda-${areaId}`);
+            const resultadosDiv = document.getElementById(`resultados-busqueda-${areaId}`);
+            const listaDocumentos = document.getElementById(`lista-documentos-${areaId}`);
+            
+            if (!inputBusqueda || !inputBusqueda.value.trim()) {
+                return;
+            }
+            
+            const query = inputBusqueda.value.trim();
+            
+            // Mostrar indicador de carga
+            resultadosDiv.innerHTML = `
+                <div class="d-flex justify-content-center align-items-center py-3">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                        <span class="visually-hidden">Buscando...</span>
+                    </div>
+                    <span>Buscando documentos...</span>
+                </div>
+            `;
+            resultadosDiv.classList.remove('d-none');
+            listaDocumentos.classList.add('d-none');
+            
+            // Realizar búsqueda
+            const urlBusqueda = '/api/buscar/';
+            fetch(`${urlBusqueda}?q=${encodeURIComponent(query)}&expediente_id=${expedienteId}&page=1`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.resultados && data.resultados.items) {
+                    mostrarResultadosBusqueda(areaId, data.resultados.items, query, data.resultados.total);
+                    btnLimpiar.classList.remove('d-none');
+                } else {
+                    mostrarSinResultados(areaId, query);
+                    btnLimpiar.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error en la búsqueda:', error);
+                resultadosDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Error al realizar la búsqueda. Por favor, intenta nuevamente.
+                    </div>
+                `;
+            });
+        }
+        
+        // Función para mostrar resultados de búsqueda
+        function mostrarResultadosBusqueda(areaId, documentos, query, total) {
+            const resultadosDiv = document.getElementById(`resultados-busqueda-${areaId}`);
+            
+            if (!documentos || documentos.length === 0) {
+                mostrarSinResultados(areaId, query);
+                return;
+            }
+            
+            let html = `
+                <div class="alert alert-info d-flex justify-content-between align-items-center">
+                    <span>
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Se encontraron <strong>${total}</strong> documento(s) con "${query}"
+                    </span>
+                </div>
+                <div class="list-group">
+            `;
+            
+            documentos.forEach(doc => {
+                const fecha = doc.fecha_creacion ? new Date(doc.fecha_creacion).toLocaleDateString('es-ES') : 'N/A';
+                const icono = doc.tipo_archivo === 'pdf' ? 'bi-file-pdf' : 
+                             doc.tipo_archivo === 'docx' || doc.tipo_archivo === 'doc' ? 'bi-file-word' :
+                             doc.tipo_archivo === 'xlsx' || doc.tipo_archivo === 'xls' ? 'bi-file-excel' :
+                             'bi-file-earmark';
+                
+                html += `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi ${icono} me-2 text-primary"></i>
+                                    <strong>${doc.titulo || doc.nombre_documento || 'Documento sin nombre'}</strong>
+                                </div>
+                                <div class="small text-muted mb-2">
+                                    <div><strong>Área:</strong> ${doc.area || 'No especificada'}</div>
+                                    <div><strong>Subido por:</strong> ${doc.usuario || 'Usuario desconocido'}</div>
+                                    <div><strong>Fecha:</strong> ${fecha}</div>
+                                    ${doc.fragmento || doc.snippet ? `<div class="mt-2"><strong>Fragmento:</strong> <em>${doc.fragmento || doc.snippet || ''}</em></div>` : ''}
+                                </div>
+                            </div>
+                            <div class="document-actions ms-3">
+                                <a href="${doc.url_descarga || doc.ruta_archivo || '#'}" 
+                                   class="btn btn-sm btn-outline-primary me-1" 
+                                   target="_blank"
+                                   title="Ver documento">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                                <a href="${doc.url_descarga || doc.ruta_archivo || '#'}" 
+                                   class="btn btn-sm btn-outline-secondary" 
+                                   download
+                                   title="Descargar">
+                                    <i class="bi bi-cloud-arrow-down-fill"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            resultadosDiv.innerHTML = html;
+        }
+        
+        // Función para mostrar mensaje cuando no hay resultados
+        function mostrarSinResultados(areaId, query) {
+            const resultadosDiv = document.getElementById(`resultados-busqueda-${areaId}`);
+            resultadosDiv.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-search me-2"></i>
+                    No se encontraron documentos que coincidan con "${query}"
+                </div>
+            `;
+        }
+        
+        // Función para limpiar la búsqueda
+        function limpiarBusquedaDocumentos(areaId) {
+            const inputBusqueda = document.getElementById(`buscar-documentos-${areaId}`);
+            const btnLimpiar = document.getElementById(`btn-limpiar-busqueda-${areaId}`);
+            const resultadosDiv = document.getElementById(`resultados-busqueda-${areaId}`);
+            const listaDocumentos = document.getElementById(`lista-documentos-${areaId}`);
+            
+            if (inputBusqueda) inputBusqueda.value = '';
+            if (btnLimpiar) btnLimpiar.classList.add('d-none');
+            if (resultadosDiv) {
+                resultadosDiv.classList.add('d-none');
+                resultadosDiv.innerHTML = '';
+            }
+            if (listaDocumentos) listaDocumentos.classList.remove('d-none');
+        }
+        
+        // Permitir búsqueda con Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputsBusqueda = document.querySelectorAll('[id^="buscar-documentos-"]');
+            inputsBusqueda.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const areaId = this.getAttribute('data-area-id');
+                        const expedienteId = this.getAttribute('data-expediente-id');
+                        buscarDocumentosEnExpediente(areaId, expedienteId);
+                    }
+                });
+            });
+        });
+        
+        // ========================================================================
+        // FUNCIONALIDAD DE ESCANEO AUTOMÁTICO PARA DETALLE_EXPEDIENTE
+        // ========================================================================
+        
+        // Función para mostrar notificación elegante
+        function mostrarNotificacionDetalle(mensaje, tipo = 'success', duracion = 3000) {
+            const notificacion = document.createElement('div');
+            notificacion.className = `alert alert-${tipo === 'success' ? 'success' : tipo === 'error' ? 'danger' : 'info'} alert-dismissible fade show scanner-notification`;
+            notificacion.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                min-width: 300px;
+                max-width: 500px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                animation: slideInRight 0.3s ease;
+            `;
+            
+            const icono = tipo === 'success' ? 'check-circle-fill' : tipo === 'error' ? 'exclamation-triangle-fill' : 'info-circle-fill';
+            notificacion.innerHTML = `
+                <i class="bi bi-${icono} me-2"></i>
+                <strong>${tipo === 'success' ? 'Éxito' : tipo === 'error' ? 'Error' : 'Información'}:</strong> ${mensaje}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(notificacion);
+            
+            setTimeout(() => {
+                if (notificacion.parentNode) {
+                    notificacion.classList.remove('show');
+                    setTimeout(() => notificacion.remove(), 300);
+                }
+            }, duracion);
+        }
+        
+        // Función para actualizar progreso del escaneo
+        function actualizarProgresoEscaneoDetalle(porcentaje, texto) {
+            const progressBar = document.getElementById('scanner-progress-bar-detalle');
+            const progressText = document.getElementById('scanner-progress-text-detalle');
+            const progressContainer = document.getElementById('scanner-progress-detalle');
+            
+            if (progressBar) {
+                progressBar.style.width = porcentaje + '%';
+            }
+            if (progressText) {
+                progressText.textContent = texto;
+            }
+            if (progressContainer) {
+                progressContainer.classList.remove('d-none');
+            }
+        }
+        
+        // Función para ocultar progreso
+        function ocultarProgresoEscaneoDetalle() {
+            const progressContainer = document.getElementById('scanner-progress-detalle');
+            if (progressContainer) {
+                progressContainer.classList.add('d-none');
+            }
+            const progressBar = document.getElementById('scanner-progress-bar-detalle');
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+        }
+        
+        // Función para iniciar el escaneo desde detalle_expediente
+        async function iniciarEscaneoDetalle() {
+            const btnEscanear = document.getElementById('btn-escanear-detalle');
+            const expedienteId = btnEscanear ? parseInt(btnEscanear.getAttribute('data-expediente-id') || '0', 10) : 0;
+            const areaId = document.getElementById('area_id')?.value;
+            const nombreDoc = document.getElementById('nombreDocumentoScan')?.value || `Scan_${Date.now()}`;
+            const observaciones = document.getElementById('observaciones')?.value || '';
+            const btnContent = btnEscanear?.querySelector('.btn-scan-content');
+            const btnLoading = btnEscanear?.querySelector('.btn-scan-loading');
+            
+            // Validaciones
+            if (!areaId) {
+                mostrarNotificacionDetalle('No se ha seleccionado un área. Por favor, selecciona un área primero.', 'error');
+                return;
+            }
+            
+            if (!nombreDoc.trim()) {
+                mostrarNotificacionDetalle('Por favor, ingresa un nombre para el documento antes de escanear.', 'error');
+                document.getElementById('nombreDocumentoScan')?.focus();
+                return;
+            }
+            
+            // Deshabilitar botón y mostrar estado de carga
+            btnEscanear.disabled = true;
+            if (btnContent) btnContent.classList.add('d-none');
+            if (btnLoading) btnLoading.classList.remove('d-none');
+            
+            // Mostrar progreso
+            actualizarProgresoEscaneoDetalle(10, 'Conectando con el servicio de escaneo...');
+            
+            try {
+                // Simular progreso mientras se conecta
+                await new Promise(resolve => setTimeout(resolve, 500));
+                actualizarProgresoEscaneoDetalle(30, 'Iniciando escaneo...');
+                
+                // Verificar si se seleccionó escaneo dúplex
+                const duplexCheckbox = document.getElementById('escaneo-duplex');
+                const isDuplex = duplexCheckbox ? duplexCheckbox.checked : false;
+                
+                // Llamada al servicio local
+                const resp = await fetch("http://127.0.0.1:5001/scan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        expediente_id: expedienteId,
+                        etapa: areaId, // Usar el área como etapa
+                        area_id: parseInt(areaId),
+                        nombre_documento: nombreDoc.trim(),
+                        descripcion: observaciones.trim(),
+                        duplex: isDuplex
+                    })
+                });
+                
+                actualizarProgresoEscaneoDetalle(60, 'Procesando documento escaneado...');
+                
+                const data = await resp.json();
+                
+                if (resp.ok && data.status === "ok") {
+                    actualizarProgresoEscaneoDetalle(90, 'Subiendo a Django...');
+                    
+                    // Esperar un momento para que Django procese
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    actualizarProgresoEscaneoDetalle(100, '¡Completado!');
+                    
+                    // Mostrar notificación de éxito
+                    mostrarNotificacionDetalle('Documento escaneado y subido correctamente.', 'success', 4000);
+                    
+                    // Cerrar modal después de un breve delay
+                    setTimeout(() => {
+                        const modalEl = document.getElementById('subirDocumentoModal');
+                        if (modalEl) {
+                            const modal = bootstrap.Modal.getInstance(modalEl);
+                            if (modal) {
+                                modal.hide();
+                            }
+                        }
+                        
+                        // Recargar documentos del área
+                        if (typeof ExpedienteApp !== 'undefined' && ExpedienteApp.cargarDocumentosArea) {
+                            ExpedienteApp.cargarDocumentosArea(areaId, '');
+                        } else if (typeof DocumentosApp !== 'undefined' && DocumentosApp.cargarDocumentosArea) {
+                            DocumentosApp.cargarDocumentosArea(areaId, '');
+                        } else {
+                            // Recargar página
+                            setTimeout(() => location.reload(), 500);
+                        }
+                        
+                        // Ocultar progreso
+                        ocultarProgresoEscaneoDetalle();
+                    }, 1000);
+                    
+                } else {
+                    // Error
+                    console.error('Error en escaneo:', data);
+                    const mensajeError = data.msg || data.error || 'Error desconocido al escanear';
+                    
+                    mostrarNotificacionDetalle(
+                        `Error al escanear: ${mensajeError}. Verifica que el servicio esté corriendo, el escáner esté encendido y los documentos estén en el alimentador.`,
+                        'error',
+                        6000
+                    );
+                    
+                    ocultarProgresoEscaneoDetalle();
+                }
+                
+            } catch (error) {
+                console.error('Error de conexión:', error);
+                
+                mostrarNotificacionDetalle(
+                    `Error de conexión con el servicio de escaneo. Verifica que el servicio esté corriendo en http://127.0.0.1:5001. Error: ${error.message}`,
+                    'error',
+                    6000
+                );
+                
+                ocultarProgresoEscaneoDetalle();
+            } finally {
+                // Restaurar botón
+                btnEscanear.disabled = false;
+                if (btnContent) btnContent.classList.remove('d-none');
+                if (btnLoading) btnLoading.classList.add('d-none');
+            }
+        }
+        
+        // Verificar si el servicio está disponible al cargar
+        async function verificarServicioEscaneoDetalle() {
+            const statusIndicator = document.getElementById('scanner-status-indicator');
+            const statusText = document.getElementById('scanner-status-text');
+            const btnEscanear = document.getElementById('btn-escanear-detalle');
+            
+            try {
+                // Usar AbortController para timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                
+                const resp = await fetch("http://127.0.0.1:5001/health", { 
+                    signal: controller.signal 
+                });
+                
+                clearTimeout(timeoutId);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    console.log('Servicio de escaneo disponible:', data);
+                    
+                    // Actualizar estado visual
+                    if (statusIndicator) {
+                        statusIndicator.classList.remove('inactive');
+                        statusIndicator.classList.add('active');
+                    }
+                    if (statusText) {
+                        statusText.textContent = 'Servicio disponible y listo';
+                        statusText.style.color = '#10b981';
+                    }
+                    if (btnEscanear) {
+                        btnEscanear.disabled = false;
+                        btnEscanear.title = '';
+                    }
+                } else {
+                    throw new Error('Servicio no disponible');
+                }
+            } catch (error) {
+                console.warn('Servicio de escaneo no disponible:', error);
+                
+                // Actualizar estado visual
+                if (statusIndicator) {
+                    statusIndicator.classList.remove('active');
+                    statusIndicator.classList.add('inactive');
+                }
+                if (statusText) {
+                    if (error.name === 'AbortError') {
+                        statusText.textContent = 'Timeout al verificar servicio';
+                    } else {
+                        statusText.textContent = 'Servicio no disponible';
+                    }
+                    statusText.style.color = '#ef4444';
+                }
+                if (btnEscanear) {
+                    btnEscanear.disabled = true;
+                    btnEscanear.title = 'El servicio de escaneo no está disponible. Asegúrate de que esté corriendo en http://127.0.0.1:5001';
+                }
+            }
+        }
+        
+        // Verificar servicio cuando se muestra la pestaña de escanear
+        document.addEventListener('DOMContentLoaded', function() {
+            const escanearTab = document.getElementById('escanear-archivo-tab');
+            if (escanearTab) {
+                escanearTab.addEventListener('shown.bs.tab', function() {
+                    setTimeout(verificarServicioEscaneoDetalle, 500);
+                });
+            }
+            
+            // Verificar también al cargar si la pestaña ya está activa
+            setTimeout(verificarServicioEscaneoDetalle, 2000);
+        });
+        
+        // Agregar animación CSS para notificaciones
+        if (!document.getElementById('scanner-animations-style')) {
+            const style = document.createElement('style');
+            style.id = 'scanner-animations-style';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                .scanner-notification {
+                    animation: slideInRight 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    </script>
+</body>
+</html>

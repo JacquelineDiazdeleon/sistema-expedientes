@@ -1,0 +1,295 @@
+{% extends 'digitalizacion/base_admin.html' %}
+{% load static humanize %}
+
+{% block title %}{{ title }} | {{ block.super }}{% endblock %}
+
+{% block head %}
+<style>
+    .badge-estado {
+        font-size: 0.75rem;
+        padding: 0.35em 0.65em;
+        font-weight: 600;
+    }
+    
+    .badge-pendiente {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .badge-aprobada {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .badge-rechazada {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .solicitud-card {
+        border-left: 4px solid #e5e7eb;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .solicitud-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transform: translateY(-2px);
+    }
+    
+    .solicitud-pendiente {
+        border-left-color: #f59e0b;
+    }
+    
+    .solicitud-aprobada {
+        border-left-color: #10b981;
+    }
+    
+    .solicitud-rechazada {
+        border-left-color: #ef4444;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: #6b7280;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .filtros {
+        background-color: #f9fafb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filtro-activo {
+        background-color: #3b82f6;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Gestión de Solicitudes de Registro</h1>
+        <p class="text-muted">Revisa y gestiona las solicitudes de registro de nuevos usuarios en el sistema.</p>
+    </div>
+    
+    <!-- Filtros -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Filtros</h6>
+            <form class="d-flex" method="get">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Buscar por nombre, email o puesto...">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="card-body">
+            <div class="btn-group" role="group">
+                <a href="?estado=pendientes" class="btn btn-outline-primary {% if estado_actual == 'pendientes' %}active{% endif %}">
+                    Pendientes <span class="badge bg-primary text-white ms-1">{{ pendientes_count|default:0 }}</span>
+                </a>
+                <a href="?estado=aprobadas" class="btn btn-outline-success {% if estado_actual == 'aprobadas' %}active{% endif %}">
+                    Aprobadas <span class="badge bg-success text-white ms-1">{{ aprobadas_count|default:0 }}</span>
+                </a>
+                <a href="?estado=rechazadas" class="btn btn-outline-danger {% if estado_actual == 'rechazadas' %}active{% endif %}">
+                    Rechazadas <span class="badge bg-danger text-white ms-1">{{ rechazadas_count|default:0 }}</span>
+                </a>
+                <a href="?" class="btn btn-outline-secondary">
+                    Todas <span class="badge bg-secondary text-white ms-1">{{ total_count|default:0 }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Lista de solicitudes -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">
+                {{ titulo }}
+                <span class="badge bg-primary text-white ms-2">{{ page_obj.paginator.count }}</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if page_obj %}
+                {% for solicitud in page_obj %}
+                <div class="card mb-3 solicitud-card solicitud-{{ solicitud.estado }}">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5 class="card-title">
+                                    {{ solicitud.nombres }} {{ solicitud.apellidos }}
+                                    <span class="badge badge-estado badge-{{ solicitud.estado }}">
+                                        {{ solicitud.get_estado_display }}
+                                    </span>
+                                </h5>
+                                <p class="card-text text-muted mb-2">
+                                    <i class="bi bi-envelope me-2"></i>{{ solicitud.email_institucional }}
+                                </p>
+                                <p class="card-text mb-2">
+                                    <i class="bi bi-building me-2"></i>
+                                    {{ solicitud.departamento.nombre|default:'Sin departamento' }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-briefcase me-2"></i>
+                                    {{ solicitud.puesto|default:'Sin puesto especificado' }}
+                                </p>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar3 me-2"></i>
+                                        Solicitado el {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}
+                                        {% if solicitud.rol_solicitado %}
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-person-badge me-2"></i>
+                                        {{ solicitud.rol_solicitado.get_nombre_display }}
+                                        {% endif %}
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                {% if solicitud.estado == 'pendiente' %}
+                                    <form method="post" action="{% url 'digitalizacion:aprobar_solicitud' solicitud.id %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-lg"></i> Aprobar
+                                        </button>
+                                    </form>
+                                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#rechazarModal{{ solicitud.id }}">
+                                        <i class="bi bi-x-lg"></i> Rechazar
+                                    </button>
+                                    
+                                    <!-- Modal de rechazo -->
+                                    <div class="modal fade" id="rechazarModal{{ solicitud.id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Rechazar Solicitud</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                                                </div>
+                                                <form method="post" action="{% url 'digitalizacion:rechazar_solicitud' solicitud.id %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <p>¿Estás seguro de que deseas rechazar la solicitud de <strong>{{ solicitud.nombres }} {{ solicitud.apellidos }}</strong>?</p>
+                                                        <div class="mb-3">
+                                                            <label for="motivo{{ solicitud.id }}" class="form-label">Motivo del rechazo (opcional):</label>
+                                                            <textarea class="form-control" id="motivo{{ solicitud.id }}" name="motivo" rows="3"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-danger">Confirmar Rechazo</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if solicitud.estado == 'rechazada' and solicitud.motivo_rechazo %}
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="tooltip" title="{{ solicitud.motivo_rechazo }}">
+                                        <i class="bi bi-info-circle"></i> Ver motivo
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Paginación -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Paginación" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}" aria-label="Primera">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}" aria-label="Siguiente">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if estado_actual %}&estado={{ estado_actual }}{% endif %}" aria-label="Última">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h5>No hay solicitudes para mostrar</h5>
+                    <p class="text-muted">No se encontraron solicitudes que coincidan con los filtros seleccionados.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Confirmar antes de rechazar
+        const rejectButtons = document.querySelectorAll('button[value="rechazar"]');
+        
+        rejectButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (!confirm('¿Estás seguro de que deseas rechazar esta solicitud? Esta acción no se puede deshacer.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        const approveButtons = document.querySelectorAll('button[value="aprobar"]');
+        
+        approveButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                if (!confirm('¿Estás seguro de que deseas aprobar esta solicitud? Se creará un nuevo usuario con los datos proporcionados.')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

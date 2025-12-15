@@ -1,0 +1,740 @@
+<!-- Modal para subir documentos -->
+<div class="modal fade" id="subirDocumentoModal" tabindex="-1" aria-labelledby="subirDocumentoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" data-theme="dark">
+            <div class="modal-header">
+                
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="subirDocumentoForm" method="post" enctype="multipart/form-data" action="">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="etapa" value="">
+                    
+                                        <input type="hidden" id="modalAreaId" name="area_id" value="">
+<div class="mb-3">
+                        <label for="nombre_documento" class="form-label">Nombre del Documento *</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="nombre_documento" 
+                               name="nombre_documento" 
+                               placeholder="Ej: Cotización proveedor ABC"
+                               required>
+                        <small class="form-text">Sugerencia: Usa el nombre exacto del requisito para mejor organización</small>
+                    </div>
+                    
+                    <!-- Campo específico para número SIMA (solo para etapa requisicion_sima) -->
+                    <div class="mb-3" id="campoNumeroSima" style="display: none;">
+                        <label for="numero_sima" class="form-label">
+                            <i class="bi bi-hash me-1"></i>Número SIMA *
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="numero_sima" 
+                               name="numero_sima" 
+                               placeholder="Ej: SIMA-2025-001">
+                        <small class="form-text">
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="documento" class="form-label"> Archivo *</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="documento" 
+                               name="documento" 
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls"
+                               required>
+                        <small class="form-text">Formatos permitidos: PDF, DOC, DOCX, JPG, PNG, XLS, XLSX</small>
+                    </div>
+                    
+                    <div class="mb-3">
+{{ ... }}
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea class="form-control" 
+                                  id="descripcion" 
+                                  name="descripcion" 
+                                  rows="3" 
+                                  placeholder="Descripción adicional del documento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-cloud-upload me-1"></i>
+                        Subir Documento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para agregar comentarios -->
+<div class="modal fade" id="comentarioModal" tabindex="-1" aria-labelledby="comentarioModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" data-theme="dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="comentarioModalLabel">
+                    Agregar Comentario - <span class="etapa-nombre"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'expedientes:agregar_comentario' expediente.pk 'placeholder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="etapa" value="">
+                    
+                    <div class="mb-3">
+                        <label for="comentario" class="form-label">Comentario *</label>
+                        <textarea class="form-control" 
+                                  id="comentario" 
+                                  name="comentario" 
+                                  rows="4" 
+                                  placeholder="Escribe tu comentario sobre esta etapa..."
+                                  required></textarea>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Los comentarios quedan registrados permanentemente en el historial del expediente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-chat me-1"></i>
+                        Agregar Comentario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para completar etapa -->
+<div class="modal fade" id="completarEtapaModal" tabindex="-1" aria-labelledby="completarEtapaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content" data-theme="dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="completarEtapaModalLabel">
+                    Completar Etapa - <span class="etapa-nombre"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'expedientes:completar_etapa' expediente.pk 'placeholder' %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="etapa" value="">
+                    
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>¿Estás seguro?</strong> Una vez completada, esta etapa no se puede deshacer fácilmente.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notas" class="form-label">Notas de Completado</label>
+                        <textarea class="form-control" 
+                                  id="notas" 
+                                  name="notas" 
+                                  rows="3" 
+                                  placeholder="Notas adicionales sobre la completación de esta etapa..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <input type="checkbox" class="form-check-input" id="confirmarCompletado" required>
+                        <label class="form-check-label ms-2" for="confirmarCompletado">
+                            Confirmo que todos los requisitos obligatorios están cumplidos
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Completar Etapa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para rechazar expediente -->
+<div class="modal fade" id="rechazarExpedienteModal" tabindex="-1" aria-labelledby="rechazarExpedienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" data-theme="dark">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rechazarExpedienteModalLabel">
+                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Rechazar Expediente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'expedientes:rechazar_expediente' expediente.pk %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>¡Atención!</strong> Esta acción marcará el expediente como rechazado y no podrá continuar con el proceso normal.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="motivo_rechazo" class="form-label">Motivo del Rechazo *</label>
+                        <textarea class="form-control" 
+                                  id="motivo_rechazo" 
+                                  name="motivo_rechazo" 
+                                  rows="4" 
+                                  required
+                                  placeholder="Describa el motivo por el cual se rechaza este expediente..."></textarea>
+                        <small class="form-text">
+                            Proporcione una explicación clara y detallada del motivo del rechazo.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Rechazar Expediente
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos base para modales usando variables CSS del sistema de temas */
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+}
+
+.modal-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.modal-footer {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.modal-title {
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-label {
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-control {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.form-text {
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.btn-close {
+    filter: var(--btn-close-filter);
+    transition: all 0.3s ease;
+}
+
+/* Botones con estilos del sistema de temas */
+.btn-secondary {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: var(--border-light);
+    color: var(--text-primary);
+}
+
+.btn-primary {
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-danger {
+    background: var(--danger);
+    border: 1px solid var(--danger);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+/* Alertas con estilos del sistema de temas */
+.alert-info {
+    background: rgba(8, 145, 178, 0.1);
+    border: 1px solid rgba(8, 145, 178, 0.3);
+    color: var(--info);
+    transition: all 0.3s ease;
+}
+
+.alert-warning {
+    background: rgba(217, 119, 6, 0.1);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    color: var(--warning);
+    transition: all 0.3s ease;
+}
+
+/* Checkbox con estilos del sistema de temas */
+.form-check-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+}
+
+.form-check-input:checked {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.form-check-label {
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+/* Variables CSS específicas para el tema oscuro */
+[data-theme="dark"] {
+    --btn-close-filter: none;
+}
+
+/* Variables CSS específicas para el tema claro */
+[data-theme="light"] {
+    --btn-close-filter: invert(1);
+}
+
+/* Estilos específicos para tema claro */
+[data-theme="light"] .modal-content {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .modal-header {
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .modal-footer {
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+}
+
+[data-theme="light"] .modal-title {
+    color: #212529;
+}
+
+[data-theme="light"] .form-label {
+    color: #212529;
+}
+
+[data-theme="light"] .form-control {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+    color: #212529;
+}
+
+[data-theme="light"] .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+[data-theme="light"] .form-control::placeholder {
+    color: #6c757d;
+}
+
+[data-theme="light"] .form-text {
+    color: #6c757d;
+}
+
+[data-theme="light"] .btn-close {
+    filter: invert(1);
+}
+
+[data-theme="light"] .btn-secondary {
+    background: #6c757d;
+    border: 1px solid #6c757d;
+    color: #ffffff;
+}
+
+[data-theme="light"] .btn-secondary:hover {
+    background: #5a6268;
+    border-color: #5a6268;
+}
+
+[data-theme="light"] .btn-primary {
+    background: #667eea;
+    border: 1px solid #667eea;
+    color: #ffffff;
+}
+
+[data-theme="light"] .btn-primary:hover {
+    background: #5a67d8;
+    border-color: #5a67d8;
+}
+
+[data-theme="light"] .btn-danger {
+    background: #dc3545;
+    border: 1px solid #dc3545;
+    color: #ffffff;
+}
+
+[data-theme="light"] .btn-danger:hover {
+    background: #c82333;
+    border-color: #c82333;
+}
+
+[data-theme="light"] .alert-info {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: #667eea;
+}
+
+[data-theme="light"] .alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+[data-theme="light"] .form-check-input {
+    background: #ffffff;
+    border: 1px solid #ced4da;
+}
+
+[data-theme="light"] .form-check-input:checked {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+[data-theme="light"] .form-check-label {
+    color: #212529;
+}
+
+/* Estilos específicos para tema oscuro */
+[data-theme="dark"] .modal-content {
+    background: #18181b;
+    border: 1px solid #3f3f46;
+}
+
+[data-theme="dark"] .modal-header {
+    background: #18181b;
+    border-bottom: 1px solid #3f3f46;
+}
+
+[data-theme="dark"] .modal-footer {
+    background: #18181b;
+    border-top: 1px solid #3f3f46;
+}
+
+[data-theme="dark"] .modal-title {
+    color: #f4f4f5;
+}
+
+[data-theme="dark"] .form-label {
+    color: #d4d4d8;
+}
+
+[data-theme="dark"] .form-control {
+    background: #27272a;
+    border: 1px solid #52525b;
+    color: #f4f4f5;
+}
+
+[data-theme="dark"] .form-control:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #71717a;
+}
+
+[data-theme="dark"] .form-text {
+    color: #71717a;
+}
+
+[data-theme="dark"] .btn-close {
+    filter: none;
+}
+
+[data-theme="dark"] .btn-secondary {
+    background: #6b7280;
+    border: 1px solid #6b7280;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+    background: #4b5563;
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] .btn-primary {
+    background: #3b82f6;
+    border: 1px solid #3b82f6;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-primary:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+[data-theme="dark"] .btn-danger {
+    background: #ef4444;
+    border: 1px solid #ef4444;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .btn-danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+[data-theme="dark"] .alert-info {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+}
+
+[data-theme="dark"] .alert-warning {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .form-check-input {
+    background: #27272a;
+    border: 1px solid #52525b;
+}
+
+[data-theme="dark"] .form-check-input:checked {
+    background: #3b82f6;
+    border-color: #3b82f6;
+}
+
+[data-theme="dark"] .form-check-label {
+    color: #d4d4d8;
+}
+</style>
+
+<style>
+    /* Estilos para los botones de acciones del expediente */
+    .btn-guardar-expediente,
+    .btn-rechazar,
+    .btn-descargar-zip {
+        background-color: rgba(0, 51, 102, 0.9) !important;
+        border: none !important;
+        color: white !important;
+        padding: 0.35rem 0.75rem !important;
+        font-size: 0.875rem !important;
+        transition: all 0.2s ease !important;
+    }
+
+    .btn-guardar-expediente:hover,
+    .btn-rechazar:hover,
+    .btn-descargar-zip:hover {
+        background-color: rgba(0, 41, 82, 0.95) !important;
+        transform: translateY(-1px);
+    }
+</style>
+
+<script>
+// Script para manejar las URLs dinámicas de los modales
+document.addEventListener('DOMContentLoaded', function() {
+    const expedienteId = {{ expediente.pk }};
+    
+    // Actualizar URLs cuando se abren los modales
+    document.addEventListener('click', function(e) {
+        const button = e.target.closest('[data-bs-toggle="modal"]');
+        if (!button) return;
+        
+        const etapa = button.dataset.etapa;
+        const targetModal = button.dataset.bsTarget;
+        
+        if (!targetModal) return;
+        
+        // Manejar el modal de subir documentos
+        if (targetModal === '#subirDocumentoModal') {
+            const form = document.querySelector('#subirDocumentoForm');
+            if (!form) return;
+            
+            // Verificar si es un área (el botón tiene data-etapa que comienza con 'area-')
+            const esArea = etapa && etapa.startsWith('area-');
+            
+            // Si no es un área, configurar la URL normalmente
+            if (etapa && !esArea) {
+                // Actualizar la URL del formulario
+                form.action = `{% url 'expedientes:subir_documento' expediente.pk 'ETAPA_PLACEHOLDER' %}`.replace('ETAPA_PLACEHOLDER', etapa);
+                
+                // Actualizar el campo oculto de etapa
+                const etapaInput = form.querySelector('input[name="etapa"]');
+                if (etapaInput) etapaInput.value = etapa;
+                
+                // Mostrar/ocultar campo de número SIMA según la etapa
+                const campoNumeroSima = document.getElementById('campoNumeroSima');
+                const inputNumeroSima = document.getElementById('numero_sima');
+                
+                if (etapa === 'requisicion_sima') {
+                    if (campoNumeroSima) campoNumeroSima.style.display = 'block';
+                    if (inputNumeroSima) inputNumeroSima.required = true;
+                    
+                    // Cambiar el título del modal para indicar que es para SIMA
+                    const modalTitle = document.querySelector('#subirDocumentoModalLabel');
+                    if (modalTitle) {
+                        modalTitle.innerHTML = '<i class="bi bi-hash me-1"></i>Subir Documento - Requisición SIMA';
+                    }
+                } else {
+                    if (campoNumeroSima) campoNumeroSima.style.display = 'none';
+                    if (inputNumeroSima) {
+                        inputNumeroSima.required = false;
+                        inputNumeroSima.value = '';
+                    }
+                    
+                    // Restaurar título original del modal
+                    const modalTitle = document.querySelector('#subirDocumentoModalLabel');
+                    if (modalTitle) {
+                        modalTitle.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Subir Documento';
+                    }
+                }
+            } else if (esArea) {
+                // Si es un área, asegurarse de que el campo de etapa esté vacío
+                const etapaInput = form.querySelector('input[name="etapa"]');
+                if (etapaInput) etapaInput.value = '';
+                
+                // Ocultar campo de número SIMA para áreas
+                const campoNumeroSima = document.getElementById('campoNumeroSima');
+                const inputNumeroSima = document.getElementById('numero_sima');
+                if (campoNumeroSima) campoNumeroSima.style.display = 'none';
+                if (inputNumeroSima) {
+                    inputNumeroSima.required = false;
+                    inputNumeroSima.value = '';
+                }
+                
+                // Restaurar título original del modal
+                const modalTitle = document.querySelector('#subirDocumentoModalLabel');
+                if (modalTitle) {
+                    modalTitle.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Subir Documento';
+                }
+            }
+        } else if (targetModal === '#comentarioModal' && etapa) {
+            // Manejar el modal de comentarios
+            const form = document.querySelector('#comentarioModal form');
+            if (form) {
+                form.action = `{% url 'expedientes:agregar_comentario' expediente.pk 'ETAPA_PLACEHOLDER' %}`.replace('ETAPA_PLACEHOLDER', etapa);
+                const etapaInput = form.querySelector('input[name="etapa"]');
+                if (etapaInput) etapaInput.value = etapa;
+            }
+        } else if (targetModal === '#completarEtapaModal' && etapa) {
+            // Manejar el modal de completar etapa
+            const form = document.querySelector('#completarEtapaModal form');
+            if (form) {
+                form.action = `{% url 'expedientes:completar_etapa' expediente.pk 'ETAPA_PLACEHOLDER' %}`.replace('ETAPA_PLACEHOLDER', etapa);
+                const etapaInput = form.querySelector('input[name="etapa"]');
+                if (etapaInput) etapaInput.value = etapa;
+            }
+        }
+    });
+    
+    // Validación de archivos
+    const archivoInput = document.getElementById('archivo');
+    if (archivoInput) {
+        archivoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    alert('El archivo es demasiado grande. Máximo 10MB permitido.');
+                    e.target.value = '';
+                    return;
+                }
+                
+                const allowedTypes = [
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'image/jpeg',
+                    'image/png',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                ];
+                
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Tipo de archivo no permitido. Solo se aceptan PDF, DOC, DOCX, JPG, PNG, XLS, XLSX.');
+                    e.target.value = '';
+                    return;
+                }
+            }
+        });
+    }
+    
+    // Función para sincronizar el tema de los modales con el tema principal
+    function syncModalTheme() {
+        const htmlTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const modals = document.querySelectorAll('.modal-content');
+        
+        modals.forEach(modal => {
+            modal.setAttribute('data-theme', htmlTheme);
+        });
+    }
+    
+    // Observar cambios en el tema principal
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                syncModalTheme();
+            }
+        });
+    });
+    
+    // Iniciar observación del tema
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+    
+    // Sincronizar tema inicial
+    syncModalTheme();
+    
+
+});
+</script>
+

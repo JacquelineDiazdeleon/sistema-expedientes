@@ -1,0 +1,1131 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Chat con {{ otro_usuario.get_full_name|default:otro_usuario.username }} - Mensajería{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        display: flex;
+        height: calc(100vh - 80px);
+        background: var(--bg-gradient);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+        margin: 1rem;
+        position: relative;
+    }
+
+    .chat-sidebar {
+        width: 300px;
+        background: var(--bg-module);
+        border-right: 1px solid var(--border-dark);
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .chat-header-sidebar {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-dark);
+        background: var(--gradient-glass);
+    }
+
+    .chat-header-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .volver-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .volver-btn:hover {
+        background: var(--accent-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+        text-decoration: none;
+    }
+
+    .chat-info-sidebar {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-dark);
+    }
+
+    .usuario-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .usuario-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-white);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .usuario-details h4 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .usuario-details p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
+
+    .chat-actions-sidebar {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .chat-action-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 0.75rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .chat-action-btn:hover {
+        background: var(--accent-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+        text-decoration: none;
+        transform: translateX(4px);
+    }
+
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-module);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        position: relative;
+        min-height: 0; /* This is crucial for flex children to respect overflow */
+    }
+
+    .chat-header-main {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--border-dark);
+        background: var(--gradient-glass);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chat-header-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .chat-header-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--gradient-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-white);
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .chat-header-details h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .chat-header-details p {
+        margin: 0;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .chat-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--accent-success);
+        font-size: 0.8rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-success);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: var(--bg-primary);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-height: 0; /* This is crucial for flex children to respect overflow */
+    }
+
+    .mensaje {
+        display: flex;
+        max-width: 70%;
+        animation: fadeInUp 0.3s ease;
+        margin-bottom: 0.5rem;
+    }
+
+    .mensaje.propio {
+        align-self: flex-end;
+        flex-direction: row-reverse;
+    }
+
+    .mensaje-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: var(--gradient-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-white);
+        font-weight: 700;
+        font-size: 0.8rem;
+        margin: 0 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .mensaje-contenido {
+        background: var(--bg-module);
+        padding: 0.75rem 1rem;
+        border-radius: 18px;
+        position: relative;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid var(--border-light);
+        word-wrap: break-word;
+    }
+
+    .mensaje.propio .mensaje-contenido {
+        background: var(--gradient-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+    }
+
+    .mensaje-texto {
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .mensaje-archivo {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .mensaje-archivo:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.02);
+    }
+
+    .mensaje-archivo-nombre {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mensaje-archivo-info {
+        font-size: 0.8rem;
+        opacity: 0.8;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .mensaje-icono {
+        font-size: 2rem;
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    .mensaje-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 0.25rem;
+        justify-content: flex-end;
+    }
+
+    .mensaje.propio .mensaje-meta {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .mensaje-editado {
+        font-style: italic;
+        opacity: 0.8;
+    }
+
+    .mensaje-actions {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        background: var(--bg-module);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 0.25rem;
+        display: none;
+        gap: 0.25rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .mensaje:hover .mensaje-actions {
+        display: flex;
+    }
+
+    .mensaje-action-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 4px;
+        padding: 0.25rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+    }
+
+    .mensaje-action-btn:hover {
+        background: var(--accent-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+    }
+
+    .chat-input-area {
+        padding: 1rem;
+        border-top: 1px solid var(--border-dark);
+        background: var(--bg-module);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-shrink: 0; /* Prevent the input area from shrinking */
+    }
+
+    .input-container {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
+    }
+
+    .input-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .action-btn {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 0.5rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+        position: relative;
+    }
+
+    .action-btn:hover {
+        background: var(--accent-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+        transform: scale(1.1);
+    }
+
+    .mensaje-input {
+        flex: 1;
+        border: 1px solid var(--border-dark);
+        border-radius: 10px;
+        padding: 0.75rem;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        resize: none;
+        min-height: 45px;
+        max-height: 120px;
+        font-family: inherit;
+    }
+
+    .mensaje-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .enviar-btn {
+        background: var(--gradient-primary);
+        color: var(--text-white);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+
+    .enviar-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .enviar-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .icono-picker {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        background: var(--bg-module);
+        border: 1px solid var(--border-dark);
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+        max-width: 300px;
+        display: none;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .icono-picker.activo {
+        display: block;
+    }
+
+    .icono-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 0.5rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .icono-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1.2rem;
+    }
+
+    .icono-item:hover {
+        background: var(--accent-primary);
+        color: var(--text-white);
+        border-color: var(--accent-primary);
+        transform: scale(1.1);
+    }
+
+    .archivo-preview {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-dark);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-top: 0.75rem;
+        display: none;
+    }
+
+    .archivo-preview.activo {
+        display: block;
+    }
+
+    .archivo-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .archivo-icono {
+        font-size: 1.5rem;
+        color: var(--accent-primary);
+    }
+
+    .archivo-details {
+        flex: 1;
+    }
+
+    .archivo-nombre {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .archivo-tamaño {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .archivo-remove {
+        background: var(--accent-danger);
+        color: var(--text-white);
+        border: none;
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+
+    .archivo-remove:hover {
+        background: var(--accent-danger);
+        opacity: 0.8;
+    }
+
+    .typing-indicator {
+        display: none;
+        padding: 0.5rem 1rem;
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+
+    .typing-indicator.activo {
+        display: block;
+    }
+
+    .typing-dots {
+        display: inline-block;
+        animation: typing 1.4s infinite;
+    }
+
+    @keyframes typing {
+        0%, 20% { content: "."; }
+        40% { content: ".."; }
+        60%, 100% { content: "..."; }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .mensaje-sistema {
+        align-self: center;
+        background: var(--bg-secondary);
+        color: var(--text-muted);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-style: italic;
+        border: 1px solid var(--border-light);
+    }
+
+    @media (max-width: 768px) {
+        .chat-container {
+            flex-direction: column;
+            height: calc(100vh - 60px);
+        }
+
+        .chat-sidebar {
+            width: 100%;
+            height: 200px;
+        }
+
+        .chat-messages {
+            height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Sidebar del chat -->
+    <div class="chat-sidebar">
+        <div class="chat-header-sidebar">
+            <div class="chat-header-title">
+                <i class="bi bi-arrow-left"></i>
+                Chat
+            </div>
+            <a href="{% url 'mensajeria:mensajeria' %}" class="volver-btn">
+                <i class="bi bi-arrow-left"></i>
+                Volver
+            </a>
+        </div>
+
+        <div class="chat-info-sidebar">
+            <div class="usuario-info">
+                <div class="usuario-avatar">
+                    {{ otro_usuario.first_name|first|upper }}{{ otro_usuario.last_name|first|upper }}
+                </div>
+                <div class="usuario-details">
+                    <h4>{{ otro_usuario.get_full_name|default:otro_usuario.username }}</h4>
+                    <p>{{ otro_usuario.email }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-actions-sidebar">
+            <button class="chat-action-btn" onclick="mostrarIconoPicker()">
+                <i class="bi bi-emoji-smile"></i>
+                Enviar Icono
+            </button>
+            <button class="chat-action-btn" onclick="document.getElementById('archivoInput').click()">
+                <i class="bi bi-paperclip"></i>
+                Adjuntar Archivo
+            </button>
+            <button class="chat-action-btn" onclick="limpiarChat()">
+                <i class="bi bi-trash"></i>
+                Limpiar Chat
+            </button>
+        </div>
+    </div>
+
+    <!-- Área principal del chat -->
+    <div class="chat-main">
+        <div class="chat-header-main">
+            <div class="chat-header-info">
+                <div class="chat-header-avatar">
+                    {{ otro_usuario.first_name|first|upper }}{{ otro_usuario.last_name|first|upper }}
+                </div>
+                <div class="chat-header-details">
+                    <h3>{{ otro_usuario.get_full_name|default:otro_usuario.username }}</h3>
+                    <p>Chat individual</p>
+                </div>
+            </div>
+            <div class="chat-status">
+                <div class="status-dot"></div>
+                <span>En línea</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            {% for mensaje in mensajes %}
+            <div class="mensaje {% if mensaje.remitente == usuario_actual %}propio{% endif %}" data-mensaje-id="{{ mensaje.id }}">
+                <div class="mensaje-avatar">
+                    {{ mensaje.remitente.first_name|first|upper }}{{ mensaje.remitente.last_name|first|upper }}
+                </div>
+                <div class="mensaje-contenido">
+                    {% if mensaje.tipo == 'texto' %}
+                        <div class="mensaje-texto">{{ mensaje.contenido }}</div>
+                    {% elif mensaje.tipo == 'archivo' %}
+                        <div class="mensaje-texto">{{ mensaje.contenido }}</div>
+                        <div class="mensaje-archivo" onclick="descargarArchivo('{{ mensaje.archivo_adjunto.ruta }}', '{{ mensaje.archivo_adjunto.nombre_original }}')">
+                            <div class="mensaje-archivo-nombre">
+                                <i class="bi bi-file-earmark"></i>
+                                {{ mensaje.archivo_adjunto.nombre_original }}
+                            </div>
+                            <div class="mensaje-archivo-info">
+                                <i class="bi bi-download"></i>
+                                {{ mensaje.archivo_adjunto.get_tamaño_formateado }}
+                            </div>
+                        </div>
+                    {% elif mensaje.tipo == 'icono' %}
+                        <div class="mensaje-icono">
+                            <i class="bi {{ mensaje.icono }}"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mensaje-meta">
+                        <span>{{ mensaje.fecha_envio|date:"H:i" }}</span>
+                        {% if mensaje.editado %}
+                            <span class="mensaje-editado">(editado)</span>
+                        {% endif %}
+                    </div>
+
+                    {% if mensaje.remitente == usuario_actual %}
+                    <div class="mensaje-actions">
+                        <button class="mensaje-action-btn" onclick="editarMensaje({{ mensaje.id }})" title="Editar">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="mensaje-action-btn" onclick="eliminarMensaje({{ mensaje.id }})" title="Eliminar">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="mensaje-sistema">
+                <i class="bi bi-info-circle"></i>
+                Inicia la conversación enviando un mensaje
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span>{{ otro_usuario.first_name|default:otro_usuario.username }} está escribiendo</span>
+            <span class="typing-dots">...</span>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-actions">
+                <button class="action-btn" onclick="mostrarIconoPicker()" title="Enviar icono">
+                    <i class="bi bi-emoji-smile"></i>
+                </button>
+                <button class="action-btn" onclick="document.getElementById('archivoInput').click()" title="Adjuntar archivo">
+                    <i class="bi bi-paperclip"></i>
+                </button>
+            </div>
+
+            <div class="input-container">
+                <textarea 
+                    class="mensaje-input" 
+                    id="mensajeInput" 
+                    placeholder="Escribe tu mensaje aquí..."
+                    rows="1"
+                ></textarea>
+                <button class="enviar-btn" onclick="enviarMensaje()" id="enviarBtn">
+                    <i class="bi bi-send"></i>
+                    Enviar
+                </button>
+            </div>
+
+            <div class="archivo-preview" id="archivoPreview">
+                <div class="archivo-info">
+                    <div class="archivo-icono">
+                        <i class="bi bi-file-earmark"></i>
+                    </div>
+                    <div class="archivo-details">
+                        <div class="archivo-nombre" id="archivoNombre"></div>
+                        <div class="archivo-tamaño" id="archivoTamaño"></div>
+                    </div>
+                    <button class="archivo-remove" onclick="removerArchivo()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="icono-picker" id="iconoPicker">
+                <div class="icono-grid">
+                    <div class="icono-item" onclick="seleccionarIcono('bi-heart')">❤️</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-thumbs-up')">👍</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-thumbs-down')">👎</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-star')">⭐</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-check-circle')">✅</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-x-circle')">❌</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-exclamation-triangle')">⚠️</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-info-circle')">ℹ️</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-question-circle')">❓</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-lightbulb')">💡</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-clock')">🕐</div>
+                    <div class="icono-item" onclick="seleccionarIcono('bi-calendar')">📅</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Input oculto para archivos -->
+<input type="file" id="archivoInput" style="display: none;" onchange="seleccionarArchivo(this)">
+
+<script>
+let chatActual = {{ chat.id }};
+let archivoSeleccionado = null;
+let iconoSeleccionado = null;
+let timeoutEscribiendo = null;
+
+// Funciones para el chat
+function enviarMensaje() {
+    const input = document.getElementById('mensajeInput');
+    const contenido = input.value.trim();
+    
+    if (!contenido && !archivoSeleccionado && !iconoSeleccionado) {
+        return;
+    }
+
+    const enviarBtn = document.getElementById('enviarBtn');
+    enviarBtn.disabled = true;
+    enviarBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+
+    if (archivoSeleccionado) {
+        enviarArchivo();
+    } else if (iconoSeleccionado) {
+        enviarIcono();
+    } else {
+        enviarTexto();
+    }
+}
+
+function enviarTexto() {
+    const input = document.getElementById('mensajeInput');
+    const contenido = input.value.trim();
+    
+    fetch('/mensajeria/api/enviar-mensaje/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            chat_id: chatActual,
+            contenido: contenido,
+            tipo: 'texto'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            input.value = '';
+            agregarMensaje({
+                contenido: contenido,
+                tipo: 'texto',
+                remitente: '{{ usuario_actual.get_full_name|default:usuario_actual.username }}',
+                fecha_envio: data.fecha_envio,
+                id: data.mensaje_id
+            });
+        }
+    })
+    .finally(() => {
+        const enviarBtn = document.getElementById('enviarBtn');
+        enviarBtn.disabled = false;
+        enviarBtn.innerHTML = '<i class="bi bi-send"></i> Enviar';
+    });
+}
+
+function enviarIcono() {
+    if (!iconoSeleccionado) return;
+    
+    fetch('/mensajeria/api/enviar-mensaje/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            chat_id: chatActual,
+            contenido: 'Icono enviado',
+            tipo: 'icono',
+            icono: iconoSeleccionado
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            agregarMensaje({
+                contenido: 'Icono enviado',
+                tipo: 'icono',
+                icono: iconoSeleccionado,
+                remitente: '{{ usuario_actual.get_full_name|default:usuario_actual.username }}',
+                fecha_envio: data.fecha_envio,
+                id: data.mensaje_id
+            });
+            iconoSeleccionado = null;
+        }
+    });
+}
+
+function enviarArchivo() {
+    if (!archivoSeleccionado) return;
+    
+    const formData = new FormData();
+    formData.append('archivo', archivoSeleccionado);
+    formData.append('chat_id', chatActual);
+    formData.append('contenido', 'Archivo enviado');
+    
+    fetch('/mensajeria/api/subir-archivo/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            agregarMensaje({
+                contenido: 'Archivo enviado',
+                tipo: 'archivo',
+                archivo: data.archivo,
+                remitente: '{{ usuario_actual.get_full_name|default:usuario_actual.username }}',
+                fecha_envio: data.fecha_envio,
+                id: data.mensaje_id
+            });
+            removerArchivo();
+        }
+    });
+}
+
+function agregarMensaje(mensaje) {
+    const chatMessages = document.getElementById('chatMessages');
+    const mensajeDiv = document.createElement('div');
+    mensajeDiv.className = 'mensaje propio';
+    mensajeDiv.dataset.mensajeId = mensaje.id;
+    
+    let contenidoHTML = '';
+    if (mensaje.tipo === 'texto') {
+        contenidoHTML = `<div class="mensaje-texto">${mensaje.contenido}</div>`;
+    } else if (mensaje.tipo === 'icono') {
+        contenidoHTML = `<div class="mensaje-icono"><i class="bi ${mensaje.icono}"></i></div>`;
+    } else if (mensaje.tipo === 'archivo') {
+        contenidoHTML = `
+            <div class="mensaje-texto">${mensaje.contenido}</div>
+            <div class="mensaje-archivo" onclick="descargarArchivo('${mensaje.archivo.url}', '${mensaje.archivo.nombre}')">
+                <div class="mensaje-archivo-nombre">
+                    <i class="bi bi-file-earmark"></i>
+                    ${mensaje.archivo.nombre}
+                </div>
+                <div class="mensaje-archivo-info">
+                    <i class="bi bi-download"></i>
+                    ${mensaje.archivo.tamaño}
+                </div>
+            </div>
+        `;
+    }
+    
+    mensajeDiv.innerHTML = `
+        <div class="mensaje-avatar">
+            {{ usuario_actual.first_name|first|upper }}{{ usuario_actual.last_name|first|upper }}
+        </div>
+        <div class="mensaje-contenido">
+            ${contenidoHTML}
+            <div class="mensaje-meta">
+                <span>${mensaje.fecha_envio}</span>
+            </div>
+            <div class="mensaje-actions">
+                <button class="mensaje-action-btn" onclick="editarMensaje(${mensaje.id})" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button class="mensaje-action-btn" onclick="eliminarMensaje(${mensaje.id})" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    chatMessages.appendChild(mensajeDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Funciones para archivos
+function seleccionarArchivo(input) {
+    const archivo = input.files[0];
+    if (archivo) {
+        archivoSeleccionado = archivo;
+        mostrarPreviewArchivo(archivo);
+    }
+}
+
+function mostrarPreviewArchivo(archivo) {
+    document.getElementById('archivoNombre').textContent = archivo.name;
+    document.getElementById('archivoTamaño').textContent = formatFileSize(archivo.size);
+    document.getElementById('archivoPreview').classList.add('activo');
+}
+
+function removerArchivo() {
+    archivoSeleccionado = null;
+    document.getElementById('archivoInput').value = '';
+    document.getElementById('archivoPreview').classList.remove('activo');
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function descargarArchivo(url, nombre) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = nombre;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Funciones para iconos
+function mostrarIconoPicker() {
+    const picker = document.getElementById('iconoPicker');
+    picker.classList.toggle('activo');
+}
+
+function seleccionarIcono(icono) {
+    iconoSeleccionado = icono;
+    mostrarIconoPicker();
+    enviarMensaje();
+}
+
+// Funciones para mensajes
+function editarMensaje(mensajeId) {
+    const mensajeDiv = document.querySelector(`[data-mensaje-id="${mensajeId}"]`);
+    const contenidoDiv = mensajeDiv.querySelector('.mensaje-texto');
+    const contenidoActual = contenidoDiv.textContent;
+    
+    const nuevoContenido = prompt('Editar mensaje:', contenidoActual);
+    if (nuevoContenido && nuevoContenido.trim() !== contenidoActual) {
+        fetch(`/mensajeria/api/editar-mensaje/${mensajeId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: `contenido=${encodeURIComponent(nuevoContenido.trim())}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                contenidoDiv.textContent = nuevoContenido.trim();
+                const metaDiv = mensajeDiv.querySelector('.mensaje-meta');
+                metaDiv.innerHTML = `<span>${metaDiv.querySelector('span').textContent}</span><span class="mensaje-editado">(editado)</span>`;
+            }
+        });
+    }
+}
+
+function eliminarMensaje(mensajeId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este mensaje?')) {
+        fetch(`/mensajeria/api/eliminar-mensaje/${mensajeId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const mensajeDiv = document.querySelector(`[data-mensaje-id="${mensajeId}"]`);
+                mensajeDiv.remove();
+            }
+        });
+    }
+}
+
+// Funciones auxiliares
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function limpiarChat() {
+    if (confirm('¿Estás seguro de que quieres limpiar todo el chat? Esta acción no se puede deshacer.')) {
+        document.getElementById('chatMessages').innerHTML = `
+            <div class="mensaje-sistema">
+                <i class="bi bi-info-circle"></i>
+                Chat limpiado
+            </div>
+        `;
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const mensajeInput = document.getElementById('mensajeInput');
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Auto-resize del textarea
+    mensajeInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Enviar con Enter
+    mensajeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            enviarMensaje();
+        }
+    });
+    
+    // Indicador de escritura
+    mensajeInput.addEventListener('input', function() {
+        if (timeoutEscribiendo) {
+            clearTimeout(timeoutEscribiendo);
+        }
+        
+        document.getElementById('typingIndicator').classList.add('activo');
+        
+        timeoutEscribiendo = setTimeout(() => {
+            document.getElementById('typingIndicator').classList.remove('activo');
+        }, 1000);
+    });
+    
+    // Scroll al final del chat
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Cerrar picker de iconos al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        const picker = document.getElementById('iconoPicker');
+        if (!picker.contains(e.target) && !e.target.closest('.action-btn')) {
+            picker.classList.remove('activo');
+        }
+    });
+});
+</script>
+{% endblock %}

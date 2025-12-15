@@ -1,0 +1,128 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Expedientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Dashboard de Expedientes</h1>
+    
+    <!-- Estadísticas -->
+    <div class="row">
+        <!-- Total de Expedientes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total de Expedientes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_expedientes }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expedientes Activos -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Expedientes Activos (último año)</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ expedientes_activos }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-folder-open fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expedientes Pendientes -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Expedientes Pendientes</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ expedientes_pendientes }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Últimos Expedientes -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Últimos Expedientes</h6>
+            <a href="{% url 'expedientes:seleccionar_tipo' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Expediente
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Título</th>
+                            <th>Estado</th>
+                            <th>Fecha de Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expediente in ultimos_expedientes %}
+                        <tr>
+                            <td>{{ expediente.numero_expediente|default:expediente.id }}</td>
+                            <td>{{ expediente.titulo|truncatechars:50 }}</td>
+                            <td>
+                                <span class="badge {% if expediente.estado_actual == 'pendiente' %}bg-warning{% else %}bg-success{% endif %}">
+                                    {{ expediente.estado_actual|title }}
+                                </span>
+                            </td>
+                            <td>{{ expediente.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <a href="{% url 'expedientes:detalle' expediente.id %}" class="btn btn-sm btn-info" title="Ver">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'expedientes:editar' expediente.id %}" class="btn btn-sm btn-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No hay expedientes registrados</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Page level plugins -->
+<script src="{% static 'vendor/chart.js/Chart.min.js' %}"></script>
+
+<!-- Page level custom scripts -->
+<script>
+// Aquí puedes agregar scripts para gráficos si es necesario
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% load static %}
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+        <!-- Brand/logo -->
+        <a class="navbar-brand d-flex align-items-center" href="{% url 'digitalizacion:inicio' %}">
+            <img src="{% static 'img/logo.svg' %}" alt="Logo Secretaría de Servicios Públicos" style="height: 40px; margin-right: 10px;" onerror="this.style.display='none';">
+            <div class="d-none d-md-block">
+                <div style="font-size: 0.9rem; line-height: 1.1;">Secretaría de Servicios Públicos</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Sistema de Digitalización</div>
+            </div>
+        </a>
+        
+        <!-- Mobile menu button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" 
+                aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navbar content -->
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <!-- Search Form -->
+            <form class="d-flex me-auto ms-0 ms-lg-3 my-2 my-lg-0" action="{% url 'digitalizacion:buscar_documentos' %}" method="get">
+                <div class="input-group">
+                    <input class="form-control form-control-sm" type="search" name="q" placeholder="Buscar documentos..." 
+                           aria-label="Buscar" value="{{ request.GET.q|default:'' }}">
+                    <button class="btn btn-outline-light" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Main navigation -->
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'inicio' %}active{% endif %}" 
+                       href="{% url 'digitalizacion:inicio' %}">
+                        <i class="bi bi-house-door-fill d-lg-none me-2"></i>
+                        Inicio
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'expedientes' in request.resolver_match.namespace %}active{% endif %}" 
+                       href="{% url 'expedientes:lista_expedientes' %}">
+                        <i class="bi bi-folder2-open d-lg-none me-2"></i>
+                        Expedientes
+                    </a>
+                </li>
+                
+                <li class="nav-item">
+                    <a class="nav-link {% if 'documentos' in request.resolver_match.url_name %}active{% endif %}" 
+                       href="{% url 'digitalizacion:buscar_documentos' %}">
+                        <i class="bi bi-search d-lg-none me-2"></i>
+                        Buscar
+                    </a>
+                </li>
+                
+                {% if user.is_staff %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-gear-fill d-lg-none me-2"></i>
+                        Administración
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'digitalizacion:panel_administracion' %}">
+                                <i class="bi bi-speedometer2 me-2"></i>Panel de Control
+                            </a>
+                        </li>
+                        {% if user.is_superuser %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'digitalizacion:indexar_documentos' %}">
+                                <i class="bi bi-database-gear me-2"></i>Indexar Documentos
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        {% endif %}
+                        <li>
+                            <a class="dropdown-item" href="{% url 'digitalizacion:gestion_usuarios' %}">
+                                <i class="bi bi-people-fill me-2"></i>Usuarios
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+            </ul>
+            
+            <!-- User menu -->
+            <ul class="navbar-nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" 
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="me-2 d-none d-lg-flex flex-column text-end">
+                            <span class="small">{% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}</span>
+                            <span class="x-small text-white-50">{{ user.get_role_display|default:user.groups.first|default:"Usuario" }}</span>
+                        </div>
+                        <div class="avatar-sm">
+                            {% if user.avatar %}
+                                <img src="{{ user.avatar.url }}" class="rounded-circle" alt="{{ user.username }}" width="32" height="32">
+                            {% else %}
+                                <div class="bg-light text-dark rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 32px; height: 32px;">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'digitalizacion:perfil_usuario' %}">
+                                <i class="bi bi-person-fill me-2"></i>Mi Perfil
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'digitalizacion:editar_perfil' %}">
+                                <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'digitalizacion:logout' %}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

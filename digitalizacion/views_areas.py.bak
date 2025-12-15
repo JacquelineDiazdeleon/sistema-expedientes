@@ -1,0 +1,572 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction, models
+from django.db.models import Max, Q
+from django.core.paginator import Paginator
+import json
+
+from .models import (
+    AreaTipoExpediente, CampoAreaPersonalizado, Expediente,
+    ValorAreaExpediente, ValorCampoPersonalizadoArea
+)
+
+
+# ============================================
+# VISTAS PARA GESTIÓN DE ÁREAS
+# ============================================
+
+@login_required
+def gestionar_areas_tipos(request, tipo=None):
+    """Vista principal para gestionar áreas por tipo y subtipo de expediente"""
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        messages.error(request, 'No tienes permisos para administrar áreas del sistema.')
+        return redirect('expedientes:dashboard')
+    
+    # Obtener tipo seleccionado (ninguno por defecto)
+    tipo_selected = tipo or request.GET.get('tipo')
+    
+    # Inicializar variables
+    subtipos_disponibles = []
+    subtipo_selected = None
+    areas = []
+    
+    # Solo obtener subtipos si hay un tipo seleccionado y es 'licitacion'
+    if tipo_selected:
+        # Solo obtener subtipos para licitación
+        if tipo_selected == 'licitacion':
+            subtipos_disponibles = [
+                ('licitacion_recurso_propio', 'Recurso Propio'),
+                ('licitacion_fondo_federal', 'Fondo Federal')
+            ]
+            
+            # Manejar la selección de subtipo
+            subtipo_selected = request.GET.get('subtipo', 'licitacion_recurso_propio')
+        else:
+            # Para otros tipos, no hay subtipos
+            subtipos_disponibles = []
+            subtipo_selected = None
+    
+    # Calcular contadores para cada subtipo
+    subtipos_con_contadores = []
+    if tipo_selected == 'licitacion':
+        for subtipo_key, subtipo_display in subtipos_disponibles:
+            count = AreaTipoExpediente.objects.filter(
+                tipo_expediente=tipo_selected,
+                subtipo_expediente=subtipo_key
+            ).count()
+            subtipos_con_contadores.append((subtipo_key, subtipo_display, count))
+    
+    # Obtener áreas cuando hay un tipo seleccionado
+    if tipo_selected:
+        # Para licitación, buscar áreas específicas del subtipo seleccionado
+        if tipo_selected == 'licitacion' and subtipo_selected:
+            areas_especificas = AreaTipoExpediente.objects.filter(
+                tipo_expediente=tipo_selected,
+                subtipo_expediente=subtipo_selected
+            ).order_by('orden', 'titulo')
+        else:
+            areas_especificas = AreaTipoExpediente.objects.none()
+        
+        # Para todos los tipos, incluyendo licitación, buscar áreas genéricas (sin subtipo)
+        areas_genericas = AreaTipoExpediente.objects.filter(
+            tipo_expediente=tipo_selected,
+            subtipo_expediente__isnull=True
+        ).order_by('orden', 'titulo')
+        
+        # Combinar ambas listas, priorizando las específicas
+        areas = list(areas_especificas) + list(areas_genericas)
+        
+        # Ordenar por orden
+        areas.sort(key=lambda x: x.orden)
+    
+    # Información de tipos para el template
+    tipos_info = {
+        'giro': 'Por Giro',
+        'fuente': 'Por Fuente de Financiamiento',
+        'tipo_adquisicion': 'Por Tipo de Adquisición',
+        'monto': 'Por Monto',
+    }
+    
+    context = {
+        'areas': areas,
+        'tipo_selected': tipo_selected,
+        'subtipo_selected': subtipo_selected,
+        'tipos_choices': Expediente.TIPO_CHOICES,
+        'tipos_info': tipos_info,
+        'subtipos_disponibles': subtipos_disponibles,
+        'subtipos_con_contadores': subtipos_con_contadores,
+    }
+    
+    return render(request, 'digitalizacion/admin/areas/gestionar_areas.html', context)
+
+
+@login_required
+def crear_area_tipo(request, tipo):
+    """Vista para crear una nueva área para un tipo y subtipo de expediente"""
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        messages.error(request, 'No tienes permisos para crear áreas.')
+        return redirect('gestionar_areas_tipos', tipo=tipo)
+    
+    # Obtener subtipo desde parámetros
+    subtipo = request.GET.get('subtipo')
+    
+    # Si es un tipo que no requiere subtipo, establecerlo como None
+    if tipo != 'licitacion':
+        subtipo = None
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Obtener el subtipo del formulario si no está en la URL
+                if not subtipo and tipo == 'licitacion':
+                    subtipo = request.POST.get('subtipo')
+                
+                # Validar que el nombre no esté vacío
+                nombre = request.POST.get('nombre', '').strip()
+                if not nombre:
+                    messages.error(request, 'El nombre del área es obligatorio.')
+                    return redirect('crear_area_tipo', tipo=tipo)
+                
+                # Verificar si ya existe un área con el mismo nombre para este tipo y subtipo
+                if AreaTipoExpediente.objects.filter(
+                    tipo_expediente=tipo,
+                    subtipo_expediente=subtipo,
+                    nombre=nombre.lower().replace(' ', '_')
+                ).exists():
+                    messages.error(request, 'Ya existe un área con este nombre para el tipo seleccionado.')
+                    return redirect('crear_area_tipo', tipo=tipo)
+                
+                # Obtener siguiente orden
+                filtro = {'tipo_expediente': tipo}
+                if subtipo:
+                    filtro['subtipo_expediente'] = subtipo
+                else:
+                    filtro['subtipo_expediente__isnull'] = True
+                    
+                ultimo_orden = AreaTipoExpediente.objects.filter(**filtro).aggregate(
+                    max_orden=Max('orden')
+                )['max_orden'] or 0
+                
+                # Crear el área
+                area = AreaTipoExpediente.objects.create(
+                    nombre=nombre.lower().replace(' ', '_'),
+                    titulo=request.POST.get('titulo', nombre),
+                    descripcion=request.POST.get('descripcion', ''),
+                    tipo_expediente=tipo,
+                    subtipo_expediente=subtipo,
+                    tipo_area=request.POST.get('tipo_area', 'mixto'),
+                    orden=ultimo_orden + 1,
+                    obligatoria=request.POST.get('obligatoria') == 'on',
+                    tipos_archivo_permitidos=request.POST.get('tipos_archivo_permitidos', 'pdf,docx,xlsx'),
+                    tamaño_max_archivo=int(request.POST.get('tamaño_max_archivo', 10)),
+                    creada_por=request.user
+                )
+                
+                messages.success(request, f'Área "{area.titulo}" creada exitosamente.')
+                
+                # Redirigir a la lista de áreas del mismo tipo/subtipo
+                redirect_url = f'/areas/?tipo={tipo}'
+                if subtipo:
+                    redirect_url += f'&subtipo={subtipo}'
+                return redirect(redirect_url)
+                
+        except Exception as e:
+            messages.error(request, f'Error al crear el área: {str(e)}')
+    
+    # GET request - mostrar formulario
+    try:
+        tipo_display = dict(Expediente.TIPO_CHOICES)[tipo]
+    except KeyError:
+        tipo_display = tipo.replace('_', ' ').title()
+        
+    subtipos_disponibles = []
+    if tipo == 'licitacion':
+        subtipos_disponibles = [
+            ('licitacion_recurso_propio', 'Recurso Propio'),
+            ('licitacion_fondo_federal', 'Fondo Federal')
+        ]
+    
+    # Si no se proporcionó subtipo y hay subtipos disponibles, usar el primero
+    if not subtipo and subtipos_disponibles:
+        subtipo = subtipos_disponibles[0][0]
+    
+    subtipo_display = dict(subtipos_disponibles).get(subtipo, subtipo.replace('_', ' ').title() if subtipo else "")
+    
+    context = {
+        'tipo': tipo,
+        'subtipo': subtipo,
+        'tipo_info': tipo_display,
+        'subtipo_info': subtipo_display,
+        'tipo_area_choices': AreaTipoExpediente.TIPO_AREA_CHOICES,
+        'subtipos_disponibles': subtipos_disponibles,
+    }
+    
+    return render(request, 'digitalizacion/admin/areas/crear_area.html', context)
+
+
+@login_required
+def editar_area(request, area_id):
+    """Vista para editar un área existente"""
+    area = get_object_or_404(AreaTipoExpediente, pk=area_id)
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        if area.creada_por != request.user:
+            messages.error(request, 'No tienes permisos para editar esta área.')
+            return redirect('areas:gestionar_tipo', tipo=area.tipo_expediente)
+    
+    if request.method == 'POST':
+        try:
+            # Actualizar campos
+            area.titulo = request.POST.get('titulo')
+            area.descripcion = request.POST.get('descripcion', '')
+            area.tipo_area = request.POST.get('tipo_area', 'mixto')
+            area.obligatoria = request.POST.get('obligatoria') == 'on'
+            area.tipos_archivo_permitidos = request.POST.get('tipos_archivo_permitidos', 'pdf,docx,xlsx')
+            area.tamaño_max_archivo = int(request.POST.get('tamaño_max_archivo', 10))
+            
+            # Solo permitir cambiar nombre si no es área por defecto
+            if not area.es_default:
+                nuevo_nombre = request.POST.get('nombre')
+                if nuevo_nombre:  # Verificar que el campo no sea None
+                    nuevo_nombre = nuevo_nombre.lower().replace(' ', '_')
+                    if nuevo_nombre != area.nombre:
+                        # Verificar que no exista otro con ese nombre
+                        if AreaTipoExpediente.objects.filter(
+                            tipo_expediente=area.tipo_expediente,
+                            nombre=nuevo_nombre
+                        ).exclude(pk=area.pk).exists():
+                            messages.error(request, 'Ya existe un área con ese nombre.')
+                            return render(request, 'digitalizacion/admin/areas/editar_area.html', {'area': area})
+                        area.nombre = nuevo_nombre
+            
+            area.save()
+            
+            messages.success(request, f'Área "{area.titulo}" actualizada exitosamente.')
+            return redirect('areas:gestionar_tipo', tipo=area.tipo_expediente)
+            
+        except Exception as e:
+            messages.error(request, f'Error al actualizar el área: {str(e)}')
+    
+    context = {
+        'area': area,
+        'tipo_area_choices': AreaTipoExpediente.TIPO_AREA_CHOICES,
+    }
+    
+    return render(request, 'digitalizacion/admin/areas/editar_area.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def eliminar_area(request, area_id):
+    """Vista para eliminar un área"""
+    area = get_object_or_404(AreaTipoExpediente, pk=area_id)
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        if area.creada_por != request.user:
+            messages.error(request, 'No tienes permisos para eliminar esta área.')
+            return redirect('areas:gestionar_tipo', tipo=area.tipo_expediente)
+    
+    # Obtener información sobre expedientes asociados
+    valores_asociados = ValorAreaExpediente.objects.filter(area=area)
+    expedientes_con_valores = valores_asociados.count()
+    
+    try:
+        titulo = area.titulo
+        tipo = area.tipo_expediente
+        es_default = area.es_default
+        
+        # Eliminar primero todos los valores asociados de expedientes
+        if expedientes_con_valores > 0:
+            valores_asociados.delete()
+        
+        # Eliminar el área
+        area.delete()
+        
+        # Mensaje de éxito diferente según el tipo
+        if es_default:
+            messages.success(request, f'Área DEFAULT "{titulo}" eliminada exitosamente. Se eliminó de {expedientes_con_valores} expedientes.')
+        else:
+            if expedientes_con_valores > 0:
+                messages.success(request, f'Área "{titulo}" eliminada exitosamente. Se eliminó de {expedientes_con_valores} expedientes.')
+            else:
+                messages.success(request, f'Área "{titulo}" eliminada exitosamente.')
+                
+    except Exception as e:
+        messages.error(request, f'Error al eliminar el área: {str(e)}')
+    
+    return redirect('areas:gestionar_tipo', tipo=tipo)
+
+
+@login_required
+@require_http_methods(["POST"])
+def reordenar_areas(request, tipo):
+    """Vista AJAX para reordenar áreas"""
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        return JsonResponse({'success': False, 'error': 'Sin permisos'})
+    
+    try:
+        data = json.loads(request.body)
+        area_ids = data.get('area_ids', [])
+        
+        with transaction.atomic():
+            for index, area_id in enumerate(area_ids):
+                AreaTipoExpediente.objects.filter(
+                    pk=area_id,
+                    tipo_expediente=tipo
+                ).update(orden=index + 1)
+        
+        return JsonResponse({'success': True})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+@require_http_methods(["POST"])
+def duplicar_area(request, area_id):
+    """Vista para duplicar un área a otro tipo de expediente"""
+    area_origen = get_object_or_404(AreaTipoExpediente, pk=area_id)
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        messages.error(request, 'No tienes permisos para duplicar áreas.')
+        return redirect('areas:gestionar_tipo', tipo=area_origen.tipo_expediente)
+    
+    tipo_destino = request.POST.get('tipo_destino')
+    if not tipo_destino or tipo_destino == area_origen.tipo_expediente:
+        messages.error(request, 'Debes seleccionar un tipo de expediente diferente.')
+        return redirect('areas:gestionar_tipo', tipo=area_origen.tipo_expediente)
+    
+    try:
+        with transaction.atomic():
+            # Verificar si ya existe
+            if AreaTipoExpediente.objects.filter(
+                tipo_expediente=tipo_destino,
+                nombre=area_origen.nombre
+            ).exists():
+                messages.error(request, f'Ya existe un área con el nombre "{area_origen.nombre}" en el tipo destino.')
+                return redirect('areas:gestionar_tipo', tipo=area_origen.tipo_expediente)
+            
+            # Obtener siguiente orden en tipo destino
+            ultimo_orden = AreaTipoExpediente.objects.filter(
+                tipo_expediente=tipo_destino
+            ).aggregate(max_orden=Max('orden'))['max_orden'] or 0
+            
+            # Duplicar el área
+            area_nueva = AreaTipoExpediente.objects.create(
+                nombre=area_origen.nombre,
+                titulo=area_origen.titulo,
+                descripcion=area_origen.descripcion,
+                tipo_expediente=tipo_destino,
+                tipo_area=area_origen.tipo_area,
+                orden=ultimo_orden + 1,
+                obligatoria=area_origen.obligatoria,
+                tipos_archivo_permitidos=area_origen.tipos_archivo_permitidos,
+                tamaño_max_archivo=area_origen.tamaño_max_archivo,
+                activa=True,
+                es_default=False,  # Las duplicadas nunca son por defecto
+                creada_por=request.user
+            )
+            
+            # Duplicar campos personalizados
+            for campo in area_origen.campos.filter(activo=True):
+                CampoAreaPersonalizado.objects.create(
+                    area=area_nueva,
+                    nombre=campo.nombre,
+                    etiqueta=campo.etiqueta,
+                    tipo_campo=campo.tipo_campo,
+                    requerido=campo.requerido,
+                    orden=campo.orden,
+                    placeholder=campo.placeholder,
+                    descripcion=campo.descripcion,
+                    opciones=campo.opciones,
+                    valor_minimo=campo.valor_minimo,
+                    valor_maximo=campo.valor_maximo,
+                    longitud_minima=campo.longitud_minima,
+                    longitud_maxima=campo.longitud_maxima,
+                    patron_validacion=campo.patron_validacion,
+                    activo=True
+                )
+            
+            tipo_destino_nombre = dict(Expediente.TIPO_CHOICES)[tipo_destino]
+            messages.success(request, f'Área duplicada exitosamente a "{tipo_destino_nombre}".')
+            
+    except Exception as e:
+        messages.error(request, f'Error al duplicar el área: {str(e)}')
+    
+    return redirect('areas:gestionar_tipo', tipo=area_origen.tipo_expediente)
+
+
+# ============================================
+# VISTAS PARA GESTIÓN DE CAMPOS PERSONALIZADOS
+# ============================================
+
+@login_required
+def gestionar_campos_area(request, area_id):
+    """Vista para gestionar campos personalizados de un área"""
+    area = get_object_or_404(AreaTipoExpediente, pk=area_id)
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        if area.creada_por != request.user:
+            messages.error(request, 'No tienes permisos para gestionar esta área.')
+            return redirect('areas:gestionar_tipo', tipo=area.tipo_expediente)
+    
+    # Obtener campos
+    campos = area.campos.filter(activo=True).order_by('orden', 'etiqueta')
+    
+    context = {
+        'area': area,
+        'campos': campos,
+    }
+    
+    return render(request, 'digitalizacion/admin/areas/gestionar_campos.html', context)
+
+
+@login_required
+def crear_campo_area(request, area_id):
+    """Vista para crear un campo personalizado en un área"""
+    area = get_object_or_404(AreaTipoExpediente, pk=area_id)
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        if area.creada_por != request.user:
+            messages.error(request, 'No tienes permisos para crear campos en esta área.')
+            return redirect('areas:campos', area_id=area.pk)
+    
+    if request.method == 'POST':
+        try:
+            # Obtener siguiente orden
+            ultimo_orden = area.campos.aggregate(max_orden=Max('orden'))['max_orden'] or 0
+            
+            # Procesar opciones para select/radio/checkbox
+            opciones = None
+            if request.POST.get('tipo_campo') in ['select', 'radio', 'checkbox']:
+                opciones_texto = request.POST.get('opciones_texto', '')
+                if opciones_texto:
+                    opciones = [opcion.strip() for opcion in opciones_texto.split('\n') if opcion.strip()]
+            
+            # Crear el campo
+            campo = CampoAreaPersonalizado.objects.create(
+                area=area,
+                nombre=request.POST.get('nombre').lower().replace(' ', '_'),
+                etiqueta=request.POST.get('etiqueta'),
+                tipo_campo=request.POST.get('tipo_campo'),
+                requerido=request.POST.get('requerido') == 'on',
+                orden=ultimo_orden + 1,
+                placeholder=request.POST.get('placeholder', ''),
+                descripcion=request.POST.get('descripcion', ''),
+                opciones=opciones,
+                valor_minimo=float(request.POST.get('valor_minimo')) if request.POST.get('valor_minimo') else None,
+                valor_maximo=float(request.POST.get('valor_maximo')) if request.POST.get('valor_maximo') else None,
+                longitud_minima=int(request.POST.get('longitud_minima')) if request.POST.get('longitud_minima') else None,
+                longitud_maxima=int(request.POST.get('longitud_maxima')) if request.POST.get('longitud_maxima') else None,
+                patron_validacion=request.POST.get('patron_validacion', '') or None,
+            )
+            
+            messages.success(request, f'Campo "{campo.etiqueta}" creado exitosamente.')
+            return redirect('areas:campos', area_id=area.pk)
+            
+        except Exception as e:
+            messages.error(request, f'Error al crear el campo: {str(e)}')
+    
+    context = {
+        'area': area,
+        'tipo_campo_choices': CampoAreaPersonalizado.TIPO_CAMPO_CHOICES,
+    }
+    
+    return render(request, 'digitalizacion/admin/areas/crear_campo.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def eliminar_campo_area(request, campo_id):
+    """Vista para eliminar un campo personalizado"""
+    campo = get_object_or_404(CampoAreaPersonalizado, pk=campo_id)
+    area = campo.area
+    
+    # Verificar permisos
+    if not hasattr(request.user, 'perfil') or not request.user.perfil.rol or not request.user.perfil.rol.puede_administrar_sistema:
+        messages.error(request, 'No tienes permisos para eliminar campos personalizados.')
+        return redirect('areas:gestionar_campos', area_id=area.id)
+    
+    try:
+        nombre_campo = campo.etiqueta
+        campo.delete()
+        messages.success(request, f'Campo "{nombre_campo}" eliminado correctamente.')
+    except Exception as e:
+        messages.error(request, f'Error al eliminar el campo: {str(e)}')
+    
+    return redirect('areas:gestionar_campos', area_id=area.id)
+
+
+def areas_por_tipo(request, tipo):
+    """Vista para obtener áreas por tipo de expediente"""
+    try:
+        # Mapeo de tipos de URL a tipos de expediente
+        tipo_mapeo = {
+            'compra_directa': 'adjudicacion_directa',
+            'concurso_invitacion': 'concurso_invitacion',
+            'licitacion': 'licitacion',
+            'adjudicacion_directa': 'adjudicacion_directa'
+        }
+        
+        # Obtener el tipo real del mapeo o usar el proporcionado
+        tipo_expediente = tipo_mapeo.get(tipo, tipo)
+        
+        # Obtener el subtipo de los parámetros de consulta
+        subtipo = request.GET.get('subtipo')
+        
+        # Filtrar áreas por tipo de expediente
+        areas_query = AreaTipoExpediente.objects.filter(
+            tipo_expediente=tipo_expediente,
+            activa=True
+        )
+        
+        # Si hay un subtipo, filtrar por él
+        if subtipo:
+            areas_query = areas_query.filter(
+                Q(subtipo_expediente=subtipo) | 
+                Q(subtipo_expediente__isnull=True) | 
+                Q(subtipo_expediente='')
+            )
+        
+        # Ordenar las áreas
+        areas = areas_query.order_by('orden', 'titulo')
+        
+        # Preparar la respuesta
+        areas_data = []
+        for area in areas:
+            areas_data.append({
+                'id': area.id,
+                'titulo': area.titulo,
+                'descripcion': area.descripcion,
+                'tipo_area': area.tipo_area,
+                'es_requerida': area.obligatoria,
+                'icono': area.icono or 'bi-folder',
+                'subtipo': area.subtipo_expediente or ''
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'areas': areas_data,
+            'tipo': tipo_expediente,
+            'subtipo': subtipo or ''
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

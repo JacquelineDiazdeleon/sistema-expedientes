@@ -1,0 +1,89 @@
+{% extends 'digitalizacion/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Registrarse - Secretaría de Servicios Públicos{% endblock %}
+
+{% block content %}
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 glassmorphism">
+                <div class="card-body p-5">
+                    <!-- Logo y título -->
+                    <div class="text-center mb-4">
+                        <div class="auth-logo mb-3">
+                            <i class="fas fa-user-plus fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="h3 mb-2 text-primary fw-bold">Crear Cuenta</h2>
+                        <p class="text-muted">Únete al sistema de la Secretaría de Servicios Públicos</p>
+                    </div>
+
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Formulario de registro -->
+                    <form method="post" class="auth-form">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-user me-2"></i>Nombre de usuario
+                            </label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.username.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Requerido. 150 caracteres como máximo. Solo letras, números y @/./+/-/_</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Contraseña
+                            </label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password1.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
+                                <i class="fas fa-lock me-2"></i>Confirmar contraseña
+                            </label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.password2.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 auth-btn mb-3">
+                            <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                        </button>
+                    </form>
+
+                    <!-- Enlaces adicionales -->
+                    <div class="text-center">
+                        <p class="text-muted mb-0">¿Ya tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:login' %}" class="text-decoration-none">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,161 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Indexar Documentos - Administración{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'digitalizacion:panel_administracion' %}">Administración</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Indexar Documentos</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Indexar Documentos</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Esta herramienta permite indexar manualmente todos los documentos del sistema para la búsqueda de texto completo.
+                        El proceso puede tardar varios minutos dependiendo de la cantidad de documentos.
+                    </div>
+                    
+                    <div id="indexingStatus" class="text-center py-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="sr-only">Indexando...</span>
+                        </div>
+                        <h4 class="mt-3">Indexando documentos...</h4>
+                        <div class="progress mt-3" style="height: 25px;">
+                            <div id="indexingProgress" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" style="width: 0%;" 
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                        </div>
+                        <p id="indexingMessage" class="mt-2">Preparando para indexar...</p>
+                    </div>
+                    
+                    <div id="indexingComplete" class="text-center py-4" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle fa-3x mb-3"></i>
+                            <h4>¡Indexación completada con éxito!</h4>
+                            <p id="indexingStats"></p>
+                            <a href="{% url 'digitalizacion:buscar_documentos' %}" class="btn btn-success mt-2">
+                                <i class="fas fa-search"></i> Probar búsqueda
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button id="startIndexing" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sync-alt"></i> Iniciar Indexación
+                        </button>
+                        <a href="{% url 'digitalizacion:panel_administracion' %}" class="btn btn-secondary btn-lg ml-2">
+                            <i class="fas fa-arrow-left"></i> Volver al Panel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let isIndexing = false;
+    
+    $('#startIndexing').on('click', function() {
+        if (isIndexing) return;
+        
+        if (!confirm('¿Estás seguro de que deseas iniciar la indexación? Este proceso puede tardar varios minutos.')) {
+            return;
+        }
+        
+        isIndexing = true;
+        $('#startIndexing').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Indexando...');
+        $('#indexingStatus').fadeIn();
+        
+        // Iniciar la indexación
+        startIndexing();
+    });
+    
+    function startIndexing() {
+        $.ajax({
+            url: '{% url "digitalizacion:indexar_documentos" %}',
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                
+                // Escuchar eventos de progreso
+                xhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        const percentComplete = Math.round((e.loaded / e.total) * 100);
+                        updateProgress(percentComplete, `Procesando: ${e.loaded} de ${e.total} documentos...`);
+                    }
+                }, false);
+                
+                return xhr;
+            },
+            success: function(response) {
+                if (response.success) {
+                    completeIndexing(response);
+                } else {
+                    showError(response.error || 'Error al indexar los documentos');
+                }
+            },
+            error: function(xhr, status, error) {
+                showError('Error de conexión: ' + error);
+            }
+        });
+    }
+    
+    function updateProgress(percent, message) {
+        $('#indexingProgress')
+            .css('width', percent + '%')
+            .attr('aria-valuenow', percent)
+            .text(percent + '%');
+            
+        if (message) {
+            $('#indexingMessage').text(message);
+        }
+    }
+    
+    function completeIndexing(response) {
+        isIndexing = false;
+        $('#indexingStatus').fadeOut(400, function() {
+            const stats = `
+                Documentos procesados: <strong>${response.total || 0}</strong> | 
+                Éxitos: <strong class="text-success">${response.exitosos || 0}</strong> | 
+                Fallidos: <strong class="text-danger">${response.fallidos || 0}</strong>
+            `;
+            $('#indexingStats').html(stats);
+            $('#indexingComplete').fadeIn();
+        });
+    }
+    
+    function showError(message) {
+        isIndexing = false;
+        $('#indexingStatus').fadeOut(400, function() {
+            const alert = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+            $(alert).insertBefore('#indexingComplete');
+            $('#startIndexing')
+                .prop('disabled', false)
+                .html('<i class="fas fa-sync-alt"></i> Reintentar');
+        });
+    }
+});
+</script>
+{% endblock %}

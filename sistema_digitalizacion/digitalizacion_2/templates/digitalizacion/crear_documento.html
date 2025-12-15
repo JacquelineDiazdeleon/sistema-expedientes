@@ -1,0 +1,370 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Crear Expediente - Sistema de Digitalización{% endblock %}
+{% block description %}Crear nuevo expediente digitalizado{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-950">
+    <div class="container py-5">
+        <!-- Header -->
+        <div class="mb-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'digitalizacion:dashboard' %}" class="text-emerald-400 text-decoration-none">Dashboard</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'digitalizacion:lista_documentos' %}" class="text-emerald-400 text-decoration-none">Expedientes</a>
+                    </li>
+                    <li class="breadcrumb-item active text-zinc-400">Crear</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 fw-bold text-zinc-100 mb-1">Crear expediente</h1>
+                    <p class="text-zinc-400 mb-0">Selecciona el flujo con el que deseas iniciar.</p>
+                </div>
+                <div class="d-flex align-items-center bg-zinc-800 border border-zinc-700 rounded px-3 py-2">
+                    <i class="bi bi-layers text-emerald-400 me-2"></i>
+                    <small class="text-zinc-200">17 etapas</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Opciones de creación -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-zinc-900 border-zinc-800 h-100 option-card" data-mode="giro">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0 d-flex align-items-center">
+                            <i class="bi bi-grid-3x3-gap text-emerald-400 me-2"></i>
+                            Crear por Giro
+                        </h5>
+                        <small class="text-zinc-400">Inicia el expediente según el giro (p.ej. Ferretería).</small>
+                    </div>
+                    <div class="card-body">
+                        <button type="button" class="btn btn-emerald-600 w-100" onclick="selectMode('giro')">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-zinc-900 border-zinc-800 h-100 option-card" data-mode="fuente">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0 d-flex align-items-center">
+                            <i class="bi bi-bank text-emerald-400 me-2"></i>
+                            Crear por Fuente
+                        </h5>
+                        <small class="text-zinc-400">Propio municipal, Estatal o Federal.</small>
+                    </div>
+                    <div class="card-body">
+                        <button type="button" class="btn btn-emerald-600 w-100" onclick="selectMode('fuente')">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-zinc-900 border-zinc-800 h-100 option-card" data-mode="tipo">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0 d-flex align-items-center">
+                            <i class="bi bi-basket text-emerald-400 me-2"></i>
+                            Crear por Tipo
+                        </h5>
+                        <small class="text-zinc-400">Bienes, Servicios, Arrendamientos.</small>
+                    </div>
+                    <div class="card-body">
+                        <button type="button" class="btn btn-emerald-600 w-100" onclick="selectMode('tipo')">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-xl-3">
+                <div class="card bg-zinc-900 border-zinc-800 h-100 option-card" data-mode="monto">
+                    <div class="card-header border-zinc-800">
+                        <h5 class="card-title text-zinc-100 mb-0 d-flex align-items-center">
+                            <i class="bi bi-currency-dollar text-emerald-400 me-2"></i>
+                            Crear por Monto
+                        </h5>
+                        <small class="text-zinc-400">Compra directa, Concurso por invitación, Licitación o Adjudicación directa.</small>
+                    </div>
+                    <div class="card-body">
+                        <button type="button" class="btn btn-emerald-600 w-100" onclick="selectMode('monto')">
+                            Continuar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de creación -->
+        <div class="card bg-zinc-900 border-zinc-800" id="createForm" style="display: none;">
+            <div class="card-header border-zinc-800">
+                <h5 class="card-title text-zinc-100 mb-0" id="formTitle">Crear expediente</h5>
+                <small class="text-zinc-400">
+                    Solo verás los campos necesarios. Se crearán 17 etapas con requisitos según tu selección.
+                </small>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="expedienteForm">
+                    {% csrf_token %}
+                    
+                    <div class="row g-4">
+                        <!-- Título (siempre visible) -->
+                        <div class="col-md-6">
+                            {{ form.titulo|as_crispy_field }}
+                        </div>
+
+                        <!-- Campo específico según el modo -->
+                        <div class="col-md-6" id="specificField">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+
+                        <!-- Campos base (siempre visibles) -->
+                        <div class="col-md-6">
+                            {{ form.tipo_documento|as_crispy_field }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {{ form.departamento|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-4">
+                            {{ form.prioridad|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-4">
+                            {{ form.fecha_documento|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-4 d-flex align-items-end">
+                            <div class="form-check">
+                                {{ form.confidencial }}
+                                <label class="form-check-label text-zinc-300" for="{{ form.confidencial.id_for_label }}">
+                                    Expediente confidencial
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            {{ form.descripcion|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.palabras_clave|as_crispy_field }}
+                        </div>
+
+                        <div class="col-md-6">
+                            {{ form.fecha_vencimiento|as_crispy_field }}
+                        </div>
+
+                        <!-- Archivo inicial (opcional) -->
+                        <div class="col-12">
+                            <div class="card bg-zinc-950 border-zinc-800">
+                                <div class="card-header border-zinc-800">
+                                    <h6 class="card-title text-zinc-100 mb-0">Archivo inicial (opcional)</h6>
+                                    <small class="text-zinc-400">Puedes subir un archivo para comenzar el expediente</small>
+                                </div>
+                                <div class="card-body">
+                                    {{ form.archivo_digital|as_crispy_field }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="border-zinc-800 my-4">
+
+                    <!-- Información sobre las etapas -->
+                    <div class="bg-zinc-950 border border-zinc-800 rounded p-4 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="badge bg-zinc-800 text-zinc-300 border border-zinc-700 me-2">
+                                Requisitos precargados
+                            </span>
+                            <small class="text-zinc-400">
+                                Al crear, podrás desplegar cada etapa para subir documentos y comentar.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-light" onclick="hideForm()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-emerald-600">
+                            <i class="bi bi-plus-circle me-2"></i>
+                            Crear expediente
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información del sistema -->
+        <div class="card bg-zinc-900 border-zinc-800 mt-4">
+            <div class="card-header border-zinc-800">
+                <h5 class="card-title text-zinc-100 mb-0">¿Qué incluye el expediente?</h5>
+                <small class="text-zinc-400">Etapas del proceso de digitalización</small>
+            </div>
+            <div class="card-body">
+                <p class="text-zinc-400 mb-0">
+                    INICIO, SOLICITUD DEL ÁREA, COTIZACIÓN, REQUISICIÓN SIMA, SUFICIENCIA PRESUPUESTAL, Aprobaciones,
+                    Notificación a compras, Valoración por tipo, Adjudicación, Formalización, Contrato, Recepciones,
+                    Generación de evidencia, Envío a compras y Pago.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentMode = null;
+
+function selectMode(mode) {
+    currentMode = mode;
+    
+    // Ocultar opciones y mostrar formulario
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.style.display = 'none';
+    });
+    document.getElementById('createForm').style.display = 'block';
+    
+    // Actualizar título del formulario
+    const titles = {
+        'giro': 'Crear por Giro',
+        'fuente': 'Crear por Fuente de financiamiento',
+        'tipo': 'Crear por Tipo de adquisición',
+        'monto': 'Crear por Monto'
+    };
+    
+    document.getElementById('formTitle').textContent = titles[mode];
+    
+    // Mostrar campo específico según el modo
+    updateSpecificField(mode);
+    
+    // Scroll al formulario
+    document.getElementById('createForm').scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+    });
+}
+
+function updateSpecificField(mode) {
+    const specificField = document.getElementById('specificField');
+    let html = '';
+    
+    switch(mode) {
+        case 'giro':
+            html = `
+                <div class="mb-3">
+                    <label class="form-label text-zinc-300">Giro</label>
+                    <input type="text" name="giro_especifico" class="form-control" value="Ferretería" placeholder="Ej: Ferretería, Papelería, etc.">
+                </div>
+            `;
+            break;
+        case 'fuente':
+            html = `
+                <div class="mb-3">
+                    <label class="form-label text-zinc-300">Fuente de financiamiento</label>
+                    <select name="fuente_financiamiento" class="form-select">
+                        <option value="Propio municipal">Propio municipal</option>
+                        <option value="Estatal">Estatal</option>
+                        <option value="Federal">Federal</option>
+                    </select>
+                </div>
+            `;
+            break;
+        case 'tipo':
+            html = `
+                <div class="mb-3">
+                    <label class="form-label text-zinc-300">Tipo de adquisición</label>
+                    <select name="tipo_adquisicion" class="form-select">
+                        <option value="Bienes">Bienes</option>
+                        <option value="Servicios">Servicios</option>
+                        <option value="Arrendamientos">Arrendamientos</option>
+                    </select>
+                </div>
+            `;
+            break;
+        case 'monto':
+            html = `
+                <div class="mb-3">
+                    <label class="form-label text-zinc-300">Modalidad por monto</label>
+                    <select name="modalidad_monto" class="form-select">
+                        <option value="Compra directa">Compra directa</option>
+                        <option value="Concurso por invitación">Concurso por invitación</option>
+                        <option value="Licitación">Licitación</option>
+                        <option value="Adjudicación directa">Adjudicación directa</option>
+                    </select>
+                </div>
+            `;
+            break;
+    }
+    
+    specificField.innerHTML = html;
+}
+
+function hideForm() {
+    document.getElementById('createForm').style.display = 'none';
+    document.querySelectorAll('.option-card').forEach(card => {
+        card.style.display = 'block';
+    });
+    currentMode = null;
+    
+    // Scroll hacia arriba
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Hover effects para las cards
+document.addEventListener('DOMContentLoaded', function() {
+    const optionCards = document.querySelectorAll('.option-card');
+    
+    optionCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.transition = 'transform 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+    
+    // Auto-resize para textareas
+    const textareas = document.querySelectorAll('textarea');
+    textareas.forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    });
+});
+
+// Validaciones del formulario
+document.getElementById('expedienteForm').addEventListener('submit', function(e) {
+    const titulo = this.querySelector('[name="titulo"]').value.trim();
+    
+    if (!titulo) {
+        e.preventDefault();
+        alert('El título del expediente es requerido');
+        return;
+    }
+    
+    if (titulo.length < 3) {
+        e.preventDefault();
+        alert('El título debe tener al menos 3 caracteres');
+        return;
+    }
+});
+</script>
+{% endblock %}
+

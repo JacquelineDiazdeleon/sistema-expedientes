@@ -1,0 +1,3437 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expedientes - Sistema de Digitalización - Secretaría de Servicios Públicos</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+    
+    /* Variables CSS para temas */
+    :root {
+      /* Tema Oscuro (por defecto) - COLORES ORIGINALES EXACTOS */
+      --bg-primary: #20252d;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #1a1a1a;
+      --bg-gradient: linear-gradient(160deg, #2a2f38 10%, #f9f2d6 90%);
+      --text-primary: white;
+      --text-secondary: rgba(255 255 255 / 0.7);
+      --text-muted: rgba(255 255 255 / 0.5);
+      --border-color: rgba(255 255 255 / 0.2);
+      --border-light: rgba(255 255 255 / 0.1);
+      --shadow-color: rgba(0, 0, 0, 0.4);
+      --panel-bg: #1a1a1a;
+      --panel-border: #333;
+      --hover-bg: rgba(255 255 255 / 0.15);
+      --active-bg: #121212cc;
+      --notification-badge: #ff4757;
+      --table-bg: #1a1a1a;
+      --table-border: #333;
+      --table-hover: rgba(15, 15, 15, 0.95);
+      --input-bg: #1a1a1a;
+      --input-border: #333;
+      --input-text: white;
+      --button-primary: #667eea;
+      --button-secondary: #6c757d;
+    }
+    
+    /* Tema Claro */
+    [data-theme="light"] {
+      --bg-primary: #f8f9fa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f8f9fa;
+      --bg-gradient: linear-gradient(160deg, #e9ecef 10%, #f8f9fa 90%);
+      --text-primary: #212529;
+      --text-secondary: #495057;
+      --text-muted: #6c757d;
+      --border-color: rgba(0, 0, 0, 0.1);
+      --border-light: rgba(0, 0, 0, 0.05);
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --panel-bg: #ffffff;
+      --panel-border: #dee2e6;
+      --hover-bg: rgba(0, 0, 0, 0.05);
+      --active-bg: #e9ecef;
+      --notification-badge: #dc3545;
+      --table-bg: #ffffff;
+      --table-border: #dee2e6;
+      --table-hover: #f8f9fa;
+      --input-bg: #ffffff;
+      --input-border: #ced4da;
+      --input-text: #212529;
+      --button-primary: #667eea;
+      --button-secondary: #6c757d;
+      --table-header-bg: #667eea;
+      --table-header-text: #ffffff;
+      --table-row-border: #e9ecef;
+      --table-hover-row: #f8f9fa;
+      --badge-primary: #667eea;
+      --badge-secondary: #6c757d;
+      --badge-success: #28a745;
+      --badge-warning: #ffc107;
+      --badge-danger: #dc3545;
+      --badge-info: #17a2b8;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      background: var(--bg-gradient);
+      font-family: 'Roboto', sans-serif;
+      color: var(--text-primary);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: auto 1fr 200px;
+      width: 100%;
+      height: 100vh;
+      color: var(--text-primary);
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    /* Left side panel */
+    .left-panel {
+      grid-column: 1 / 2;
+      grid-row: 1 / 4;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 20px 25px;
+      gap: 25px;
+      position: relative;
+      box-shadow: inset -40px 0 60px -30px var(--shadow-color);
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos específicos para tema claro en panel izquierdo */
+    [data-theme="light"] .left-panel {
+      background: #f8f9fa !important;
+      box-shadow: inset -40px 0 60px -30px rgba(0, 0, 0, 0.1) !important;
+    }
+    .logo-text {
+      font-weight: 300;
+      font-size: 1.4em;
+      font-family: 'Roboto', sans-serif;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+      margin: 0;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos específicos para tema claro en logo */
+    [data-theme="light"] .logo-text {
+      color: #212529 !important;
+      font-weight: 500;
+    }
+    .logo-subtext {
+      font-weight: 300;
+      font-size: 0.8em;
+      padding-left: 5px;
+      margin-top: 5px;
+      opacity: 0.7;
+      letter-spacing: 0.02em;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos específicos para tema claro en sidebar */
+    [data-theme="light"] .logo-subtext {
+      color: #212529 !important;
+      opacity: 0.9;
+      font-weight: 500;
+    }
+
+    /* Menu */
+    .menu {
+      margin-top: 20px;
+      width: 100%;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Estilos específicos para tema claro en bordes del menú */
+    [data-theme="light"] .menu {
+      border-top: 1px solid #dee2e6 !important;
+      border-bottom: 1px solid #dee2e6 !important;
+    }
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-secondary);
+      padding: 10px 12px;
+      font-weight: 400;
+      font-size: 0.9em;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      text-decoration: none;
+    }
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+    .menu-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-secondary);
+      stroke-width: 2;
+      fill: none;
+      transition: stroke 0.3s ease;
+    }
+    .menu-item:hover {
+      color: var(--text-primary);
+      background: var(--hover-bg);
+      text-decoration: none;
+    }
+    .menu-item.active {
+      background: #121212cc;
+      color: white;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .menu-item.active:hover {
+      color: white;
+      background: #121212cc;
+      text-decoration: none;
+    }
+    .menu-item.active::after {
+      content: "";
+      position: absolute;
+      right: -12px;
+      width: 0; 
+      height: 0; 
+      border-top: 20px solid transparent;
+      border-bottom: 20px solid transparent; 
+      border-left: 12px solid #121212cc;
+      top: 50%;
+      transform: translateY(-50%);
+      filter: drop-shadow(-2px 0 1px #0008);
+    }
+    
+    /* Estilos específicos para tema claro en menú */
+    [data-theme="light"] .menu-item {
+      color: #212529 !important;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    [data-theme="light"] .menu-item svg {
+      stroke: #212529 !important;
+    }
+    
+    [data-theme="light"] .menu-item:hover {
+      color: #000000 !important;
+      background: #f8f9fa !important;
+    }
+    
+    [data-theme="light"] .menu-item.active {
+      background: #263b96 !important;
+      color: #ffffff !important;
+      font-weight: 700;
+    }
+    
+    [data-theme="light"] .menu-item.active:hover {
+      background: #2633ac !important;
+      color: #ffffff !important;
+    }
+    
+    [data-theme="light"] .menu-item.active::after {
+      border-left: 12px solid #181f40;
+      filter: drop-shadow(-2px 0 1px rgba(102, 126, 234, 0.3));
+    }
+
+    /* Center top blocks with icons and text */
+    .top-centers {
+      grid-column: 2 / 4;
+      grid-row: 1 / 2;
+      display: flex;
+      gap: 8px;
+      padding: 0 8px;
+    }
+    .top-center-block {
+      flex: 1;
+      background-color: rgba(30, 39, 50, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 30px #000000cc;
+      margin: 0;
+      padding: 12px 8px;
+      border-radius: 8px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .top-center-block:nth-child(2),
+    .top-center-block:nth-child(3) {
+      background-color: rgba(20, 20, 20, 0.75);
+    }
+    .icon-circle {
+      background: white;
+      border-radius: 50%;
+      padding: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px #0003;
+    }
+    .icon-circle svg {
+      width: 16px;
+      height: 16px;
+      fill: #000;
+      stroke: none;
+    }
+    .top-center-block h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 0.85em;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+    }
+    .top-center-block p {
+      margin: 0;
+      font-weight: 300;
+      font-size: 0.7em;
+      user-select: text;
+      -webkit-user-select: text;
+      line-height: 1.1;
+      text-align: center;
+    }
+
+    /* Top right container */
+    .top-right-container {
+      grid-column: 4 / 5;
+      grid-row: 1 / 2;
+      background: rgba(26, 26, 26, 0.95);
+      border-radius: 12px;
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      margin: 8px 8px 0 8px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    
+    /* Top right icons */
+    .top-right-icons {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .icon-button {
+      background: rgba(26, 26, 26, 0.8);
+      border: none;
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      backdrop-filter: blur(9px);
+      -webkit-backdrop-filter: blur(9px);
+      box-shadow: inset 0 0 25px #000000cc;
+    }
+    
+    .icon-button:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: scale(1.05);
+    }
+    
+    .icon-button svg {
+      width: 22px;
+      height: 22px;
+      stroke: white;
+      fill: none;
+    }
+    
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #6f6f6f;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    /* Main content styles */
+    .center-main {
+      grid-column: 2 / 3;
+      grid-row: 1 / 4;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      padding: 0 15px 15px 15px;
+      color: #222;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    /* Variables de colores profesionales */
+    :root {
+      --primary-bg: rgba(17, 24, 39, 0.85);
+      --secondary-bg: rgba(31, 41, 55, 0.75);
+      --accent-bg: rgba(55, 65, 81, 0.6);
+      --border-color: rgba(75, 85, 99, 0.4);
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --text-muted: #9ca3af;
+      --accent-blue: rgba(59, 130, 246, 0.8);
+      --accent-purple: rgba(147, 51, 234, 0.8);
+      --accent-red: rgba(67, 67, 67, 0.8);
+      --accent-amber: rgba(163, 163, 163, 0.8);
+      --accent-slate: rgba(100, 116, 139, 0.8);
+    }
+
+    /* Header principal con transparencia mejorada */
+    .main-content-header {
+      margin: 0 0 20px 0;
+      padding: 20px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--panel-border);
+      transition: all 0.3s ease;
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .header-text {
+      text-align: left;
+      flex: 1;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    /* Botón de cambio de tema */
+    .theme-toggle-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--panel-border);
+      border-radius: 50%;
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px var(--shadow-color);
+    }
+    
+    .theme-toggle-btn:hover {
+      background: var(--hover-bg);
+      transform: scale(1.05);
+    }
+    
+    .theme-toggle-btn .theme-icon {
+      width: 22px;
+      height: 22px;
+      stroke: var(--text-primary);
+      fill: none;
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .sun-icon,
+    .theme-toggle-btn .sun-rays {
+      transition: all 0.3s ease;
+    }
+    
+    .theme-toggle-btn .moon-icon {
+      transition: all 0.3s ease;
+    }
+    
+    /* Estilos para tema claro */
+    [data-theme="light"] .theme-toggle-btn .sun-icon,
+    [data-theme="light"] .theme-toggle-btn .sun-rays {
+      display: none;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      display: block !important;
+    }
+    
+    /* Estilos para tema oscuro */
+    [data-theme="dark"] .theme-toggle-btn .sun-icon,
+    [data-theme="dark"] .theme-toggle-btn .sun-rays {
+      display: block;
+    }
+    
+    [data-theme="dark"] .theme-toggle-btn .moon-icon {
+      display: none !important;
+    }
+    
+    /* Estilos específicos para tema claro en botón del tema */
+    [data-theme="light"] .theme-toggle-btn {
+      background: #ffffff !important;
+      border: 2px solid #667eea !important;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn:hover {
+      background: #f8f9fa !important;
+      border-color: #5a67d8 !important;
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .theme-icon {
+      stroke: #667eea !important;
+    }
+    
+    [data-theme="light"] .theme-toggle-btn .moon-icon {
+      stroke: #667eea !important;
+    }
+
+    /* Sección de filtros con transparencia mejorada */
+    .filters-section {
+      margin-bottom: 20px;
+      padding: 15px;
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+    }
+    
+    /* Estilos específicos para tema claro en filtros */
+    [data-theme="light"] .filters-section {
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Contenedor de tabla con transparencia mejorada */
+    .table-container {
+      flex: 1;
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 8px 32px var(--shadow-color);
+      border: 1px solid var(--border-color);
+      overflow-y: auto;
+      max-height: calc(100vh - 250px);
+      min-height: 400px;
+    }
+    
+    /* Estilos específicos para tema claro en contenedor de tabla */
+    [data-theme="light"] .table-container {
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+    
+    .main-content-header h2 {
+      margin: 0 0 6px 0;
+      font-size: 1.6em;
+      color: var(--text-primary);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .main-content-header p {
+      margin: 0;
+      font-size: 0.9em;
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    /* Filtros y búsqueda */
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 0;
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group:last-child {
+      flex-direction: row;
+      gap: 6px;
+      align-items: flex-end;
+      margin-top: 8px;
+    }
+
+    .filter-group:last-child button {
+      flex: 1;
+      min-width: 80px;
+      padding: 8px 12px;
+      font-size: 0.85em;
+    }
+    
+    .filter-group label {
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 0.9em;
+      margin-bottom: 4px;
+    }
+    
+    .filter-group input,
+    .filter-group select {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: var(--input-text);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.9em;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .filter-group input:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      background: var(--input-bg);
+      color: var(--input-text);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Estilos específicos para tema claro en inputs */
+    [data-theme="light"] .filter-group input,
+    [data-theme="light"] .filter-group select {
+      background: #ffffff;
+      border: 1px solid #ced4da;
+      color: #212529;
+    }
+    
+    [data-theme="light"] .filter-group input:focus,
+    [data-theme="light"] .filter-group select:focus {
+      border-color: #667eea;
+      background: #ffffff;
+      color: #212529;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-group input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .filter-group select option {
+      background: #1a1a1a;
+      color: var(--text-primary);
+    }
+    
+    .search-btn, .clear-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background-color: #1a237e !important;
+      color: white !important;
+      border: 1px solid #0d47a1 !important;
+      box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+      margin-right: 8px;
+    }
+    
+    .search-btn:hover, .clear-btn:hover {
+      background-color: #0d47a1 !important;
+      border-color: #082f6e !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(13, 71, 161, 0.3);
+    }
+    
+    /* Estilos para tema claro */
+    [data-theme="light"] .search-btn,
+    [data-theme="light"] .clear-btn {
+      background-color: #1a237e !important;
+      color: white !important;
+      border: 1px solid #0d47a1 !important;
+    }
+    
+    [data-theme="light"] .search-btn:hover,
+    [data-theme="light"] .clear-btn:hover {
+      background-color: #0d47a1 !important;
+      border-color: #082f6e !important;
+    }
+
+    /* Tabla de expedientes */
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .table-title {
+      color: #000000;
+      font-size: 1.1em;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    /* Estilos específicos para tema claro en título de tabla */
+    [data-theme="light"] .table-title {
+      color: #212529;
+    }
+
+    /* Estilos para filas clickeables */
+    .expedientes-table tbody tr {
+      cursor: pointer;
+      transition: all 0.3s ease;
+      height: 60px; /* Aumentar altura de las filas */
+    }
+    
+    .expedientes-table tbody tr td {
+      padding: 12px 8px; /* Aumentar padding vertical */
+      font-size: 1.05em; /* Aumentar tamaño de fuente */
+      vertical-align: middle; /* Centrar verticalmente el contenido */
+    }
+    
+    .expedientes-table tbody tr:hover {
+      background: var(--table-hover-row);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Asegurar que los iconos también se vean más grandes */
+    .expediente-tipo svg,
+    .subtipo-badge svg {
+      width: 16px !important;
+      height: 16px !important;
+    }
+    
+    /* Ajustar el tamaño de los badges */
+    .expediente-tipo,
+    .subtipo-badge {
+      padding: 6px 10px;
+      font-size: 0.9em;
+    }
+    
+    /* Modal de detalles del expediente - Diseño Moderno */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .modal-content {
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      max-width: 95vw;
+      max-height: 95vh;
+      width: 1200px;
+      overflow: hidden;
+      transform: scale(0.95) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-overlay.show .modal-content {
+      transform: scale(1) translateY(0);
+    }
+    
+    .modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      padding: 28px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: none;
+      box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .modal-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+      opacity: 0.3;
+    }
+    
+    .modal-title {
+      font-size: 1.625em;
+      font-weight: 700;
+      margin: 0;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      position: relative;
+      z-index: 1;
+    }
+    
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg) scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-close:active {
+      transform: rotate(90deg) scale(0.95);
+    }
+    
+    .modal-body {
+      padding: 32px;
+      max-height: calc(95vh - 120px);
+      overflow-y: auto;
+      background: #f8f9fa;
+      color: #212529;
+    }
+    
+    .modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-body::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .modal-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    
+    .modal-body::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    
+    .expediente-modal-content {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    .expediente-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    .info-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .info-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .info-section:hover {
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(102, 126, 234, 0.1);
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+    }
+    
+    .info-section h4 {
+      color: #1e293b;
+      font-size: 1.15em;
+      font-weight: 700;
+      margin: 0 0 24px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e2e8f0;
+      letter-spacing: -0.01em;
+    }
+    
+    .info-section h4 svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 14px 0;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 20px;
+      transition: all 0.2s ease;
+    }
+    
+    .info-item:hover {
+      background: rgba(102, 126, 234, 0.02);
+      margin: 0 -8px;
+      padding: 14px 8px;
+      border-radius: 8px;
+    }
+    
+    .info-item:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.8125em;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      min-width: 150px;
+      flex-shrink: 0;
+    }
+    
+    .info-value {
+      color: #0f172a;
+      font-weight: 500;
+      text-align: right;
+      font-size: 0.9375em;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+    
+    .estado-badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8em;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .estado-badge.estado-completado,
+    .estado-badge.estado-finalizado,
+    .estado-badge.estado-aprobado,
+    .estado-badge.estado-expediente_completo,
+    .estado-badge[class*="completado"],
+    .estado-badge[class*="finalizado"],
+    .estado-badge[class*="aprobado"] {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .estado-badge.estado-rechazado,
+    .estado-badge[class*="rechazado"] {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    .estado-badge.estado-en_proceso,
+    .estado-badge.estado-proceso,
+    .estado-badge[class*="proceso"] {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .estado-badge.estado-desconocido,
+    .estado-badge:not([class*="completado"]):not([class*="rechazado"]):not([class*="proceso"]):not([class*="finalizado"]):not([class*="aprobado"]) {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    
+    .documents-section {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.02);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .documents-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    }
+    
+    .documents-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .documents-section h4 {
+      color: #1e293b;
+      font-size: 1.15em;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.01em;
+    }
+    
+    .documents-section h4 svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+    
+    .documents-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .document-item {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: #212529;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      position: relative;
+    }
+    
+    .document-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px 0 0 16px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .document-item:hover {
+      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+      border-color: #cbd5e1;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    
+    .document-item:hover::before {
+      opacity: 1;
+    }
+    
+    .document-icon {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .document-item:hover .document-icon {
+      transform: scale(1.05) rotate(5deg);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .document-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      stroke-width: 2;
+    }
+    
+    .document-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .document-name {
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 1em;
+      margin: 0 0 8px 0;
+      word-break: break-word;
+      letter-spacing: -0.01em;
+    }
+    
+    .document-meta {
+      color: #64748b;
+      font-size: 0.8125em;
+      display: flex;
+      gap: 12px;
+      font-weight: 500;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    .document-meta .meta-badge {
+      padding: 3px 10px;
+      background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+      border-radius: 8px;
+      font-size: 0.75em;
+      font-weight: 600;
+      color: #475569;
+    }
+    
+    .document-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .document-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    
+    .document-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875em;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .document-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .document-btn:hover::before {
+      left: 100%;
+    }
+    
+    .document-btn:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .document-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .document-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      background: #cbd5e1;
+      box-shadow: none;
+    }
+    
+    .document-btn:disabled:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    
+    .document-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      flex-shrink: 0;
+    }
+    
+    /* Botón de descargar con estilo diferente */
+    .document-btn.download-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    
+    .document-btn.download-btn:hover {
+      background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    }
+    
+    .search-btn, .clear-btn, .new-expediente-btn {
+      padding: 8px 16px;
+      border: 1px solid #0d47a1;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      background-color: #1a237e !important;
+      color: white !important;
+    }
+    
+    .search-btn {
+      margin-right: 8px;
+    }
+    
+    .search-btn:hover, .clear-btn:hover, .new-expediente-btn:hover {
+      background-color: #0d47a1 !important;
+      border-color: #082f6e !important;
+    }
+    
+    .search-button, input[type="submit"] {
+      background: #1a237e !important;
+      color: white !important;
+      border: 1px solid #0d47a1 !important;
+      border-radius: 4px;
+      padding: 8px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    
+    .search-button:hover, input[type="submit"]:hover {
+      background: #0d47a1 !important;
+      border-color: #082f6e !important;
+    }
+    
+    .no-documents {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+    
+    .no-documents svg {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 15px;
+      opacity: 0.5;
+    }
+    
+    /* Estilos específicos para tema claro en modal */
+    [data-theme="light"] .modal-content {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    
+    [data-theme="light"] .info-section {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    
+    [data-theme="light"] .document-item {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    
+    [data-theme="light"] .document-item:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    
+    /* Spinner de carga mejorado */
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+      border-width: 0.3em;
+      color: #3b82f6;
+    }
+    
+    /* Mejoras adicionales para el modal */
+    .no-documents {
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 2px dashed #cbd5e1;
+      margin: 20px 0;
+    }
+    
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #000000;
+  font-weight: 500;
+  font-size: 0.8em;
+}
+
+/* This was a misplaced rule, needs to be in its proper selector */
+.expedientes-table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text-primary);
+      margin-top: 8px;
+      background: var(--bg-card);
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .expedientes-table th,
+    .expedientes-table td {
+      padding: 6px 4px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .expedientes-table th {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 0.75em;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    
+    .expedientes-table td {
+      font-size: 0.8em;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .expedientes-table tbody tr:hover {
+      background: var(--hover-bg);
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .expedientes-table {
+      background: #ffffff;
+      border: 1px solid #dee2e6;
+      color: #000000;
+    }
+    
+    [data-theme="light"] .expedientes-table th {
+      background: #e9ecef;
+      color: #000000;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    [data-theme="light"] .expedientes-table td {
+      color: #000000;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    [data-theme="light"] .expedientes-table tbody tr:hover {
+      background: #f0f0f0;
+    }
+    
+    .status-badge {
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      font-weight: 500;
+      text-align: center;
+      display: inline-block;
+    }
+    
+    .status-pendiente {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .status-en-proceso {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    
+    .status-completado {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    .status-rechazado {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+      color: var(--text-primary);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .status-inicio {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+      color: var(--text-primary);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    
+    .status-badge.status-inicio {
+      background: var(--primary);
+      color: white;
+      border: none;
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .status-badge {
+      color: #ffffff;
+      font-weight: 600;
+    }
+    
+    [data-theme="light"] .status-inicio {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    [data-theme="light"] .status-pendiente {
+      background: #ffc107;
+      color: #212529;
+      border: none;
+      box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    }
+    
+    [data-theme="light"] .status-en-proceso {
+      background: #17a2b8;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+    }
+    
+    [data-theme="light"] .status-completado {
+      background: #28a745;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    [data-theme="light"] .status-rechazado {
+      background: #dc3545;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+    }
+    
+    .action-btn {
+      background: rgba(59, 130, 246, 0.2);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .action-btn {
+      background: #667eea;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    [data-theme="light"] .action-btn:hover {
+      background: #5a67d8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    }
+    
+    .action-btn {
+      text-decoration: none;
+      font-size: 0.8em;
+      transition: all 0.3s ease;
+      display: inline-block;
+      margin-right: 8px;
+    }
+    
+    .action-btn:hover {
+      background: rgba(59, 130, 246, 0.3);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: #60a5fa;
+    }
+    
+    .action-btn.danger {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    .action-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      width: 80px;
+      margin-right: 8px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .btn-action {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 4px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 1px;
+      text-decoration: none;
+      width: 24px;
+      height: 24px;
+    }
+
+    .btn-action:hover {
+      background: var(--hover-bg);
+    }
+
+    .btn-action.btn-delete:hover {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Estilo para todos los botones */
+    button, .btn, .btn-action, .new-expediente-btn, .pagination-btn, .btn-apply, .clear-btn, .btn-close, .btn-descargar, .btn-ver, 
+    .btn-buscar, .search-button, input[type="submit"], .btn-primary {
+      background-color: #1a237e !important; /* Azul oscuro opaco */
+      border-color: #0d47a1 !important;
+      color: white !important;
+    }
+    
+    /* Efecto hover para todos los botones */
+    button:hover, .btn:hover, .btn-action:hover, .new-expediente-btn:hover, 
+    .pagination-btn:hover, .btn-apply:hover, .clear-btn:hover, .btn-close:hover,
+    .btn-descargar:hover, .btn-ver:hover, .btn-buscar:hover, .search-button:hover, 
+    input[type="submit"]:hover, .btn-primary:hover {
+      background-color: #0d47a1 !important;
+      border-color: #082f6e !important;
+      color: white !important;
+    }
+
+    .btn-action:has(svg[viewBox*="14 2H6"]) {
+      background: #1a237e !important;
+      border-color: #0d47a1 !important;
+    }
+
+    .btn-action:has(svg[viewBox*="14 2H6"]):hover {
+      background: rgba(59, 130, 246, 0.9);
+      border-color: #2563eb;
+      color: white;
+    }
+    
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .btn-action {
+      background: #667eea;
+      border: 1px solid #5a67d8;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    [data-theme="light"] .btn-action:hover {
+      background: #5a67d8;
+      border-color: #4c51bf;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+    }
+    
+    [data-theme="light"] .btn-action.btn-delete {
+      background: #dc3545;
+      border-color: #c82333;
+      color: #ffffff;
+    }
+    
+    [data-theme="light"] .btn-action.btn-delete:hover {
+      background: #c82333;
+      border-color: #bd2130;
+      color: #ffffff;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 2px;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    /* Estilos para filas interactivas */
+    .table tbody tr {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    
+    .table tbody tr:hover {
+      background-color: rgba(0, 123, 255, 0.05);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Estilos específicos para tema claro en filas */
+    [data-theme="light"] .table tbody tr:hover {
+      background-color: rgba(102, 126, 234, 0.05);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+    }
+    
+    .status-inicio {
+      background: rgba(16, 185, 129, 0.2);
+      color: #6ee7b7;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    
+    /* Iconos de tipo de expediente */
+    .tipo-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    
+    /* Estilos específicos para tema claro en iconos de tipo */
+    [data-theme="light"] .tipo-icon {
+      background: #f8f9fa;
+      color: #212529;
+      border: 1px solid #dee2e6;
+    }
+    
+    .tipo-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+    }
+    
+    .giro-icon {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .financiamiento-icon {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .adquisicion-icon {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .proceso-icon {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    .default-icon {
+      background: #000000;
+      color: #ffffff;
+      border: 1px solid #000000;
+    }
+    
+    /* Subtipos */
+    .subtipo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-size: 0.7em;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+    
+    .subtipo-badge svg {
+      width: 8px;
+      height: 8px;
+      stroke: currentColor;
+      fill: none;
+    }
+    
+    .giro-subtipo {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    
+    .financiamiento-subtipo {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    
+    .adquisicion-subtipo {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    
+    .proceso-subtipo {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    
+    .default-subtipo {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+    
+    .subtipo-placeholder {
+      color: var(--text-muted);
+      font-size: 0.75em;
+      font-style: italic;
+    }
+    
+    /* Estilos específicos para tema claro en subtipos */
+    [data-theme="light"] .subtipo-badge {
+      background: #f8f9fa;
+      color: #212529;
+      border: 1px solid #dee2e6;
+    }
+    
+    [data-theme="light"] .subtipo-placeholder {
+      color: #6c757d;
+    }
+
+    /* Right center sub block */
+    .right-center-subblock {
+      grid-column: 4 / 5;
+      grid-row: 2 / 3;
+      background: rgba(26, 26, 26, 0.95);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid #333;
+      margin-top: 20px;
+      margin-right: 8px;
+      margin-left: 8px;
+    }
+    
+    .right-center-subblock-secondary {
+      grid-column: 4 / 5;
+      grid-row: 3 / 4;
+      background: rgba(26, 26, 26, 0.95);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid #333;
+      margin-top: 20px;
+      margin-right: 8px;
+      margin-left: 8px;
+    }
+
+    .right-center-subblock .icon-circle,
+    .right-center-subblock-secondary .icon-circle {
+      background: white;
+      border-radius: 50%;
+      padding: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 10px #0003;
+      margin: 0 auto 12px;
+    }
+    
+    .right-center-subblock .icon-circle svg,
+    .right-center-subblock-secondary .icon-circle svg {
+      width: 24px;
+      height: 24px;
+      fill: #000;
+      stroke: none;
+    }
+    
+    .right-center-subblock h4,
+    .right-center-subblock-secondary h4 {
+      margin: 0 0 8px 0;
+      font-weight: 600;
+      font-size: 0.95em;
+      color: #ffffff;
+    }
+    
+    .right-center-subblock p,
+    .right-center-subblock-secondary p {
+      font-weight: 300;
+      font-size: 0.75em;
+      margin: 0;
+      color: #e5e7eb;
+      line-height: 1.3;
+    }
+
+    /* Bottom info bar */
+    .bottom-info-bar {
+      grid-column: 1 / 3;
+      grid-row: 4 / 5;
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      padding: 15px 20px;
+      margin-top: 20px;
+    }
+    
+    .bottom-info-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 2s infinite;
+    }
+    
+    .status-indicator.online {
+      background: #10b981;
+    }
+    
+    .status-text {
+      color: #e5e7eb;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    
+    .system-version {
+      color: #9ca3af;
+      font-size: 0.85em;
+    }
+    
+    .system-links {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .bottom-link {
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.85em;
+      transition: color 0.3s ease;
+    }
+    
+    .bottom-link:hover {
+      color: #e5e7eb;
+      text-decoration: none;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-columns: 250px 1fr;
+      }
+    }
+    
+    @media (max-width: 992px) {
+      .container {
+        grid-template-columns: 220px 1fr;
+      }
+      
+      .filters-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto;
+      }
+      
+      .left-panel {
+        grid-column: 1;
+        grid-row: 1;
+        position: fixed;
+        top: 0;
+        left: -280px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+      }
+      
+      .left-panel.open {
+        left: 0;
+      }
+      
+      .center-main {
+        grid-column: 1;
+        grid-row: 2 / 4;
+        padding: 15px;
+      }
+      
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Estilos de paginación */
+    .pagination-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 25px;
+      padding: 20px;
+      background: rgba(55, 65, 81, 0.3);
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .pagination-info {
+      flex: 1;
+    }
+
+    .pagination-text {
+      color: #9ca3af;
+      font-size: 0.9em;
+    }
+
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 2;
+      justify-content: center;
+    }
+
+    .pagination-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(75, 85, 99, 0.8);
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      color: #e5e7eb;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .pagination-btn:hover {
+      background: rgba(107, 114, 128, 0.9);
+      border-color: #6b7280;
+      transform: translateY(-1px);
+    }
+
+    .pagination-pages {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .pagination-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: rgba(75, 85, 99, 0.8);
+      border: 1px solid #4b5563;
+      border-radius: 6px;
+      color: #e5e7eb;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+
+    .pagination-page:hover {
+      background: rgba(107, 114, 128, 0.9);
+      border-color: #6b7280;
+      transform: translateY(-1px);
+    }
+
+    .pagination-current {
+      background: rgba(59, 130, 246, 0.9) !important;
+      border-color: #3b82f6 !important;
+      color: white !important;
+      font-weight: 600;
+    }
+
+    .pagination-size {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .pagination-size label {
+      color: #9ca3af;
+      font-size: 0.9em;
+    }
+
+    .pagination-size select {
+      background: rgba(75, 85, 99, 0.8);
+      border: 1px solid #4b5563;
+      border-radius: 4px;
+      color: #e5e7eb;
+      padding: 4px 8px;
+      font-size: 0.9em;
+    }
+
+    .pagination-size span {
+      color: #9ca3af;
+      font-size: 0.9em;
+    }
+    
+    /* Estilos específicos para tema claro en paginación */
+    [data-theme="light"] .pagination-container {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+    }
+    
+    [data-theme="light"] .pagination-text {
+      color: #495057;
+    }
+    
+    [data-theme="light"] .pagination-btn {
+      background: #e9ecef;
+      border: 1px solid #ced4da;
+      color: #495057;
+    }
+    
+    [data-theme="light"] .pagination-btn:hover {
+      background: #dee2e6;
+      border-color: #adb5bd;
+      color: #212529;
+    }
+    
+    [data-theme="light"] .pagination-page {
+      background: #e9ecef;
+      border: 1px solid #ced4da;
+      color: #495057;
+    }
+    
+    [data-theme="light"] .pagination-page:hover {
+      background: #dee2e6;
+      border-color: #adb5bd;
+      color: #212529;
+    }
+    
+    [data-theme="light"] .pagination-current {
+      background: #667eea !important;
+      border-color: #5a67d8 !important;
+      color: #ffffff !important;
+    }
+    
+    [data-theme="light"] .pagination-size label {
+      color: #495057;
+    }
+    
+    [data-theme="light"] .pagination-size select {
+      background: #ffffff;
+      border: 1px solid #ced4da;
+      color: #212529;
+    }
+    
+    [data-theme="light"] .pagination-size span {
+      color: #495057;
+    }
+    
+    /* Estilos específicos para tema claro en mensajes y texto */
+    [data-theme="light"] .text-muted {
+      color: #6c757d !important;
+    }
+    
+    [data-theme="light"] p {
+      color: #212529;
+    }
+    
+    /* Estilos específicos para tema claro en elementos de texto */
+    [data-theme="light"] .expedientes-table td {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .expedientes-table th {
+      background: #e9ecef !important;
+      color: #000000 !important;
+    }
+    
+    /* Estilos específicos para tema claro en elementos de interfaz */
+    [data-theme="light"] .main-content-header h2 {
+      color: #212529 !important;
+    }
+    
+    [data-theme="light"] .main-content-header p {
+      color: #495057 !important;
+    }
+    
+    [data-theme="light"] .filter-group label {
+      color: #212529 !important;
+    }
+
+    /* Estilos para mensajes de notificación */
+    .alert {
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 0.9em;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .alert-success {
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+      border-color: rgba(40, 167, 69, 0.3);
+    }
+
+    .alert-danger {
+      background: rgba(220, 53, 69, 0.9);
+      color: white;
+      border-color: rgba(220, 53, 69, 0.3);
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2em;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 10px;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn-close:hover {
+      opacity: 1;
+    }
+
+    /* Estilos específicos para tema claro */
+    [data-theme="light"] .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border-color: #c3e6cb;
+    }
+
+    [data-theme="light"] .alert-danger {
+      background: #f8d7da;
+      color: #721c24;
+      border-color: #f5c6cb;
+    }
+
+    [data-theme="light"] .btn-close {
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel" aria-label="Menú del sistema">
+      <div>
+        <h1 class="logo-text" aria-label="Nombre del sistema">
+          Secretaría de Servicios Públicos<br />
+          <span class="logo-subtext"><br />Digitalización de archivos</span>
+        </h1>
+      </div>
+      <nav aria-label="Menú principal del sistema" class="menu" role="menu">
+        <a href="{% url 'digitalizacion:dashboard' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9M9 21v-6h6v6"/></svg>
+          Dashboard
+        </a>
+        <a href="{% url 'expedientes:lista_expedientes' %}" role="menuitem" class="menu-item active" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/></svg>
+          Expedientes
+        </a>
+        <a href="{% url 'expedientes:seleccionar_tipo' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 7h3l3-4h8l3 4h3v10H2V7z"/></svg>
+          Crear
+        </a>
+        <a href="{% url 'digitalizacion:reportes' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-7-7v14"/></svg>
+          Reportes
+        </a>
+        <a href="{% url 'areas:gestionar' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="16" r="1"/><path d="M2 12h20"/></svg>
+          Áreas
+        </a>
+        <a href="{% url 'digitalizacion:panel_administracion' %}" role="menuitem" class="menu-item" tabindex="0">
+          <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></svg>
+          Configuración
+        </a>
+      </nav>
+    </div>
+
+    <div class="center-main" aria-label="Contenido principal del sistema">
+      <div class="main-content-header">
+        <div class="header-content">
+          <div class="header-text">
+            <h2>Gestión de Expedientes</h2>
+            <p>Administra y consulta todos los expedientes del sistema</p>
+          </div>
+          <div class="header-actions">
+            <!-- Botón de Cambio de Tema -->
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Cambiar Tema" id="themeToggle">
+              <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- Icono de Sol (tema claro) -->
+                <circle cx="12" cy="12" r="5" class="sun-icon"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" class="sun-rays"/>
+                <!-- Icono de Luna (tema oscuro) -->
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="moon-icon" style="display: none;"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {% csrf_token %}
+      
+      <!-- Filtros de búsqueda -->
+      <div class="filters-section">
+        <form method="get" class="filters-grid">
+          <div class="filter-group">
+            <label for="q">Búsqueda general</label>
+            <input type="text" id="q" name="q" value="{{ filtros_actuales.busqueda|default:'' }}" placeholder="Buscar por título, número o descripción...">
+          </div>
+          
+          <div class="filter-group">
+            <label for="numero_sima">Número SIMA</label>
+            <input type="text" id="numero_sima" name="numero_sima" value="{{ filtros_actuales.numero_sima|default:'' }}" placeholder="Buscar por número SIMA...">
+          </div>
+          
+          <div class="filter-group">
+            <label for="tipo">Tipo</label>
+            <select id="tipo" name="tipo">
+              <option value="">Todos los tipos</option>
+              <optgroup label="Por Giro">
+                <option value="giro_ferreteria" {% if filtros_actuales.tipo == 'giro_ferreteria' %}selected{% endif %}>Ferretería</option>
+                <option value="giro_construccion" {% if filtros_actuales.tipo == 'giro_construccion' %}selected{% endif %}>Construcción</option>
+                <option value="giro_comercial" {% if filtros_actuales.tipo == 'giro_comercial' %}selected{% endif %}>Comercial</option>
+                <option value="giro_servicios" {% if filtros_actuales.tipo == 'giro_servicios' %}selected{% endif %}>Servicios</option>
+                <option value="giro_industrial" {% if filtros_actuales.tipo == 'giro_industrial' %}selected{% endif %}>Industrial</option>
+                <option value="giro_otros" {% if filtros_actuales.tipo == 'giro_otros' %}selected{% endif %}>Otros Giros</option>
+              </optgroup>
+              <optgroup label="Por Fuente de Financiamiento">
+                <option value="fuente_propio_municipal" {% if filtros_actuales.tipo == 'fuente_propio_municipal' %}selected{% endif %}>Propio Municipal</option>
+                <option value="fuente_estatal" {% if filtros_actuales.tipo == 'fuente_estatal' %}selected{% endif %}>Estatal</option>
+                <option value="fuente_federal" {% if filtros_actuales.tipo == 'fuente_federal' %}selected{% endif %}>Federal</option>
+              </optgroup>
+              <optgroup label="Por Tipo de Adquisición">
+                <option value="adquisicion_bienes" {% if filtros_actuales.tipo == 'adquisicion_bienes' %}selected{% endif %}>Bienes</option>
+                <option value="adquisicion_servicios" {% if filtros_actuales.tipo == 'adquisicion_servicios' %}selected{% endif %}>Servicios</option>
+                <option value="adquisicion_arrendamientos" {% if filtros_actuales.tipo == 'adquisicion_arrendamientos' %}selected{% endif %}>Arrendamientos</option>
+              </optgroup>
+              <optgroup label="Por Monto/Proceso">
+                <option value="proceso_compra_directa" {% if filtros_actuales.tipo == 'proceso_compra_directa' %}selected{% endif %}>Compra Directa</option>
+                <option value="proceso_concurso_invitacion" {% if filtros_actuales.tipo == 'proceso_concurso_invitacion' %}selected{% endif %}>Concurso por Invitación</option>
+                <option value="proceso_licitacion" {% if filtros_actuales.tipo == 'proceso_licitacion' %}selected{% endif %}>Licitación</option>
+                <option value="proceso_adjudicacion_directa" {% if filtros_actuales.tipo == 'proceso_adjudicacion_directa' %}selected{% endif %}>Adjudicación Directa</option>
+              </optgroup>
+            </select>
+          </div>
+          
+          
+          <div class="filter-group">
+            <label for="departamento">Departamento</label>
+            <select id="departamento" name="departamento">
+              <option value="">Todos los departamentos</option>
+              {% for depto in departamentos %}
+                <option value="{{ depto.id }}" {% if filtros_actuales.departamento == depto.id|stringformat:"s" %}selected{% endif %}>
+                  {{ depto.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado">
+              <option value="">Todos los estados</option>
+              {% for estado_key, estado_nombre in estados %}
+                <option value="{{ estado_key }}" {% if filtros_actuales.estado == estado_key %}selected{% endif %}>
+                  {{ estado_nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <button type="submit" class="search-btn">Buscar</button>
+            <button type="button" class="clear-btn" onclick="limpiarFiltros()">Limpiar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Tabla de expedientes -->
+      <div class="table-container">
+        <div class="table-header">
+          <h3 class="table-title">Lista de Expedientes</h3>
+          <a href="{% url 'expedientes:seleccionar_tipo' %}" class="new-expediente-btn" style="text-decoration: none !important;">Nuevo Expediente</a>
+        </div>
+        
+        {% if expedientes %}
+          <table class="expedientes-table">
+            <thead>
+              <tr>
+                <th>NÚMERO</th>
+                <th>TÍTULO</th>
+                <th>TIPO</th>
+                <th>SUBTIPO</th>
+                <th>SIMA</th>
+                <th>DEPARTAMENTO</th>
+                <th>ESTADO ACTUAL</th>
+                <th>PROGRESO</th>
+                <th>FECHA</th>
+                <th>ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for expediente in expedientes %}
+                <tr data-expediente-id="{{ expediente.id }}" onclick="abrirModalExpediente({{ expediente.id }})" style="cursor: pointer;">
+                  <td>{{ expediente.numero_expediente }}</td>
+                  <td>{{ expediente.titulo }}</td>
+                  <td>
+                    <div class="expediente-tipo">
+                      {% if expediente.tipo_expediente == 'giro' %}
+                        <div class="tipo-icon giro-icon" title="Por Giro">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <rect x="3" y="3" width="6" height="6"></rect>
+                            <rect x="12" y="3" width="6" height="6"></rect>
+                            <rect x="3" y="12" width="6" height="6"></rect>
+                            <rect x="12" y="12" width="6" height="6"></rect>
+                          </svg>
+                          <span>Giro</span>
+                        </div>
+                      {% elif expediente.tipo_expediente == 'financiamiento' %}
+                        <div class="tipo-icon financiamiento-icon" title="Por Fuente de Financiamiento">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M3 21h18"></path>
+                            <path d="M5 21V7l8-4v18"></path>
+                            <path d="M19 21V11l-6-4"></path>
+                          </svg>
+                          <span>Financiamiento</span>
+                        </div>
+                      {% elif expediente.tipo_expediente == 'adquisicion' %}
+                        <div class="tipo-icon adquisicion-icon" title="Por Tipo de Adquisición">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M9 12l2 2 4-4"></path>
+                            <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                            <path d="M3 12c1 0 2-1 2-2s-1-2-2-2-2 1-2 2 1 2 2 2z"></path>
+                            <path d="M12 3c0 1-1 2-2 2s-2-1-2-2 1-2 2-2 2 1 2 2z"></path>
+                            <path d="M12 21c0-1 1-2 2-2s2 1 2 2-1 2-2 2-2-1-2-2z"></path>
+                          </svg>
+                          <span>Adquisición</span>
+                        </div>
+                      {% elif expediente.tipo_expediente == 'proceso' %}
+                        <div class="tipo-icon proceso-icon" title="Por Monto/Proceso">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                          </svg>
+                          <span>Proceso</span>
+                        </div>
+                      {% else %}
+                        <div class="tipo-icon default-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          </svg>
+                          <span>{{ expediente.tipo_expediente|default:"N/A"|title }}</span>
+                        </div>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="expediente-subtipo">
+                      {% if expediente.subtipo_expediente %}
+                        {% if expediente.tipo_expediente == 'giro' %}
+                          <span class="subtipo-badge giro-subtipo">
+                            {% if expediente.subtipo_expediente == 'ferreteria' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                              </svg>
+                              Ferretería
+                            {% elif expediente.subtipo_expediente == 'construccion' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                              </svg>
+                              Construcción
+                            {% elif expediente.subtipo_expediente == 'comercial' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 3h18v18H3z"></path>
+                                <path d="M9 9h6v6H9z"></path>
+                              </svg>
+                              Comercial
+                            {% elif expediente.subtipo_expediente == 'servicios' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83-2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                              </svg>
+                              Servicios
+                            {% elif expediente.subtipo_expediente == 'industrial' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                                <path d="M9 9h6v6H9z"></path>
+                              </svg>
+                              Industrial
+                            {% elif expediente.subtipo_expediente == 'otros' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6m0 0l4-4m-4 4l-4-4"></path>
+                              </svg>
+                              Otros Giros
+                            {% else %}
+                              {{ expediente.subtipo_expediente|title }}
+                            {% endif %}
+                          </span>
+                        {% elif expediente.tipo_expediente == 'financiamiento' %}
+                          <span class="subtipo-badge financiamiento-subtipo">
+                            {% if expediente.subtipo_expediente == 'propio_municipal' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                              </svg>
+                              Propio Municipal
+                            {% elif expediente.subtipo_expediente == 'estatal' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                              </svg>
+                              Estatal
+                            {% elif expediente.subtipo_expediente == 'federal' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                                <path d="M9 9h6v6H9z"></path>
+                              </svg>
+                              Federal
+                            {% else %}
+                              {{ expediente.subtipo_expediente|title }}
+                            {% endif %}
+                          </span>
+                        {% elif expediente.tipo_expediente == 'adquisicion' %}
+                          <span class="subtipo-badge adquisicion-subtipo">
+                            {% if expediente.subtipo_expediente == 'bienes' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M9 12l2 2 4-4"></path>
+                                <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                              </svg>
+                              Bienes
+                            {% elif expediente.subtipo_expediente == 'servicios' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83-2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                              </svg>
+                              Servicios
+                            {% elif expediente.subtipo_expediente == 'arrendamientos' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                                <path d="M9 9h6v6H9z"></path>
+                              </svg>
+                              Arrendamientos
+                            {% else %}
+                              {{ expediente.subtipo_expediente|title }}
+                            {% endif %}
+                          </span>
+                        {% elif expediente.tipo_expediente == 'proceso' %}
+                          <span class="subtipo-badge proceso-subtipo">
+                            {% if expediente.subtipo_expediente == 'compra_directa' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M9 12l2 2 4-4"></path>
+                                <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                              </svg>
+                              Compra Directa
+                            {% elif expediente.subtipo_expediente == 'concurso_invitacion' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83-2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                              </svg>
+                              Concurso por Invitación
+                            {% elif expediente.subtipo_expediente == 'licitacion' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M3 21h18"></path>
+                                <path d="M5 21V7l8-4v18"></path>
+                                <path d="M19 21V11l-6-4"></path>
+                                <path d="M9 9h6v6H9z"></path>
+                              </svg>
+                              Licitación
+                            {% elif expediente.subtipo_expediente == 'adjudicacion_directa' %}
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 12px; height: 12px;">
+                                <path d="M9 12l2 2 4-4"></path>
+                                <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                              </svg>
+                              Adjudicación Directa
+                            {% else %}
+                              {{ expediente.subtipo_expediente|title }}
+                            {% endif %}
+                          </span>
+                        {% else %}
+                          <span class="subtipo-badge default-subtipo">
+                            {{ expediente.subtipo_expediente|title }}
+                          </span>
+                        {% endif %}
+                      {% else %}
+                        <span class="subtipo-placeholder">Sin subtipo</span>
+                      {% endif %}
+                    </div>
+                  </td>
+                  <td>{{ expediente.numero_sima|default:"Sin asignar" }}</td>
+                  <td>{{ expediente.departamento.nombre }}</td>
+                  <td>
+                    {% if expediente.estado_actual == 'rechazado' %}
+                      <span class="status-badge status-rechazado">
+                        <i class="bi bi-x-circle"></i>
+                        Rechazado
+                      </span>
+                    {% elif expediente.estado_actual == 'inicio' %}
+                      <span class="status-badge status-inicio">
+                        <i class="bi bi-check-circle"></i>
+                        Inicio
+                      </span>
+                    {% else %}
+                      <span class="status-badge status-inicio">
+                        <i class="bi bi-check-circle"></i>
+                        {{ expediente.estado_actual|title }}
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: {{ expediente.progreso|default:0 }}%"></div>
+                    </div>
+                    <span class="ms-2">{{ expediente.progreso|default:0 }}%</span>
+                  </td>
+                  <td>{{ expediente.fecha_creacion|date:"d/m/Y" }}<br><small>{{ expediente.creado_por.get_full_name }}</small></td>
+                  <td>
+                    <div class="action-buttons" onclick="event.stopPropagation()">
+                      <a href="{% url 'expedientes:detalle' expediente.id %}" class="btn-action" title="Ver expediente completo">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                          <path d="M9 12l2 2 4-4"></path>
+                          <path d="M21 12c-1 0-2-1-2-2s1-2 2-2 2 1 2 2-1 2-2 2z"></path>
+                        </svg>
+                      </a>
+                      <a href="{% url 'expedientes:ver_documentos' expediente.id %}" class="btn-action" title="Ver Documentos">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14,2 14,8 20,8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                      </a>
+                      <button class="btn-action btn-delete" title="Eliminar expediente" onclick="confirmarEliminar({{ expediente.id }}, '{{ expediente.numero_expediente|default:"Sin número"|escapejs }}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                          <polyline points="3,6 5,6 21,6"></polyline>
+                          <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="10" class="text-center py-4">
+                    <p class="text-muted mb-0">No se encontraron expedientes</p>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          
+          <!-- Paginación -->
+          {% if expedientes.has_other_pages %}
+            <div class="pagination-container">
+              <div class="pagination-info">
+                <span class="pagination-text">
+                  Mostrando {{ expedientes.start_index }} a {{ expedientes.end_index }} de {{ expedientes.paginator.count }} expedientes
+                </span>
+              </div>
+              
+              <div class="pagination-controls">
+                {% if expedientes.has_previous %}
+                  <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page=1" class="pagination-btn pagination-first" title="Primera página">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                      <polyline points="11,17 6,12 11,7"></polyline>
+                      <polyline points="17,17 12,12 17,7"></polyline>
+                    </svg>
+                  </a>
+                  <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ expedientes.previous_page_number }}" class="pagination-btn pagination-prev" title="Página anterior">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                      <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
+                  </a>
+                {% endif %}
+                
+                <div class="pagination-pages">
+                  {% for num in expedientes.paginator.page_range %}
+                    {% if expedientes.number == num %}
+                      <span class="pagination-page pagination-current">{{ num }}</span>
+                    {% elif num > expedientes.number|add:'-3' and num < expedientes.number|add:'3' %}
+                      <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}" class="pagination-page">{{ num }}</a>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+                
+                {% if expedientes.has_next %}
+                  <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ expedientes.next_page_number }}" class="pagination-btn pagination-next" title="Página siguiente">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                      <polyline points="9,18 15,12 9,6"></polyline>
+                    </svg>
+                  </a>
+                  <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ expedientes.paginator.num_pages }}" class="pagination-btn pagination-last" title="Última página">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                      <polyline points="13,17 18,12 13,7"></polyline>
+                      <polyline points="7,17 12,12 7,7"></polyline>
+                    </svg>
+                  </a>
+                {% endif %}
+              </div>
+              
+              <div class="pagination-size">
+                <label for="page-size">Mostrar:</label>
+                <select id="page-size" name="page_size" onchange="cambiarTamanoPagina(this.value)">
+                  <option value="25" {% if request.GET.page_size == '25' or not request.GET.page_size %}selected{% endif %}>25</option>
+                  <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50</option>
+                  <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100</option>
+                  <option value="200" {% if request.GET.page_size == '200' %}selected{% endif %}>200</option>
+                </select>
+                <span>por página</span>
+              </div>
+            </div>
+          {% endif %}
+        {% else %}
+          <div style="text-align: center; padding: 40px; color: #9ca3af;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; margin: 0 auto 20px; opacity: 0.5;">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <h3>No hay expedientes</h3>
+            <p>No se encontraron expedientes con los filtros aplicados.</p>
+            <a href="{% url 'expedientes:seleccionar_tipo' %}" class="new-expediente-btn" style="margin-top: 20px; display: inline-block;">
+              Crear Primer Expediente
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Barra inferior negra con información del sistema -->
+    <div class="bottom-info-bar">
+      <div class="bottom-info-content">
+        <div class="system-status">
+          <span class="status-indicator online"></span>
+          <span class="status-text">Sistema Operativo</span>
+        </div>
+        <div class="system-version">
+          <span class="version-text">v2.1.0 - Secretaría de Servicios Públicos</span>
+        </div>
+        <div class="system-links">
+          <a href="#" class="bottom-link">Ayuda</a>
+          <a href="#" class="bottom-link">Contacto</a>
+          <a href="#" class="bottom-link">Términos</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de detalles del expediente -->
+  <div class="modal-overlay" id="expedienteModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Detalles del Expediente</h3>
+        <button class="modal-close" onclick="cerrarModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- El contenido se cargará dinámicamente -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Función para alternar entre temas
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      // Guardar la preferencia en localStorage
+      localStorage.setItem('theme', newTheme);
+      
+      // Aplicar el nuevo tema
+      html.setAttribute('data-theme', newTheme);
+      
+      // Actualizar el ícono
+      updateThemeIcon(newTheme);
+      
+      // Actualizar el atributo para el lector de pantalla
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.setAttribute('aria-label', `Cambiar a tema ${currentTheme === 'dark' ? 'oscuro' : 'claro'}`);
+        themeToggle.setAttribute('title', `Cambiar a tema ${currentTheme === 'dark' ? 'oscuro' : 'claro'}`);
+      }
+    }
+    
+    // Función para actualizar el icono del botón de tema
+    function updateThemeIcon(theme) {
+      const sunIcon = document.querySelector('.sun-icon');
+      const sunRays = document.querySelector('.sun-rays');
+      const moonIcon = document.querySelector('.moon-icon');
+      
+      if (theme === 'light') {
+        sunIcon.style.display = 'none';
+        sunRays.style.display = 'none';
+        moonIcon.style.display = 'block';
+      } else {
+        sunIcon.style.display = 'block';
+        sunRays.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }
+    }
+    
+    // Función para inicializar el tema
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      console.log('Inicializando tema:', savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+      console.log('Tema inicializado:', document.documentElement.getAttribute('data-theme'));
+    }
+    
+    // Función para cerrar paneles al hacer clic fuera de ellos
+    document.addEventListener('click', function(event) {
+      // Aquí puedes agregar lógica adicional si es necesario
+    });
+
+    // Función para confirmar eliminación de expediente
+    function confirmarEliminar(expedienteId, numeroExpediente) {
+      if (confirm(`¿Estás seguro de que quieres eliminar el expediente ${numeroExpediente}?\n\nEsta acción no se puede deshacer.`)) {
+        eliminarExpediente(expedienteId, numeroExpediente);
+      }
+    }
+
+    // Función para eliminar expediente via AJAX
+    function eliminarExpediente(expedienteId, numeroExpediente) {
+      // Mostrar indicador de carga
+      const botonEliminar = document.querySelector(`button[onclick*="${expedienteId}"]`);
+      if (botonEliminar) {
+        botonEliminar.disabled = true;
+        botonEliminar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83-2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>';
+      }
+
+      // Obtener token CSRF
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+      // Hacer petición AJAX
+      fetch(`/expedientes/${expedienteId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Mostrar mensaje de éxito
+          mostrarMensaje('success', data.message);
+          
+          // Remover la fila de la tabla
+          const fila = document.querySelector(`tr[data-expediente-id="${expedienteId}"]`);
+          if (fila) {
+            fila.style.transition = 'opacity 0.3s ease';
+            fila.style.opacity = '0';
+            setTimeout(() => {
+              fila.remove();
+              
+              // Verificar si no quedan expedientes
+              const tbody = document.querySelector('.expedientes-table tbody');
+              if (tbody && tbody.children.length === 0) {
+                // Mostrar mensaje de no hay expedientes
+                tbody.innerHTML = `
+                  <tr>
+                    <td colspan="10" class="text-center py-4">
+                      <p class="text-muted mb-0">No se encontraron expedientes</p>
+                    </td>
+                  </tr>
+                `;
+              }
+            }, 300);
+          }
+        } else {
+          // Mostrar mensaje de error
+          mostrarMensaje('error', data.error || 'Error al eliminar el expediente');
+          
+          // Restaurar botón
+          if (botonEliminar) {
+            botonEliminar.disabled = false;
+            botonEliminar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><polyline points="3,6 5,6 21,6"></polyline><path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path></svg>';
+          }
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('error', 'Error de conexión al eliminar el expediente');
+        
+        // Restaurar botón
+        if (botonEliminar) {
+          botonEliminar.disabled = false;
+          botonEliminar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><polyline points="3,6 5,6 21,6"></polyline><path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path></svg>';
+        }
+      });
+    }
+
+    // Función para mostrar mensajes
+    function mostrarMensaje(tipo, mensaje) {
+      // Crear elemento de mensaje
+      const mensajeDiv = document.createElement('div');
+      mensajeDiv.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+      mensajeDiv.style.position = 'fixed';
+      mensajeDiv.style.top = '20px';
+      mensajeDiv.style.right = '20px';
+      mensajeDiv.style.zIndex = '9999';
+      mensajeDiv.style.minWidth = '300px';
+      mensajeDiv.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+      `;
+      
+      // Agregar al DOM
+      document.body.appendChild(mensajeDiv);
+      
+      // Auto-remover después de 5 segundos
+      setTimeout(() => {
+        if (mensajeDiv.parentElement) {
+          mensajeDiv.remove();
+        }
+      }, 5000);
+    }
+
+    // Función para limpiar filtros
+    function limpiarFiltros() {
+      window.location.href = '{% url "expedientes:lista_expedientes" %}';
+    }
+
+    // Función para cambiar el tamaño de página
+    function cambiarTamanoPagina(tamano) {
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.set('page_size', tamano);
+      urlParams.delete('page'); // Reset a la primera página
+      window.location.href = '{% url "expedientes:lista_expedientes" %}?' + urlParams.toString();
+    }
+    
+    // Funciones para el modal de expedientes
+    function abrirModalExpediente(expedienteId) {
+      const modal = document.getElementById('expedienteModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalBody = document.getElementById('modalBody');
+      
+      // Mostrar modal
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      
+      // Obtener el estado actual del expediente desde la fila de la tabla
+      const filaExpediente = document.querySelector(`tr[data-expediente-id="${expedienteId}"]`);
+      const estadoActual = filaExpediente ? filaExpediente.querySelector('.estado-badge')?.textContent.trim() : null;
+      
+      // Mostrar loading con el estado actual si está disponible
+      modalTitle.textContent = 'Cargando...';
+      let loadingHTML = '<div style="text-align: center; padding: 20px;"><div class="spinner"></div><p>Cargando información del expediente...</p>';
+      
+      if (estadoActual) {
+        loadingHTML += `<p class="mt-2">Estado actual: <span class="estado-badge estado-${estadoActual.toLowerCase()}">${estadoActual}</span></p>`;
+      }
+      
+      loadingHTML += '</div>';
+      modalBody.innerHTML = loadingHTML;
+      
+      // Hacer petición AJAX para obtener los datos del expediente
+      fetch(`/expedientes/api/${expedienteId}/detalles/`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            const expediente = data.expediente;
+            
+            // Formatear la fecha
+            const fechaCreacion = new Date(expediente.fecha_creacion);
+            const opcionesFecha = { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            };
+            const fechaFormateada = fechaCreacion.toLocaleDateString('es-ES', opcionesFecha);
+            
+            // Llenar el modal con los datos
+            modalTitle.textContent = `Expediente ${expediente.numero_expediente || 'N/A'}`;
+            
+            // Contenido del modal con datos - Diseño Moderno
+            modalBody.innerHTML = `
+              <div class="expediente-modal-content">
+                <div class="expediente-info-grid">
+                  <!-- Sección de Información General -->
+                  <div class="info-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <rect x="7" y="7" width="10" height="2"></rect>
+                        <rect x="7" y="11" width="10" height="2"></rect>
+                        <rect x="7" y="15" width="6" height="2"></rect>
+                      </svg>
+                      Información General
+                    </h4>
+                    <div class="info-item">
+                      <span class="info-label">Número:</span>
+                      <span class="info-value">${expediente.numero_expediente || 'N/A'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Título:</span>
+                      <span class="info-value">${expediente.titulo || 'Sin título'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Descripción:</span>
+                      <span class="info-value">${expediente.descripcion || 'Sin descripción'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Estado:</span>
+                      <span class="info-value">
+                        <span class="estado-badge estado-${expediente.estado_actual?.toLowerCase().replace(/\s+/g, '_') || 'desconocido'}">
+                          ${expediente.estado_actual || 'Estado no disponible'}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- Sección de Información Adicional -->
+                  <div class="info-section">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      Información Adicional
+                    </h4>
+                    <div class="info-item">
+                      <span class="info-label">Departamento:</span>
+                      <span class="info-value">${expediente.departamento || 'No asignado'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Creado por:</span>
+                      <span class="info-value">${expediente.creado_por || 'Usuario desconocido'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Fecha creación:</span>
+                      <span class="info-value">${fechaFormateada}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Documentos:</span>
+                      <span class="info-value">${expediente.documentos_count || 0} archivos</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Etapas:</span>
+                      <span class="info-value">${expediente.etapas_count || 0} completadas</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Sección de Documentos -->
+                <div class="documents-section">
+                  <div class="documents-header">
+                    <h4>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                      </svg>
+                      Documentos (${expediente.documentos_count || 0})
+                    </h4>
+                  </div>
+                  
+                  <div id="documentosContainer" class="documents-list">
+                    <div class="text-center py-4">
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando documentos...</span>
+                      </div>
+                      <p class="mt-2">Cargando documentos...</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+            
+            // Cargar los documentos después de mostrar la información básica
+            cargarDocumentos(expedienteId);
+            
+          } else {
+            throw new Error(data.error || 'Error desconocido al cargar el expediente');
+          }
+        })
+        .catch(error => {
+          console.error('Error al cargar el expediente:', error);
+          modalTitle.textContent = 'Error';
+          modalBody.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+              <h5 class="alert-heading">¡Error al cargar el expediente!</h5>
+              <p>${error.message || 'Ocurrió un error al intentar cargar la información del expediente.'}</p>
+              <hr>
+              <p class="mb-0">Por favor, intente nuevamente más tarde o contacte al administrador del sistema.</p>
+              <button class="btn btn-sm btn-outline-secondary mt-3" onclick="abrirModalExpediente(${expedienteId})">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 5px;">
+                  <path d="M21.5 2v6h-6M2.5 22v-6h6m13-13l-7 7m0 0l-7-7m7 7v18"></path>
+                </svg>
+                Reintentar
+              </button>
+            </div>
+          `;
+        });
+    }
+    
+    // Función para cargar los documentos del expediente
+    function cargarDocumentos(expedienteId) {
+      const documentosContainer = document.getElementById('documentosContainer');
+      
+      if (!documentosContainer) {
+        console.error('No se encontró el contenedor de documentos');
+        return;
+      }
+      
+      // Mostrar indicador de carga
+      documentosContainer.innerHTML = `
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando documentos...</span>
+          </div>
+          <p class="mt-2">Cargando documentos...</p>
+        </div>
+      `;
+      
+      // Hacer petición para obtener los documentos
+      fetch(`/api/expedientes/${expedienteId}/documentos/`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success && data.documentos && data.documentos.length > 0) {
+            // Mostrar los documentos con diseño moderno
+            documentosContainer.innerHTML = data.documentos.map(doc => {
+              const tipoArchivo = doc.tipo || 'Archivo';
+              const tamaño = formatearTamaño(doc.tamaño_bytes || 0);
+              const fechaSubida = formatearFecha(doc.fecha_subida);
+              const subidoPor = doc.subido_por || 'Usuario desconocido';
+              const nombreArchivo = doc.nombre || 'Sin nombre';
+              
+              return `
+              <div class="document-item">
+                <div class="document-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                  </svg>
+                </div>
+                <div class="document-info">
+                  <div class="document-name" title="${nombreArchivo}">${nombreArchivo}</div>
+                  <div class="document-meta">
+                    <span>${tipoArchivo}</span>
+                    <span>•</span>
+                    <span>${tamaño}</span>
+                    <span>•</span>
+                    <span>Subido: ${fechaSubida}</span>
+                    <span>•</span>
+                    <span>Por: ${subidoPor}</span>
+                  </div>
+                </div>
+                <div class="document-actions">
+                  <button class="document-btn" 
+                          onclick="verDocumento('${doc.archivo_url || ''}', '${tipoArchivo}')" 
+                          title="Ver documento"
+                          ${!doc.archivo_url ? 'disabled' : ''}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Ver
+                  </button>
+                  <button class="document-btn download-btn" 
+                          onclick="descargarDocumento('${doc.archivo_url || ''}')" 
+                          title="Descargar documento"
+                          ${!doc.archivo_url ? 'disabled' : ''}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7,10 12,15 17,10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Descargar
+                  </button>
+                </div>
+              </div>
+            `;
+            }).join('');
+          } else {
+            documentosContainer.innerHTML = `
+              <div class="no-documents" style="text-align: center; padding: 80px 40px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-radius: 16px; border: 2px dashed #cbd5e1;">
+                <div style="width: 80px; height: 80px; margin: 0 auto 24px; background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 40px; height: 40px; color: #64748b;">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                </div>
+                <p style="font-size: 1.125em; font-weight: 600; color: #334155; margin: 0 0 8px 0; letter-spacing: -0.01em;">No hay documentos cargados</p>
+                <p style="font-size: 0.9375em; font-weight: 400; color: #64748b; margin: 0;">Este expediente aún no tiene documentos asociados</p>
+              </div>
+            `;
+          }
+        })
+        .catch(error => {
+          console.error('Error al cargar documentos:', error);
+          documentosContainer.innerHTML = `
+            <div style="background: #fef3c7; border: 1px solid #fbbf24; border-radius: 12px; padding: 20px; text-align: center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 48px; height: 48px; color: #d97706; margin: 0 auto 16px; display: block;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              <h5 style="color: #92400e; font-weight: 600; margin: 0 0 8px 0; font-size: 1.1em;">Error al cargar documentos</h5>
+              <p style="color: #78350f; margin: 0 0 16px 0;">${error.message || 'No se pudieron cargar los documentos del expediente.'}</p>
+              <button class="document-btn" onclick="cargarDocumentos(${expedienteId})" style="margin: 0 auto;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M23 4v6h-6M1 20v-6h6m13-5l-7-7-7 7m7-7v18"></path>
+                </svg>
+                Reintentar
+              </button>
+            </div>
+          `;
+        });
+    }
+    
+    // Función auxiliar para formatear el tamaño del archivo
+    function formatearTamaño(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Función auxiliar para formatear fechas
+    function formatearFecha(fechaString) {
+      if (!fechaString) return 'Fecha desconocida';
+      const fecha = new Date(fechaString);
+      return fecha.toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+    
+    function cerrarModal() {
+      const modal = document.getElementById('expedienteModal');
+      modal.classList.remove('show');
+      document.body.style.overflow = 'auto';
+    }
+    
+    // Cerrar modal al hacer clic fuera del contenido
+    document.getElementById('expedienteModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        cerrarModal();
+      }
+    });
+    
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        cerrarModal();
+      }
+    });
+
+    // Funciones para ver y descargar documentos
+    function verDocumento(archivoUrl, tipoArchivo) {
+      if (archivoUrl) {
+        const tipo = tipoArchivo ? tipoArchivo.toLowerCase() : '';
+        const extension = archivoUrl.toLowerCase();
+        
+        if (tipo === 'pdf' || extension.endsWith('.pdf')) {
+          // PDF: Abrir directamente en nueva pestaña
+          window.open(archivoUrl, '_blank');
+        } else if (tipo === 'docx' || tipo === 'doc' || extension.endsWith('.docx') || extension.endsWith('.doc')) {
+          // Word: Abrir con Google Docs Viewer
+          const googleDocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(archivoUrl)}&embedded=true`;
+          window.open(googleDocsUrl, '_blank');
+        } else if (tipo === 'xlsx' || tipo === 'xls' || extension.endsWith('.xlsx') || extension.endsWith('.xls')) {
+          // Excel: Abrir con Google Sheets Viewer
+          const googleSheetsUrl = `https://docs.google.com/spreadsheets/d/1/edit?usp=sharing&url=${encodeURIComponent(archivoUrl)}`;
+          window.open(googleSheetsUrl, '_blank');
+        } else {
+          // Otros tipos: Intentar abrir directamente
+          window.open(archivoUrl, '_blank');
+        }
+      } else {
+        alert('No hay archivo disponible para ver');
+      }
+    }
+    
+    function descargarDocumento(archivoUrl) {
+      if (archivoUrl) {
+        // Crear un enlace temporal para descargar
+        const link = document.createElement('a');
+        link.href = archivoUrl;
+        link.download = ''; // Esto forzará la descarga
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        alert('No hay archivo disponible para descargar');
+      }
+    }
+
+    // Función para actualizar el estado del expediente
+    function actualizarEstadoExpediente(expedienteId, boton) {
+      const contenedorEstado = boton.closest('.info-item');
+      const badgeEstado = contenedorEstado.querySelector('.estado-badge');
+      
+      // Mostrar indicador de carga
+      const textoOriginal = boton.innerHTML;
+      boton.disabled = true;
+      boton.innerHTML = `
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+      `;
+      
+      // Hacer petición para actualizar el estado
+      fetch(`/expedientes/api/${expedienteId}/actualizar-estado/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.success) {
+          // Actualizar el badge del estado
+          badgeEstado.className = `info-value estado-badge estado-${data.nuevo_estado.toLowerCase()}`;
+          badgeEstado.textContent = data.nuevo_estado;
+          
+          // Actualizar también en la fila de la tabla
+          const filaExpediente = document.querySelector(`tr[data-expediente-id="${expedienteId}"]`);
+          if (filaExpediente) {
+            const badgeTabla = filaExpediente.querySelector('.estado-badge');
+            if (badgeTabla) {
+              badgeTabla.className = `estado-badge estado-${data.nuevo_estado.toLowerCase()}`;
+              badgeTabla.textContent = data.nuevo_estado;
+            }
+          }
+          
+          // Mostrar mensaje de éxito
+          mostrarMensaje('success', 'Estado del expediente actualizado correctamente');
+        } else {
+          throw new Error(data.error || 'Error al actualizar el estado');
+        }
+      })
+      .catch(error => {
+        console.error('Error al actualizar el estado:', error);
+        mostrarMensaje('danger', `Error al actualizar el estado: ${error.message}`);
+      })
+      .finally(() => {
+        // Restaurar el botón
+        boton.disabled = false;
+        boton.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px; margin-right: 2px;">
+            <path d="M23 4v6h-6M1 20v-6h6m13-5l-7-7-7 7m7-7v18"></path>
+          </svg>
+        `;
+      });
+    }
+    
+    // Función auxiliar para obtener el token CSRF
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    // Inicializar el tema al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeTheme();
+    });
+  </script>
+</body>
+</html>

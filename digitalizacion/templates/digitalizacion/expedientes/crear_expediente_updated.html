@@ -1,0 +1,87 @@
+  <script>
+    // Validación del formulario
+    document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form.needs-validation');
+      const submitButton = document.getElementById('submit-button');
+      const formErrors = document.getElementById('form-errors');
+      
+      if (form) {
+        form.addEventListener('submit', function(event) {
+          // Evitar el envío normal del formulario
+          event.preventDefault();
+          
+          // Validar el formulario
+          if (form.checkValidity() === false) {
+            event.stopPropagation();
+            form.classList.add('was-validated');
+            
+            // Mostrar mensajes de error
+            const invalidFields = form.querySelectorAll(':invalid');
+            let errorMessage = 'Por favor completa los siguientes campos obligatorios:';
+            
+            invalidFields.forEach(function(field) {
+              const fieldName = field.labels ? field.labels[0].textContent : field.name;
+              errorMessage += `\n- ${fieldName}`;
+            });
+            
+            formErrors.textContent = errorMessage;
+            formErrors.style.display = 'block';
+            
+            // Desplazarse al primer campo inválido
+            if (invalidFields.length > 0) {
+              invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            return false;
+          }
+          
+          // Si el formulario es válido, mostramos un mensaje de carga
+          submitButton.disabled = true;
+          submitButton.innerHTML = `
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Procesando...
+          `;
+          
+          // Enviar el formulario
+          form.submit();
+          
+          return true;
+        });
+      }
+    });
+    
+    // Funciones para cambio de tema
+    function toggleTheme() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon();
+    }
+    
+    function updateThemeIcon() {
+      const html = document.documentElement;
+      const currentTheme = html.getAttribute('data-theme');
+      const sunIcon = document.querySelector('.sun-icon');
+      const moonIcon = document.querySelector('.moon-icon');
+      
+      if (currentTheme === 'light') {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      } else {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      }
+    }
+    
+    function initializeTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon();
+    }
+    
+    // Inicializar tema al cargar la página
+    document.addEventListener('DOMContentLoaded', initializeTheme);
+  </script>

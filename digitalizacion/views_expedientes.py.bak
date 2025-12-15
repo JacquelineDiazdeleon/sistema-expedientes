@@ -1,0 +1,3606 @@
+# Importaciones estándar de Django
+import io
+import os
+import zipfile
+import json
+import logging
+import traceback
+import tempfile
+import re
+from datetime import datetime
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse, HttpResponse
+from django.contrib import messages as django_messages
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.db import transaction
+from django.contrib.auth.decorators import login_required, permission_required
+from django.views.decorators.http import require_http_methods, require_GET, require_POST
+
+# Importaciones de modelos locales
+from .models import (
+    Expediente, 
+    DocumentoExpediente, 
+    ComentarioEtapa, 
+    HistorialExpediente,
+    AreaTipoExpediente, 
+    ComentarioArea, 
+    Notificacion, 
+    EtapaExpediente, 
+    TipoDocumento,
+    Expediente  # Importación del modelo Expediente
+)
+
+logger = logging.getLogger(__name__)
+from django.core.paginator import Paginator
+from django.db.models import Q, Count, Sum, F, Value, CharField, Case, When, Value, BooleanField
+from django.db.models.functions import Concat, Coalesce
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.core.files import File
+from django.apps import apps
+from django.forms import modelformset_factory
+from django.urls import reverse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.http import Http404, HttpResponseForbidden, FileResponse
+from django.utils.encoding import smart_str
+import mimetypes
+import os
+
+# Configuración de logging
+logger = logging.getLogger(__name__)
+
+# Importación de modelos usando get_model para evitar importaciones circulares
+Expediente = apps.get_model('digitalizacion', 'Expediente')
+DocumentoExpediente = apps.get_model('digitalizacion', 'DocumentoExpediente')
+MensajeExpediente = apps.get_model('digitalizacion', 'MensajeExpediente')
+AreaTipoExpediente = apps.get_model('digitalizacion', 'AreaTipoExpediente')
+HistorialExpediente = apps.get_model('digitalizacion', 'HistorialExpediente')
+User = apps.get_model('auth', 'User')
+ComentarioArea = apps.get_model('digitalizacion', 'ComentarioArea')
+Notificacion = apps.get_model('digitalizacion', 'Notificacion')
+Departamento = apps.get_model('digitalizacion', 'Departamento')
+
+# Importación de formularios
+from .forms import ExpedienteForm
+
+# Constantes
+SUBTIPOS_LICITACION = {
+    'licitacion_recurso_propio': 'licitacion',
+    'licitacion_fondo_federal': 'licitacion'
+}
+
+# Intento de importar PyMuPDF para funcionalidad de PDF
+try:
+    import fitz  # PyMuPDF
+    FITZ_AVAILABLE = True
+except ImportError:
+    FITZ_AVAILABLE = False
+    print("Advertencia: PyMuPDF (fitz) no está instalado. Algunas funcionalidades de PDF podrían no estar disponibles.")
+
+# Importaciones para el manejo de documentos de Word
+try:
+    from docx import Document
+    from docx.shared import Inches, Mm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    from docx.shared import RGBColor
+except ImportError:
+    print("Advertencia: python-docx no está instalado. Algunas funcionalidades de Word podrían no estar disponibles.")
+
+# Deshabilitar mensajes
+@login_required
+@require_http_methods(["POST"])
+def guardar_expediente(request, expediente_id):
+    """
+    Vista para guardar los cambios de un expediente existente
+    """
+    try:
+        # Obtener el expediente o devolver 404 si no existe
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos (solo el usuario que creó el expediente o superusuarios pueden editarlo)
+        if not (request.user.is_superuser or expediente.creado_por == request.user):
+            messages.error(request, 'No tienes permiso para editar este expediente.')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Verificar que el expediente no esté en un estado que impida la edición
+        if expediente.estado in ['aprobado', 'rechazado']:
+            messages.error(request, 'No se puede editar un expediente que ya ha sido aprobado o rechazado.')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Procesar el formulario
+        form = ExpedienteForm(request.POST, request.FILES, instance=expediente)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Guardar los cambios en el expediente
+                    expediente = form.save(commit=False)
+                    expediente.modificado_por = request.user
+                    expediente.fecha_modificacion = timezone.now()
+                    expediente.save()
+                    form.save_m2m()  # Guardar relaciones many-to-many
+                    
+                    # Registrar en el historial
+                    HistorialExpediente.crear_registro(
+                        usuario=request.user,
+                        accion='actualizar_expediente',
+                        modelo='Expediente',
+                        objeto_id=expediente.id,
+                        detalles='Se actualizaron los datos del expediente.'
+                    )
+                    
+                    messages.success(request, 'Los cambios en el expediente se han guardado correctamente.')
+                    return redirect('expedientes:detalle', expediente_id=expediente_id)
+                    
+            except Exception as e:
+                logger.error(f"Error al guardar el expediente {expediente_id}: {str(e)}")
+                messages.error(request, f'Error al guardar los cambios: {str(e)}')
+        else:
+            # Si el formulario no es válido, mostrar los errores
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error en {field}: {error}")
+            
+        # Si hay errores, redirigir de vuelta al formulario de edición
+        return redirect('expedientes:editar', expediente_id=expediente_id)
+        
+    except Exception as e:
+        logger.error(f"Error en guardar_expediente: {str(e)}")
+        messages.error(request, 'Ocurrió un error al procesar la solicitud.')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+@login_required
+@login_required
+@require_http_methods(["POST"])
+@login_required
+@require_http_methods(["POST"])
+@login_required
+@login_required
+@require_http_methods(["POST"])
+@login_required
+@require_http_methods(["POST"])
+@login_required
+@login_required
+def generar_pdf_completo(request, expediente_id):
+    """
+    Vista para generar un PDF con la información completa de un expediente
+    """
+    try:
+        # Obtener el expediente con sus relaciones
+        expediente = get_object_or_404(
+            Expediente.objects.select_related(
+                'creado_por', 'area', 'modificado_por', 'usuario_rechazo'
+            ).prefetch_related(
+                'documentos__tipo_documento',
+                'documentos__subido_por',
+                'historial__usuario',
+                'comentarios__usuario',
+                'etapas'
+            ),
+            id=expediente_id
+        )
+        
+        # Verificar permisos
+        if not (request.user.is_superuser or expediente.area in request.user.areas.all()):
+            messages.error(request, 'No tienes permiso para ver este expediente.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+        
+        # Crear el objeto HttpResponse con los headers de PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="expediente_{expediente.numero_expediente}_{timezone.now().strftime("%Y%m%d")}.pdf"'
+        
+        # Crear el objeto PDF
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, 
+                              rightMargin=72, leftMargin=72,
+                              topMargin=72, bottomMargin=72)
+        
+        # Estilos
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(
+            name='Titulo',
+            fontSize=16,
+            leading=20,
+            alignment=TA_CENTER,
+            spaceAfter=20
+        ))
+        styles.add(ParagraphStyle(
+            name='Subtitulo',
+            fontSize=12,
+            leading=16,
+            spaceAfter=12
+        ))
+        styles.add(ParagraphStyle(
+            name='Normal',
+            fontSize=10,
+            leading=12,
+            spaceAfter=6
+        ))
+        
+        # Contenido del PDF
+        elements = []
+        
+        # Título
+        elements.append(Paragraph(f"Expediente: {expediente.numero_expediente}", styles['Title']))
+        elements.append(Spacer(1, 12))
+        
+        # Información del expediente
+        elements.append(Paragraph("Información General", styles['Heading2']))
+        data = [
+            ['Tipo', expediente.get_tipo_display()],
+            ['Estado', expediente.get_estado_display()],
+            ['Área', str(expediente.area)],
+            ['Creado por', f"{expediente.creado_por.get_full_name()} ({expediente.creado_por.username})"],
+            ['Fecha de creación', expediente.fecha_creacion.strftime('%d/%m/%Y %H:%M')],
+            ['Última modificación', expediente.fecha_modificacion.strftime('%d/%m/%Y %H:%M') if expediente.fecha_modificacion else 'N/A'],
+        ]
+        
+        if expediente.estado == 'rechazado' and expediente.usuario_rechazo:
+            data.append(['Rechazado por', f"{expediente.usuario_rechazo.get_full_name()} ({expediente.usuario_rechazo.username})"])
+            if expediente.razon_rechazo:
+                data.append(['Razón de rechazo', expediente.razon_rechazo])
+        
+        t = Table(data, colWidths=[doc.width/3.0]*2)
+        t.setStyle(TableStyle([
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('LEFTPADDING', (0, 0), (-1, -1), 3),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(t)
+        elements.append(Spacer(1, 12))
+        
+        # Documentos
+        if expediente.documentos.exists():
+            elements.append(Paragraph("Documentos", styles['Heading2']))
+            data = [['Tipo', 'Nombre', 'Subido por', 'Fecha', 'Tamaño']]
+            
+            for doc in expediente.documentos.all():
+                data.append([
+                    doc.tipo_documento.nombre if doc.tipo_documento else 'Sin tipo',
+                    doc.nombre,
+                    doc.subido_por.get_full_name() if hasattr(doc.subido_por, 'get_full_name') else str(doc.subido_por),
+                    doc.fecha_subida.strftime('%d/%m/%Y %H:%M'),
+                    f"{doc.tamano_bytes/1024:.1f} KB" if doc.tamano_bytes else 'N/A'
+                ])
+            
+            t = Table(data, colWidths=[doc.width*0.2]*5)
+            t.setStyle(TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, -1), 6),
+                ('LEFTPADDING', (0, 0), (-1, -1), 3),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ]))
+            elements.append(t)
+            elements.append(Spacer(1, 12))
+        
+        # Historial
+        if expediente.historial.exists():
+            elements.append(Paragraph("Historial", styles['Heading2']))
+            data = [['Fecha', 'Usuario', 'Acción', 'Detalles']]
+            
+            for h in expediente.historial.order_by('-fecha_accion'):
+                data.append([
+                    h.fecha_accion.strftime('%d/%m/%Y %H:%M'),
+                    h.usuario.get_full_name() if hasattr(h.usuario, 'get_full_name') else str(h.usuario),
+                    h.get_accion_display(),
+                    h.detalles[:100] + '...' if h.detalles and len(h.detalles) > 100 else (h.detalles or '')
+                ])
+            
+            t = Table(data, colWidths=[doc.width*0.15, doc.width*0.2, doc.width*0.2, doc.width*0.45])
+            t.setStyle(TableStyle([
+                ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTSIZE', (0, 0), (-1, -1), 6),
+                ('LEFTPADDING', (0, 0), (-1, -1), 3),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 3),
+            ]))
+            elements.append(t)
+        
+        # Pie de página
+        elements.append(PageBreak())
+        elements.append(Paragraph(f"Generado el: {timezone.now().strftime('%d/%m/%Y %H:%M')} por {request.user.get_full_name() or request.user.username}", 
+                               style=ParagraphStyle(name='Footer', fontSize=8, alignment=TA_RIGHT)))
+        
+        # Construir el PDF
+        doc.build(elements)
+        
+        # Obtener el valor del buffer y enviar la respuesta
+        pdf = buffer.getvalue()
+        buffer.close()
+        response.write(pdf)
+        
+        # Registrar en el historial
+        HistorialExpediente.crear_registro(
+            usuario=request.user,
+            accion='generar_pdf',
+            modelo='Expediente',
+            objeto_id=expediente.id,
+            detalles='Se generó el archivo PDF del expediente.'
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error en generar_pdf_completo: {str(e)}")
+        messages.error(request, 'Ocurrió un error al generar el PDF.')
+        return redirect('expedientes:detalle', pk=expediente_id)
+
+@login_required
+def descargar_expediente(request, expediente_id):
+    """
+    Vista para descargar todos los documentos de un expediente en un archivo ZIP
+    """
+    try:
+        # Obtener el expediente con sus documentos relacionados
+        expediente = get_object_or_404(
+            Expediente.objects.prefetch_related('documentos__tipo_documento'),
+            id=expediente_id
+        )
+        
+        # Verificar permisos (usuario autenticado y con acceso al área del expediente o superusuario)
+        if not (request.user.is_superuser or expediente.area in request.user.areas.all()):
+            messages.error(request, 'No tienes permiso para descargar este expediente.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+        
+        # Verificar si el expediente tiene documentos
+        if not expediente.documentos.exists():
+            messages.warning(request, 'El expediente no contiene documentos para descargar.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+        
+        # Crear un archivo ZIP en memoria
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            # Agregar cada documento al ZIP
+            for documento in expediente.documentos.all():
+                if documento.archivo and os.path.exists(documento.archivo.path):
+                    # Crear un nombre de archivo único para evitar colisiones
+                    nombre_archivo = f"{documento.tipo_documento.nombre if documento.tipo_documento else 'documento'}_{documento.id}{os.path.splitext(documento.archivo.name)[1]}"
+                    # Usar el nombre del archivo en lugar de la ruta completa
+                    zipf.write(documento.archivo.path, nombre_archivo)
+        
+        # Registrar en el historial
+        HistorialExpediente.crear_registro(
+            usuario=request.user,
+            accion='descargar_expediente',
+            modelo='Expediente',
+            objeto_id=expediente.id,
+            detalles=f'Se descargaron todos los documentos del expediente.'
+        )
+        
+        # Preparar la respuesta
+        buffer.seek(0)
+        response = HttpResponse(buffer, content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="expediente_{expediente.numero_expediente}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.zip"'
+        response['Content-Length'] = buffer.tell()
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error en descargar_expediente: {str(e)}")
+        messages.error(request, 'Ocurrió un error al generar el archivo ZIP.')
+        return redirect('expedientes:detalle', pk=expediente_id)
+
+@login_required
+@require_http_methods(["POST"])
+def agregar_comentario(request, expediente_id, etapa):
+    """
+    Vista para agregar un comentario a una etapa específica de un expediente
+    """
+    try:
+        # Obtener el expediente o devolver 404 si no existe
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos (usuario autenticado y con acceso al área del expediente o superusuario)
+        if not (request.user.is_superuser or expediente.area in request.user.areas.all()):
+            return JsonResponse({
+                'success': False, 
+                'error': 'No tienes permiso para agregar comentarios a este expediente.'
+            }, status=403)
+        
+        # Obtener el texto del comentario del formulario
+        texto = request.POST.get('texto', '').strip()
+        if not texto:
+            return JsonResponse({
+                'success': False, 
+                'error': 'El comentario no puede estar vacío.'
+            }, status=400)
+        
+        # Validar la longitud del comentario
+        if len(texto) > 1000:
+            return JsonResponse({
+                'success': False, 
+                'error': 'El comentario no puede tener más de 1000 caracteres.'
+            }, status=400)
+        
+        try:
+            with transaction.atomic():
+                # Crear el comentario
+                comentario = ComentarioExpediente.objects.create(
+                    expediente=expediente,
+                    usuario=request.user,
+                    etapa=etapa,
+                    texto=texto
+                )
+                
+                # Registrar en el historial
+                HistorialExpediente.crear_registro(
+                    usuario=request.user,
+                    accion='agregar_comentario',
+                    modelo='ComentarioExpediente',
+                    objeto_id=comentario.id,
+                    detalles=f'Se agregó un comentario en la etapa {etapa}.'
+                )
+                
+                # Si el comentario menciona un cambio de estado, actualizar el expediente
+                if 'estado:' in texto.lower():
+                    # Extraer el nuevo estado del comentario (ej: "estado:revision")
+                    partes = texto.lower().split('estado:')
+                    if len(partes) > 1:
+                        nuevo_estado = partes[1].split()[0].strip()
+                        if hasattr(Expediente, 'ESTADOS') and any(nuevo_estado == codigo for codigo, _ in Expediente.ESTADOS):
+                            expediente.estado = nuevo_estado
+                            expediente.save()
+                
+                # Obtener la URL para redirigir después de guardar
+                redirect_url = reverse('expedientes:detalle', args=[expediente_id])
+                
+                return JsonResponse({
+                    'success': True,
+                    'comentario': {
+                        'id': comentario.id,
+                        'texto': comentario.texto,
+                        'fecha_creacion': comentario.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+                        'usuario': comentario.usuario.get_full_name() or comentario.usuario.username,
+                        'etapa': comentario.etapa,
+                        'es_propio': comentario.usuario == request.user
+                    },
+                    'redirect': redirect_url
+                })
+                
+        except Exception as e:
+            logger.error(f"Error al guardar el comentario: {str(e)}")
+            return JsonResponse({
+                'success': False, 
+                'error': f'Error al guardar el comentario: {str(e)}'
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error en agregar_comentario: {str(e)}")
+        return JsonResponse({
+            'success': False, 
+            'error': 'Ocurrió un error al procesar la solicitud.'
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def subir_documento(request, expediente_id, etapa):
+    """
+    Vista para subir un documento a un expediente en una etapa específica
+    """
+    # Importar el modelo Expediente aquí para evitar problemas de importación circular
+    from .models import Expediente
+    
+    try:
+        # Obtener el expediente o devolver 404 si no existe
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos (usuario autenticado y con acceso al área del expediente o superusuario)
+        if not (request.user.is_superuser or expediente.area in request.user.areas.all()):
+            messages.error(request, 'No tienes permiso para subir documentos a este expediente.')
+            return JsonResponse({'success': False, 'error': 'Permiso denegado'}, status=403)
+        
+        # Verificar que el expediente no esté en un estado que impida la edición
+        if expediente.estado in ['aprobado', 'rechazado']:
+            messages.error(request, 'No se pueden subir documentos a un expediente que ya ha sido aprobado o rechazado.')
+            return JsonResponse({
+                'success': False, 
+                'error': 'Expediente no editable',
+                'redirect': reverse('expedientes:detalle', args=[expediente_id])
+            }, status=400)
+        
+        # Verificar que se haya enviado un archivo
+        if 'documento' not in request.FILES:
+            return JsonResponse({'success': False, 'error': 'No se ha proporcionado ningún archivo'}, status=400)
+        
+        archivo = request.FILES['documento']
+        
+        # Validar el tipo de archivo
+        extension_permitidas = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png']
+        extension = archivo.name.split('.')[-1].lower()
+        if extension not in extension_permitidas:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Tipo de archivo no permitido. Formatos aceptados: { ", ".join(extension_permitidas) }'
+            }, status=400)
+        
+        # Validar tamaño del archivo (máximo 10MB)
+        tamano_maximo = 10 * 1024 * 1024  # 10MB en bytes
+        if archivo.size > tamano_maximo:
+            return JsonResponse({
+                'success': False, 
+                'error': f'El archivo es demasiado grande. Tamaño máximo permitido: 10MB'
+            }, status=400)
+        
+        # Obtener o crear el tipo de documento
+        tipo_documento, creado = TipoDocumento.objects.get_or_create(
+            nombre=request.POST.get('tipo_documento', 'Sin especificar'),
+            defaults={
+                'descripcion': f'Documento subido manualmente para {etapa}',
+                'activo': True
+            }
+        )
+        
+        from .models import AreaTipoExpediente
+        from django.core.validators import ValidationError
+        
+        try:
+            # Obtener el área por su ID
+            area_etapa = AreaTipoExpediente.objects.get(
+                id=etapa,  # Usamos el ID del área directamente
+                activa=True
+            )
+            
+            # Obtener las opciones válidas para el campo etapa
+            from .models import Expediente
+            opciones_validas = [opcion[0] for opcion in Expediente.ESTADO_CHOICES]
+            
+            # Usar el nombre del área como etapa si es válido, de lo contrario usar un valor por defecto
+            etapa_valida = area_etapa.nombre.lower()
+            if etapa_valida not in opciones_validas:
+                # Si el nombre del área no es una opción válida, usar la primera opción por defecto
+                etapa_valida = opciones_validas[0] if opciones_validas else 'inicio'
+                logger.warning(f"El nombre del área '{area_etapa.nombre}' no es una opción válida para etapa. Usando '{etapa_valida}'")
+            
+        except (ValueError, AreaTipoExpediente.DoesNotExist):
+            logger.error(f"No se encontró el área con ID {etapa} o no está activa")
+            return JsonResponse({
+                'success': False, 
+                'error': 'Área no encontrada o no está activa.'
+            }, status=400)
+
+        # Crear el directorio de carga si no existe
+        upload_dir = os.path.join(settings.MEDIA_ROOT, 'documentos', str(expediente_id))
+        os.makedirs(upload_dir, exist_ok=True)
+
+        # Crear el documento en la base de datos
+        try:
+            with transaction.atomic():
+                # Crear una instancia del modelo
+                documento = DocumentoExpediente(
+                    expediente=expediente,
+                    area=area_etapa,
+                    etapa=etapa_valida,  # Usamos el valor validado
+                    nombre_documento=archivo.name,
+                    archivo=archivo,
+                    subido_por=request.user,
+                    tamano_archivo=archivo.size,
+                    tipo_archivo=archivo.content_type,
+                    descripcion=request.POST.get('descripcion', f'Documento subido para el área {area_etapa.titulo}'),
+                    validado=False
+                )
+                
+                # Guardar el documento
+                documento.full_clean()  # Validar el modelo antes de guardar
+                documento.save()
+                
+                # Registrar en el historial
+                HistorialExpediente.objects.create(
+                    expediente=expediente,
+                    usuario=request.user,
+                    accion='subir_documento',
+                    descripcion=f'Se subió el documento {archivo.name} en la etapa {etapa}.',
+                    etapa_nueva=etapa
+                )
+                
+                # Actualizar la fecha de actualización del expediente
+                expediente.fecha_actualizacion = timezone.now()
+                expediente.save(update_fields=['fecha_actualizacion'])
+                
+                # Verificar si se completó la etapa/área
+                try:
+                    # Obtener el área de la etapa actual
+                    area_etapa = AreaTipoExpediente.objects.get(id=etapa)
+                    
+                    # Verificar si hay documentos en esta área
+                    tiene_documentos = expediente.documentos.filter(area=area_etapa).exists()
+                    
+                    # Actualizar el estado de la etapa
+                    etapa_obj, created = EtapaExpediente.objects.update_or_create(
+                        expediente=expediente,
+                        nombre_etapa=area_etapa.nombre,
+                        defaults={
+                            'completada': tiene_documentos,
+                            'fecha_completada': timezone.now() if tiene_documentos else None,
+                            'completada_por': request.user if tiene_documentos else None,
+                            'notas': f'Documento subido: {archivo.name}' if tiene_documentos else ''
+                        }
+                    )
+                    
+                    # Registrar en el historial
+                    HistorialExpediente.objects.create(
+                        expediente=expediente,
+                        usuario=request.user,
+                        accion='subir_documento' if tiene_documentos else 'actualizar_etapa',
+                        descripcion=f"Se {'completó' if tiene_documentos else 'actualizó'} la etapa {area_etapa.nombre} del expediente.",
+                        etapa_nueva=area_etapa.nombre
+                    )
+                    
+                except Exception as e:
+                    logger.error(f"Error al actualizar el estado de la etapa: {str(e)}", exc_info=True)
+                
+                # Registrar éxito
+                logger.info(f"Documento {archivo.name} subido exitosamente para el expediente {expediente_id}")
+                
+                # Recalcular el progreso
+                areas_etapas = AreaTipoExpediente.objects.filter(
+                    tipo_expediente=expediente.tipo_expediente,
+                    activa=True
+                )
+                
+                if getattr(expediente, 'subtipo_expediente', None):
+                    areas_etapas = areas_etapas.filter(
+                        Q(subtipo_expediente=expediente.subtipo_expediente) | 
+                        Q(subtipo_expediente__isnull=True) | 
+                        Q(subtipo_expediente='')
+                    )
+                
+                total_etapas = areas_etapas.count()
+                
+                # Obtener etapas completadas
+                etapas_completadas = EtapaExpediente.objects.filter(
+                    expediente=expediente,
+                    completada=True
+                ).count()
+                
+                # Calcular progreso
+                progreso = int((etapas_completadas / total_etapas) * 100) if total_etapas > 0 else 0
+                
+                # Actualizar solo la fecha de actualización del expediente
+                expediente.fecha_actualizacion = timezone.now()
+                expediente.save(update_fields=['fecha_actualizacion'])
+                
+                # Preparar respuesta
+                response_data = {
+                    'success': True,
+                    'documento': {
+                        'id': documento.id,
+                        'nombre': documento.nombre_documento,
+                        'url': documento.archivo.url,
+                        'fecha_subida': documento.fecha_subida.strftime('%d/%m/%Y %H:%M'),
+                        'subido_por': documento.subido_por.get_full_name() or documento.subido_por.username,
+                        'tipo': documento.tipo_archivo if documento.tipo_archivo else 'Sin especificar',
+                        'tamano': f'{(documento.tamano_archivo / 1024):.1f} KB' if documento.tamano_archivo else '0 KB',
+                        'estado': 'Validado' if documento.validado else 'Pendiente de validar'
+                    },
+                    'progreso': progreso,
+                    'etapas_completadas': etapas_completadas,
+                    'total_etapas': total_etapas,
+                    'etapa_actual': area_etapa.nombre if 'area_etapa' in locals() else '',
+                    'etapa_completada': tiene_documentos if 'tiene_documentos' in locals() else False
+                }
+                
+                return JsonResponse(response_data)
+                
+        except ValidationError as e:
+            logger.error(f"Error de validación al guardar el documento {archivo.name}: {str(e)}")
+            return JsonResponse({
+                'success': False, 
+                'error': f'Error de validación: {str(e)}',
+                'errors': dict(e)
+            }, status=400)
+            
+        except Exception as e:
+            logger.error(f"Error al guardar el documento {archivo.name}: {str(e)}", exc_info=True)
+            return JsonResponse({
+                'success': False, 
+                'error': f'Error al procesar el archivo: {str(e)}',
+                'type': type(e).__name__
+            }, status=500)
+            
+    except Exception as e:
+        logger.error(f"Error en subir_documento: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False, 
+            'error': 'Ocurrió un error al procesar la solicitud.',
+            'type': type(e).__name__
+        }, status=500)
+
+@login_required
+def detalle_expediente(request, expediente_id):
+    """
+    Vista para ver el detalle de un expediente
+    """
+    logger.info(f"=== INICIO detalle_expediente ===")
+    logger.info(f"Expediente ID: {expediente_id}")
+    logger.info(f"Usuario: {request.user.get_full_name()} (ID: {request.user.id})")
+    
+    try:
+        # Obtener el expediente con relaciones relacionadas para optimización de consultas
+        expediente = get_object_or_404(
+            Expediente.objects.select_related(
+                'creado_por',
+                'departamento'
+            ).prefetch_related(
+                'documentos',
+                'documentos__subido_por',
+                'historial'
+            ),
+            id=expediente_id
+        )
+        
+        logger.info(f"Expediente encontrado: {expediente.numero_expediente}")
+        logger.info(f"Tipo: {expediente.tipo_expediente}, Subtipo: {getattr(expediente, 'subtipo_expediente', 'No definido')}")
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            logger.warning(f"Usuario {request.user.id} no tiene permiso para ver el expediente {expediente_id}")
+            messages.error(request, 'No tienes permiso para ver este expediente.')
+            return redirect('expedientes:lista')
+        
+        # Obtener áreas asociadas al tipo de expediente
+        areas = AreaTipoExpediente.objects.filter(
+            tipo_expediente=expediente.tipo_expediente,
+            subtipo_expediente=getattr(expediente, 'subtipo_expediente', None)
+        ).order_by('orden')
+        
+        logger.info(f"Áreas encontradas: {areas.count()}")
+        
+        # Obtener documentos agrupados por tipo de archivo
+        documentos_por_tipo = {}
+        for doc in expediente.documentos.all():
+            tipo = doc.tipo_archivo or 'sin_tipo'
+            if tipo not in documentos_por_tipo:
+                documentos_por_tipo[tipo] = []
+            documentos_por_tipo[tipo].append(doc)
+        
+        # Obtener comentarios
+        comentarios = ComentarioArea.objects.filter(
+            expediente=expediente
+        ).select_related('usuario').order_by('-fecha_creacion')
+        
+        # Obtener etapas pendientes
+        tareas_pendientes = EtapaExpediente.objects.filter(
+            expediente=expediente,
+            completada=False
+        ).select_related('completada_por').order_by('nombre_etapa')
+        
+        # Obtener historial de cambios
+        historial = expediente.historial.all().order_by('-fecha')
+        
+        # Obtener archivos adjuntos de forma segura
+        try:
+            archivos_adjuntos = expediente.archivos_adjuntos.all() if hasattr(expediente, 'archivos_adjuntos') else []
+        except Exception as e:
+            logger.warning(f"Error al obtener archivos adjuntos: {str(e)}")
+            archivos_adjuntos = []
+        
+        # Obtener áreas/etapas configuradas para este tipo de expediente
+        # Usamos la misma lógica que en areas_por_tipo
+        areas_query = AreaTipoExpediente.objects.filter(
+            tipo_expediente=expediente.tipo_expediente,
+            activa=True
+        )
+        
+        # Si hay un subtipo, incluir tanto las áreas específicas como las genéricas
+        subtipo = getattr(expediente, 'subtipo_expediente', None)
+        if subtipo:
+            areas_query = areas_query.filter(
+                Q(subtipo_expediente=subtipo) | 
+                Q(subtipo_expediente__isnull=True) | 
+                Q(subtipo_expediente='')
+            )
+        
+        # Ordenar las áreas
+        areas_etapas = areas_query.order_by('orden', 'titulo')
+        
+        logger.info(f"Áreas/etapas encontradas: {areas_etapas.count()} para tipo: {expediente.tipo_expediente}, subtipo: {subtipo or 'Ninguno'}")
+        
+        # Obtener departamentos para el formulario
+        departamentos = Departamento.objects.filter(activo=True).order_by('nombre')
+        
+        # Verificar permisos adicionales
+        puede_editar = (request.user.is_superuser or 
+                       expediente.creado_por == request.user or 
+                       request.user.has_perm('digitalizacion.change_expediente', expediente))
+        
+        puede_rechazar = (request.user.is_superuser or 
+                         request.user.has_perm('digitalizacion.rechazar_expediente'))
+        
+        puede_eliminar = (request.user.is_superuser or 
+                         (expediente.creado_por == request.user and 
+                          expediente.estado != 'aprobado'))
+        
+        # Obtener usuarios asignables (solo superusuarios o personal autorizado)
+        usuarios_asignables = User.objects.filter(
+            is_active=True,
+            is_staff=True
+        ).order_by('first_name', 'last_name')
+        
+        # Obtener departamentos para el formulario de transferencia
+        departamentos = Departamento.objects.filter(activo=True).order_by('nombre')
+        
+        # Inicializar lista vacía de plantillas de documentos
+        plantillas_documentos = []
+        
+        # Calcular el progreso del expediente
+        total_etapas = areas_etapas.count()
+        etapas_completadas = 0
+        
+        # Usar getattr para manejar el caso en que el método no exista
+        for area in areas_etapas:
+            if getattr(area, 'etapa_completada', lambda exp: False)(expediente):
+                etapas_completadas += 1
+        
+        progreso = 0
+        if total_etapas > 0:
+            progreso = int((etapas_completadas / total_etapas) * 100)
+            
+        logger.info(f"Progreso del expediente: {progreso}% ({etapas_completadas}/{total_etapas} etapas completadas)")
+        
+        # Inicializar valores_areas como un diccionario vacío
+        valores_areas = {}
+        
+        # Preparar contexto
+        # Determinar si se debe mostrar el campo de fuente de financiamiento
+        # Mostrar para: adjudicacion_directa, compra_directa, concurso_invitacion
+        mostrar_fuente = expediente.tipo_expediente in ['adjudicacion_directa', 'compra_directa', 'concurso_invitacion']
+        
+        # Obtener el tipo de expediente para usar en la plantilla
+        tipo_expediente = getattr(expediente, 'tipo_expediente', '')
+        
+        context = {
+            'expediente': expediente,
+            'tipo': tipo_expediente,
+            'tipo_nombre': expediente.get_tipo_expediente_display(),
+            'titulo': f'Expediente {expediente.numero_expediente}',
+            'departamentos': departamentos,
+            'mostrar_fuente_financiamiento': mostrar_fuente,
+            'subtipo': getattr(expediente, 'subtipo_expediente', None),
+            'estados_disponibles': Expediente.ESTADOS if hasattr(Expediente, 'ESTADOS') else [],
+            'progreso': progreso,
+            'etapas_completadas': etapas_completadas,
+            'total_etapas': total_etapas,
+            'progreso_detalle': {  
+                'completadas': etapas_completadas,
+                'total': total_etapas
+            },
+            'valores_areas': valores_areas,
+            'documentos_por_tipo': documentos_por_tipo,
+            'comentarios': comentarios,
+            'tareas_pendientes': tareas_pendientes,
+            'historial': historial,
+            'archivos_adjuntos': archivos_adjuntos,
+            'areas_etapas': areas_etapas,
+            'puede_editar': puede_editar,
+            'puede_rechazar': puede_rechazar,
+            'puede_eliminar': puede_eliminar,
+            'usuarios_asignables': usuarios_asignables
+        }
+        
+        logger.info("Renderizando plantilla...")
+        return render(request, 'digitalizacion/expedientes/detalle_expediente.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error en detalle_expediente: {str(e)}", exc_info=True)
+        messages.error(request, 'Ocurrió un error al cargar el expediente.')
+        return redirect('expedientes:lista')
+
+
+@login_required
+def eliminar_expediente(request, expediente_id):
+    """
+    Vista para eliminar un expediente existente.
+    Solo disponible para superusuarios o el creador del expediente.
+    No se pueden eliminar expedientes aprobados.
+    """
+    logger.info(f"=== INICIO eliminar_expediente ===")
+    logger.info(f"Expediente ID: {expediente_id}")
+    logger.info(f"Usuario: {request.user.get_full_name()} (ID: {request.user.id})")
+    
+    try:
+        # Obtener el expediente
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos (solo superusuarios o el creador pueden eliminar)
+        if not (request.user.is_superuser or expediente.creado_por == request.user):
+            logger.warning(f"Usuario {request.user.id} no tiene permiso para eliminar el expediente {expediente_id}")
+            messages.error(request, 'No tienes permiso para eliminar este expediente.')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Verificar que el expediente no esté en un estado que impida la eliminación
+        if expediente.estado == 'aprobado':
+            logger.warning(f"Intento de eliminar expediente aprobado {expediente_id}")
+            messages.error(request, 'No se puede eliminar un expediente que ya ha sido aprobado.')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Eliminar el expediente
+        numero_expediente = expediente.numero_expediente
+        expediente.delete()
+        
+        logger.info(f"Expediente {numero_expediente} eliminado exitosamente")
+        messages.success(request, f'El expediente {numero_expediente} ha sido eliminado correctamente.')
+        return redirect('expedientes:lista')
+        
+    except Exception as e:
+        logger.error(f"Error al eliminar expediente {expediente_id}: {str(e)}", exc_info=True)
+        messages.error(request, 'Ocurrió un error al intentar eliminar el expediente.')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        try:
+            with transaction.atomic():
+                # Guardar información para el historial antes de eliminar
+                expediente_info = {
+                    'numero': expediente.numero_expediente,
+                    'tipo': expediente.tipo,
+                    'creado_por': expediente.creado_por.get_full_name() if expediente.creado_por else 'Usuario desconocido',
+                    'fecha_creacion': expediente.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S'),
+                    'estado': expediente.estado
+                }
+                
+                # Obtener documentos asociados para eliminación física de archivos
+                documentos = DocumentoExpediente.objects.filter(expediente=expediente)
+                documentos_info = [
+                    {
+                        'id': doc.id,
+                        'nombre': doc.nombre_archivo,
+                        'tipo': doc.tipo_documento.nombre if doc.tipo_documento else 'Sin tipo',
+                        'tamano': doc.archivo.size if doc.archivo else 0
+                    }
+                    for doc in documentos
+                ]
+                
+                # Eliminar documentos físicos
+                for doc in documentos:
+                    if doc.archivo and os.path.isfile(doc.archivo.path):
+                        try:
+                            os.remove(doc.archivo.path)
+                        except Exception as e:
+                            logger.error(f"Error al eliminar archivo {doc.archivo.path}: {str(e)}")
+                
+                # Registrar en el historial antes de eliminar
+                HistorialExpediente.crear_registro(
+                    usuario=request.user,
+                    accion='eliminar_expediente',
+                    modelo='Expediente',
+                    objeto_id=expediente.id,
+                    detalles={
+                        'expediente': expediente_info,
+                        'documentos_eliminados': documentos_info,
+                        'total_documentos': len(documentos_info),
+                        'espacio_liberado': sum(doc['tamano'] for doc in documentos_info)
+                    }
+                )
+                
+                # Eliminar el expediente (esto también eliminará los documentos en CASCADE)
+                expediente.delete()
+                
+                messages.success(request, 'El expediente y todos sus documentos han sido eliminados correctamente.')
+                return redirect('expedientes:lista')
+                
+        except Exception as e:
+            logger.error(f"Error al eliminar el expediente {expediente_id}: {str(e)}")
+            messages.error(request, f'Error al eliminar el expediente: {str(e)}')
+            return redirect('expedientes:detalle', pk=expediente_id)
+            
+    except Exception as e:
+        logger.error(f"Error en eliminar_expediente: {str(e)}")
+        messages.error(request, 'Ocurrió un error al procesar la solicitud de eliminación.')
+        return redirect('expedientes:lista')
+
+@login_required
+@require_http_methods(["POST"])
+def rechazar_expediente(request, expediente_id):
+    """
+    Vista para rechazar un expediente
+    """
+    try:
+        # Obtener el expediente o devolver 404 si no existe
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos (solo superusuarios o usuarios con permiso específico pueden rechazar)
+        if not (request.user.is_superuser or request.user.has_perm('digitalizacion.rechazar_expediente')):
+            messages.error(request, 'No tienes permiso para rechazar este expediente.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+        
+        # Verificar que el expediente no esté ya rechazado
+        if expediente.estado == 'rechazado':
+            messages.warning(request, 'Este expediente ya ha sido rechazado anteriormente.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+            
+        # Obtener la razón del rechazo del formulario
+        razon_rechazo = request.POST.get('razon_rechazo', '').strip()
+        if not razon_rechazo:
+            messages.error(request, 'Debe proporcionar una razón para el rechazo.')
+            return redirect('expedientes:detalle', pk=expediente_id)
+        
+        try:
+            with transaction.atomic():
+                # Actualizar el estado del expediente
+                expediente.estado = 'rechazado'
+                expediente.fecha_rechazo = timezone.now()
+                expediente.usuario_rechazo = request.user
+                expediente.razon_rechazo = razon_rechazo
+                expediente.save()
+                
+                # Registrar en el historial
+                HistorialExpediente.crear_registro(
+                    usuario=request.user,
+                    accion='rechazar_expediente',
+                    modelo='Expediente',
+                    objeto_id=expediente.id,
+                    detalles=f'Expediente rechazado. Razón: {razon_rechazo}'
+                )
+                
+                # Opcional: Enviar notificación al creador del expediente
+                if expediente.creado_por and expediente.creado_por != request.user:
+                    try:
+                        Notificacion.objects.create(
+                            usuario=expediente.creado_por,
+                            titulo=f'Expediente {expediente.numero_expediente} Rechazado',
+                            mensaje=f'Tu expediente ha sido rechazado. Razón: {razon_rechazo}',
+                            tipo='rechazo',
+                            url=reverse('expedientes:detalle', args=[expediente.id])
+                        )
+                    except Exception as e:
+                        logger.error(f"Error al crear notificación de rechazo: {str(e)}")
+                
+                messages.success(request, 'El expediente ha sido rechazado correctamente.')
+                return redirect('expedientes:detalle', pk=expediente_id)
+                
+        except Exception as e:
+            logger.error(f"Error al rechazar el expediente {expediente_id}: {str(e)}")
+            messages.error(request, f'Error al rechazar el expediente: {str(e)}')
+            return redirect('expedientes:detalle', pk=expediente_id)
+            
+    except Exception as e:
+        logger.error(f"Error en rechazar_expediente: {str(e)}")
+        messages.error(request, 'Ocurrió un error al procesar la solicitud de rechazo.')
+        return redirect('expedientes:lista')
+
+@login_required
+def obtener_documentos_expediente_api(request, expediente_id):
+    """
+    Vista API para obtener los documentos de un expediente en formato JSON
+    """
+    from django.http import JsonResponse
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Obtener el expediente
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            logger.warning(f'Intento de acceso no autorizado a documentos del expediente {expediente_id} por el usuario {request.user.username}')
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para ver los documentos de este expediente'}, 
+                status=403
+            )
+        
+        # Obtener documentos del expediente
+        try:
+            documentos = expediente.documentos.all().select_related('area', 'subido_por')
+            
+            # Formatear los documentos
+            documentos_data = []
+            for doc in documentos:
+                try:
+                    doc_data = {
+                        'id': doc.id,
+                        'nombre': doc.nombre_archivo,
+                        'tipo': os.path.splitext(doc.archivo.name)[1].lstrip('.').lower() if doc.archivo else '',
+                        'fecha_subida': doc.fecha_subida.strftime('%Y-%m-%d %H:%M:%S') if doc.fecha_subida else None,
+                        'tamano': doc.archivo.size if doc.archivo else 0,
+                        'url': doc.archivo.url if doc.archivo else None,
+                        'area': {
+                            'id': doc.area.id,
+                            'nombre': doc.area.nombre
+                        } if doc.area else None,
+                        'subido_por': {
+                            'id': doc.subido_por.id,
+                            'username': doc.subido_por.username,
+                            'nombre_completo': doc.subido_por.get_full_name() or doc.subido_por.username
+                        } if doc.subido_por else None
+                    }
+                    documentos_data.append(doc_data)
+                except Exception as e:
+                    logger.error(f'Error al procesar documento {getattr(doc, "id", "desconocido")}: {str(e)}')
+                    continue
+            
+            return JsonResponse({
+                'success': True,
+                'documentos': documentos_data,
+                'total': len(documentos_data)
+            })
+            
+        except Exception as e:
+            logger.error(f'Error al obtener documentos del expediente {expediente_id}: {str(e)}', exc_info=True)
+            return JsonResponse(
+                {'success': False, 'error': 'Error al obtener los documentos del expediente'}, 
+                status=500
+            )
+            
+    except Expediente.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Expediente no encontrado'}, 
+            status=404
+        )
+    except Exception as e:
+        logger.error(f'Error inesperado en obtener_documentos_expediente_api: {str(e)}', exc_info=True)
+        return JsonResponse(
+            {'success': False, 'error': 'Error interno del servidor al procesar la solicitud'}, 
+            status=500
+        )
+
+
+@login_required
+def ver_documentos_expediente(request, expediente_id):
+    """
+    Vista para ver los documentos de un expediente
+    """
+    try:
+        # Obtener el expediente
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            messages.error(request, 'No tiene permiso para ver este expediente.')
+            return redirect('expedientes:lista')
+        
+        # Obtener documentos del expediente
+        documentos = expediente.documentos.all()
+        
+        # Obtener áreas de documentos disponibles para este tipo de expediente
+        areas = AreaTipoExpediente.objects.filter(
+            tipo_expediente=expediente.tipo_expediente
+        ).order_by('orden')
+        
+        context = {
+            'expediente': expediente,
+            'documentos': documentos,
+            'areas': areas,
+            'titulo': f'Documentos del expediente {expediente.numero_expediente}'
+        }
+        
+        return render(request, 'digitalizacion/expedientes/ver_documentos.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error al cargar documentos del expediente: {str(e)}')
+        messages.error(request, 'Ocurrió un error al cargar los documentos del expediente.')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Eliminar el registro de la base de datos
+        documento.delete()
+        
+        messages.success(request, 'El documento ha sido eliminado correctamente.')
+        return redirect('expedientes:detalle', pk=expediente_id)
+        
+    except Exception as e:
+        logger.error(f"Error al eliminar documento: {str(e)}")
+        messages.error(request, 'Ocurrió un error al intentar eliminar el documento.')
+@require_http_methods(["POST"])
+def eliminar_comentario(request, expediente_id, comentario_id):
+    """
+    Vista para eliminar un comentario de un expediente
+    """
+    try:
+        # Obtener el comentario
+        comentario = get_object_or_404(ComentarioArea, id=comentario_id, expediente_id=expediente_id)
+        
+        # Verificar permisos (solo el autor o un superusuario pueden eliminar)
+        if not (request.user.is_superuser or request.user == comentario.usuario):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'No tiene permiso para eliminar este comentario'},
+                    status=403
+                )
+            messages.error(request, 'No tiene permiso para eliminar este comentario')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Guardar información para el historial
+        expediente_id = comentario.expediente.id
+        comentario_texto = comentario.texto[:50] + '...' if len(comentario.texto) > 50 else comentario.texto
+        
+        # Eliminar el comentario
+        comentario.delete()
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente_id=expediente_id,
+            usuario=request.user,
+            accion='Comentario eliminado',
+            detalles=f'Se eliminó el comentario: "{comentario_texto}"'
+        )
+        
+        # Responder según el tipo de solicitud
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Comentario eliminado correctamente',
+                'redirect_url': reverse('expedientes:detalle', args=[expediente_id])
+            })
+            
+        messages.success(request, 'Comentario eliminado correctamente')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+    except ComentarioArea.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'El comentario no existe'},
+                status=404
+            )
+        messages.error(request, 'El comentario no existe')
+        return redirect('expedientes:lista')
+        
+    except Exception as e:
+        logger.error(f'Error al eliminar comentario {comentario_id}: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': f'Error al eliminar el comentario: {str(e)}'},
+                status=500
+            )
+        messages.error(request, 'Ocurrió un error al intentar eliminar el comentario')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def cambiar_estado_expediente(request, expediente_id):
+    """
+    Vista para cambiar el estado de un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'No tiene permiso para cambiar el estado de este expediente'},
+                    status=403
+                )
+            messages.error(request, 'No tiene permiso para cambiar el estado de este expediente')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Obtener el nuevo estado del formulario
+        nuevo_estado = request.POST.get('estado', '').strip()
+        
+        # Validar que el estado no esté vacío
+        if not nuevo_estado:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'Debe especificar un estado'},
+                    status=400
+                )
+            messages.error(request, 'Debe especificar un estado')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Guardar el estado anterior para el historial
+        estado_anterior = expediente.estado_actual
+        
+        # Actualizar el estado del expediente
+        expediente.estado_actual = nuevo_estado
+        expediente.fecha_modificacion = timezone.now()
+        expediente.modificado_por = request.user
+        expediente.save()
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'Cambio de estado: {estado_anterior} → {nuevo_estado}',
+            detalles=f'El usuario {request.user.get_full_name()} cambió el estado del expediente.'
+        )
+        
+        # Responder según el tipo de solicitud
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Estado del expediente actualizado correctamente',
+                'estado_actual': nuevo_estado,
+                'fecha_actualizacion': expediente.fecha_modificacion.strftime('%d/%m/%Y %H:%M')
+            })
+            
+        messages.success(request, 'Estado del expediente actualizado correctamente')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+    except Expediente.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'El expediente no existe'},
+                status=404
+            )
+        messages.error(request, 'El expediente no existe')
+        return redirect('expedientes:lista')
+        
+    except Exception as e:
+        logger.error(f'Error al cambiar estado del expediente {expediente_id}: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': f'Error al cambiar el estado del expediente: {str(e)}'},
+                status=500
+            )
+        messages.error(request, 'Ocurrió un error al intentar cambiar el estado del expediente')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def asignar_expediente(request, expediente_id):
+    """
+    Vista para asignar un expediente a un usuario
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'No tiene permiso para asignar este expediente'},
+                    status=403
+                )
+            messages.error(request, 'No tiene permiso para asignar este expediente')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Obtener el ID del usuario al que se asignará el expediente
+        usuario_id = request.POST.get('usuario_id')
+        if not usuario_id:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'Debe especificar un usuario'},
+                    status=400
+                )
+            messages.error(request, 'Debe especificar un usuario')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        try:
+            usuario = User.objects.get(id=usuario_id)
+        except User.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'El usuario especificado no existe'},
+                    status=404
+                )
+            messages.error(request, 'El usuario especificado no existe')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Guardar el usuario asignado anterior para el historial
+        usuario_anterior = expediente.asignado_a
+        
+        # Asignar el expediente al nuevo usuario
+        expediente.asignado_a = usuario
+        expediente.fecha_modificacion = timezone.now()
+        expediente.modificado_por = request.user
+        expediente.save()
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'Expediente asignado a {usuario.get_full_name() or usuario.username}',
+            detalles=f'El usuario {request.user.get_full_name()} asignó el expediente a {usuario.get_full_name() or usuario.username}.'
+        )
+        
+        # Crear notificación para el usuario asignado
+        Notificacion.objects.create(
+            usuario=usuario,
+            titulo=f'Se te ha asignado el expediente {expediente.numero_expediente}',
+            mensaje=f'El usuario {request.user.get_full_name()} te ha asignado el expediente {expediente.numero_expediente}.',
+            url=reverse('expedientes:detalle', args=[expediente.id])
+        )
+        
+        # Responder según el tipo de solicitud
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Expediente asignado correctamente',
+                'usuario_asignado': {
+                    'id': usuario.id,
+                    'nombre': usuario.get_full_name() or usuario.username,
+                    'username': usuario.username
+                },
+                'fecha_asignacion': expediente.fecha_modificacion.strftime('%d/%m/%Y %H:%M')
+            })
+            
+        messages.success(request, f'Expediente asignado correctamente a {usuario.get_full_name() or usuario.username}')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+    except Expediente.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'El expediente no existe'},
+                status=404
+            )
+        messages.error(request, 'El expediente no existe')
+        return redirect('expedientes:lista')
+        
+    except Exception as e:
+        logger.error(f'Error al asignar expediente {expediente_id}: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': f'Error al asignar el expediente: {str(e)}'},
+                status=500
+            )
+        messages.error(request, 'Ocurrió un error al intentar asignar el expediente')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def transferir_expediente(request, expediente_id):
+    """
+    Vista para transferir un expediente a otra área
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.transferir_expediente', expediente):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'No tiene permiso para transferir este expediente'},
+                    status=403
+                )
+            messages.error(request, 'No tiene permiso para transferir este expediente')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Obtener el ID del área de destino
+        area_destino_id = request.POST.get('area_destino_id')
+        if not area_destino_id:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'Debe especificar un área de destino'},
+                    status=400
+                )
+            messages.error(request, 'Debe especificar un área de destino')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        try:
+            area_destino = Area.objects.get(id=area_destino_id)
+        except Area.DoesNotExist:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'El área de destino especificada no existe'},
+                    status=404
+                )
+            messages.error(request, 'El área de destino especificada no existe')
+            return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+        # Guardar el área anterior para el historial
+        area_anterior = expediente.area_actual
+        
+        # Transferir el expediente al área de destino
+        expediente.area_anterior = expediente.area_actual
+        expediente.area_actual = area_destino
+        expediente.fecha_modificacion = timezone.now()
+        expediente.modificado_por = request.user
+        
+        # Si el área de destino es diferente, reiniciamos el estado
+        if area_anterior != area_destino:
+            expediente.estado_actual = 'Pendiente de revisión'
+            
+        expediente.save()
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'Expediente transferido a {area_destino.nombre}',
+            detalles=f'El usuario {request.user.get_full_name()} transfirió el expediente de {area_anterior.nombre} a {area_destino.nombre}.'
+        )
+        
+        # Crear notificación para los usuarios del área de destino con permisos
+        usuarios_destino = User.objects.filter(
+            groups__in=area_destino.grupos_usuarios.all(),
+            is_active=True
+        ).distinct()
+        
+        for usuario in usuarios_destino:
+            if usuario != request.user:  # No notificar al usuario que realiza la transferencia
+                Notificacion.objects.create(
+                    usuario=usuario,
+                    titulo=f'Nuevo expediente transferido a {area_destino.nombre}',
+                    mensaje=f'El usuario {request.user.get_full_name()} ha transferido el expediente {expediente.numero_expediente} a tu área.',
+                    url=reverse('expedientes:detalle', args=[expediente.id])
+                )
+        
+        # Responder según el tipo de solicitud
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Expediente transferido correctamente',
+                'area_destino': {
+                    'id': area_destino.id,
+                    'nombre': area_destino.nombre,
+                    'codigo': area_destino.codigo
+                },
+                'nuevo_estado': expediente.estado_actual,
+                'fecha_transferencia': expediente.fecha_modificacion.strftime('%d/%m/%Y %H:%M')
+            })
+            
+        messages.success(request, f'Expediente transferido correctamente a {area_destino.nombre}')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+        
+    except Expediente.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'El expediente no existe'},
+                status=404
+            )
+        messages.error(request, 'El expediente no existe')
+        return redirect('expedientes:lista')
+        
+    except Exception as e:
+        logger.error(f'Error al transferir expediente {expediente_id}: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': f'Error al transferir el expediente: {str(e)}'},
+                status=500
+            )
+
+@login_required
+@login_required
+def editar_expediente(request, expediente_id):
+    """
+    Vista para editar un expediente existente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            messages.error(request, 'No tiene permiso para editar este expediente.')
+            return redirect('expedientes:detalle_expediente', expediente_id=expediente_id)
+        
+        # Obtener el formulario según el tipo de expediente
+        form_class = EXPEDIENTE_FORMS.get(expediente.tipo)
+        if not form_class:
+            messages.error(request, f'No se encontró el formulario para el tipo de expediente: {expediente.tipo}')
+            return redirect('expedientes:detalle_expediente', expediente_id=expediente_id)
+        
+        if request.method == 'POST':
+            form = form_class(request.POST, request.FILES, instance=expediente)
+            if form.is_valid():
+                expediente = form.save(commit=False)
+                expediente.modificado_por = request.user
+                expediente.save()
+                
+                # Registrar en el historial
+                HistorialExpediente.objects.create(
+                    expediente=expediente,
+                    usuario=request.user,
+                    accion='Expediente actualizado',
+                    detalles=f'Se actualizó la información del expediente'
+                )
+                
+                messages.success(request, 'Expediente actualizado correctamente.')
+                return redirect('expedientes:detalle_expediente', expediente_id=expediente.id)
+        else:
+            form = form_class(instance=expediente)
+        
+        # Obtener documentos del expediente
+        documentos = DocumentoExpediente.objects.filter(expediente=expediente).order_by('fecha_creacion')
+        
+        return render(request, 'expedientes/editar_expediente.html', {
+            'form': form,
+            'expediente': expediente,
+            'documentos': documentos,
+            'tipos_documento': TIPO_DOCUMENTO_CHOICES,
+            'etapas': ETAPA_EXPEDIENTE_CHOICES
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al editar expediente {expediente_id}: {str(e)}')
+        messages.error(request, 'Ocurrió un error al intentar editar el expediente.')
+        return redirect('expedientes:detalle_expediente', expediente_id=expediente_id)
+
+
+@login_required
+def crear_expediente(request, tipo_id):
+    """
+    Vista para crear un nuevo expediente de un tipo específico
+    """
+    # Configuración inicial de logging
+    logger.debug("\n=== INICIO crear_expediente ===")
+    logger.debug(f"Usuario: {request.user} (ID: {request.user.id})")
+    logger.debug(f"Tipo ID recibido: {tipo_id}")
+    logger.debug(f"Método: {request.method}")
+    logger.debug(f"Permiso add_expediente: {request.user.has_perm('digitalizacion.add_expediente')}")
+
+    # Verificar permisos
+    if not request.user.has_perm('digitalizacion.add_expediente'):
+        error_msg = f'Usuario {request.user} no tiene permiso para crear expedientes'
+        logger.warning(error_msg)
+        messages.error(request, 'No tiene permiso para crear expedientes')
+        return redirect('expedientes:lista')
+
+    # Validar tipo de expediente
+    tipo_opciones = dict(Expediente.TIPO_CHOICES)
+    tipo_valido = False
+    tipo_nombre = ''
+    subtipo = None
+    tipo_principal = None
+
+    # Verificar si es un tipo principal
+    if tipo_id in tipo_opciones:
+        tipo_valido = True
+        tipo_principal = tipo_id
+        tipo_nombre = tipo_opciones.get(tipo_id, tipo_id)
+    # Verificar si es un subtipo de licitación
+    elif ':' in tipo_id:
+        tipo_principal, subtipo = tipo_id.split(':', 1)
+        if tipo_principal == 'licitacion' and subtipo in dict(Expediente.SUBTIPO_LICITACION_CHOICES):
+            tipo_valido = True
+            tipo_nombre = f"{tipo_opciones.get('licitacion', 'Licitación')} - {dict(Expediente.SUBTIPO_LICITACION_CHOICES).get(subtipo, subtipo)}"
+
+    if not tipo_valido:
+        error_msg = f'Tipo de expediente no válido: {tipo_id}'
+        logger.warning(error_msg)
+        messages.error(request, 'Tipo de expediente no válido')
+        return redirect('expedientes:seleccionar_tipo')
+
+    # Procesar formulario si es POST
+    if request.method == 'POST':
+        logger.debug("\n=== PROCESANDO FORMULARIO ===")
+        logger.debug(f"Datos POST: {request.POST}")
+        logger.debug(f"Archivos adjuntos: {request.FILES}")
+        logger.debug(f"Usuario autenticado: {request.user} (ID: {request.user.id})")
+        logger.debug(f"Tipo principal: {tipo_principal}, Subtipo: {subtipo}")
+
+        # Crear una copia mutable de los datos POST
+        post_data = request.POST.copy()
+        
+        # Procesar el tipo de expediente
+        if ':' in tipo_id:
+            tipo_principal, subtipo = tipo_id.split(':', 1)
+            post_data['tipo_expediente'] = tipo_principal
+            post_data['subtipo_expediente'] = subtipo
+        else:
+            post_data['tipo_expediente'] = tipo_id
+        
+        # Asegurarse de que los campos tengan valores por defecto si no están presentes
+        if 'fuente_financiamiento' not in post_data and 'licitacion:' not in tipo_id:
+            post_data['fuente_financiamiento'] = 'propio_municipal'
+        
+        if 'tipo_adquisicion' not in post_data:
+            post_data['tipo_adquisicion'] = 'bienes'
+        
+        # Si es una licitación, establecer la fuente de financiamiento según el subtipo
+        if 'licitacion:' in tipo_id:
+            if 'recurso_propio' in tipo_id:
+                post_data['fuente_financiamiento'] = 'propio_municipal'
+            elif 'fondo_federal' in tipo_id:
+                post_data['fuente_financiamiento'] = 'federal'
+        
+        # Crear el formulario con los datos procesados
+        form = ExpedienteForm(post_data, request.FILES)
+        
+        # Agregar logs de depuración para el formulario
+        logger.debug(f"Formulario data: {form.data}")
+        logger.debug(f"Valores iniciales: {form.initial}")
+        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Obtener valores directamente del formulario
+                    tipo_adquisicion = form.cleaned_data.get('tipo_adquisicion', 'bienes')
+                    fuente_financiamiento = form.cleaned_data.get('fuente_financiamiento', 'propio_municipal')
+                    
+                    # Solo sobrescribir fuente_financiamiento para licitaciones
+                    if 'licitacion:' in tipo_id:
+                        if 'recurso_propio' in tipo_id:
+                            fuente_financiamiento = 'propio_municipal'
+                        elif 'fondo_federal' in tipo_id:
+                            fuente_financiamiento = 'federal'
+                    
+                    # Crear el expediente con los valores obtenidos
+                    expediente = Expediente(
+                        titulo=form.cleaned_data.get('titulo'),
+                        descripcion=form.cleaned_data.get('descripcion'),
+                        tipo_expediente=form.cleaned_data['tipo_expediente'],
+                        subtipo_expediente=form.cleaned_data.get('subtipo_expediente', ''),
+                        departamento=form.cleaned_data.get('departamento'),
+                        giro=form.cleaned_data.get('giro'),
+                        fuente_financiamiento=fuente_financiamiento,
+                        tipo_adquisicion=tipo_adquisicion,
+                        modalidad_monto=form.cleaned_data.get('modalidad_monto'),
+                        creado_por=request.user
+                    )
+                    expediente.save()
+                    
+                    # Log de depuración detallado
+                    logger.debug(f"=== DETALLES DEL EXPEDIENTE CREADO ===")
+                    logger.debug(f"ID: {expediente.id}")
+                    logger.debug(f"Tipo: {expediente.tipo_expediente}")
+                    logger.debug(f"Subtipo: {expediente.subtipo_expediente}")
+                    logger.debug(f"Fuente financiamiento: {expediente.fuente_financiamiento}")
+                    logger.debug(f"Tipo adquisición: {expediente.tipo_adquisicion}")
+                    logger.debug(f"Datos completos: {expediente.__dict__}")
+                    
+                    # Agregar los logs al contexto para mostrarlos en la plantilla
+                    debug_info = {
+                        'tipo': expediente.tipo_expediente,
+                        'subtipo': expediente.subtipo_expediente,
+                        'fuente': expediente.fuente_financiamiento,
+                        'adquisicion': expediente.tipo_adquisicion,
+                        'datos': str(expediente.__dict__)
+                    }
+                    messages.debug(request, f"Datos guardados: {debug_info}")
+                    
+                    # Procesar archivos adjuntos
+                    if 'archivos' in request.FILES:
+                        for archivo in request.FILES.getlist('archivos'):
+                            try:
+                                DocumentoExpediente.objects.create(
+                                    expediente=expediente,
+                                    archivo=archivo,
+                                    nombre=archivo.name,
+                                    subido_por=request.user,
+                                    tipo_documento=TipoDocumento.objects.get_or_create(nombre='General')[0]
+                                )
+                            except Exception as e:
+                                logger.error(f'Error al guardar archivo {archivo.name}: {str(e)}')
+                                raise ValidationError(f'Error al procesar el archivo {archivo.name}: {str(e)}')
+                    
+                    # Registrar en el historial
+                    HistorialExpediente.objects.create(
+                        expediente=expediente,
+                        usuario=request.user,
+                        accion='CREACION',
+                        descripcion=f'Expediente creado por {request.user.get_full_name() or request.user.username}'
+                    )
+                    
+                    logger.info(f"Expediente creado correctamente. ID: {expediente.id}")
+                    
+                    # Redirigir al detalle del expediente
+                    return redirect('expedientes:detalle', expediente_id=expediente.id)
+                    
+            except ValidationError as ve:
+                # Capturar errores de validación específicos
+                messages.error(request, str(ve))
+                logger.error(f'Error de validación al crear expediente: {str(ve)}')
+            except Exception as e:
+                # Capturar cualquier otro error
+                error_msg = f'Error inesperado al guardar el expediente: {str(e)}'
+                logger.error(error_msg, exc_info=True)
+                messages.error(request, 'Ocurrió un error al guardar el expediente. Por favor, inténtalo de nuevo.')
+        else:
+            # Mostrar errores del formulario
+            logger.error("El formulario no es válido")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    msg = f"Error en {field}: {error}"
+                    messages.error(request, msg)
+                    logger.error(msg)
+    else:
+        # Método GET - Mostrar formulario vacío
+        initial_data = {'tipo_expediente': tipo_id}
+        if ':' in tipo_id:
+            tipo_principal, subtipo = tipo_id.split(':', 1)
+            initial_data['subtipo_expediente'] = subtipo
+        
+        form = ExpedienteForm(initial=initial_data, user=request.user)
+
+    # Obtener todos los departamentos activos
+    departamentos = Departamento.objects.filter(activo=True).order_by('nombre')
+    
+    # Determinar si se debe mostrar el campo de fuente de financiamiento
+    # Mostrar para todos los tipos excepto licitaciones
+    mostrar_fuente_financiamiento = not tipo_id.startswith('licitacion')
+    
+    # Inicializar el formulario con los datos correspondientes
+    if request.method == 'POST':
+        # Crear una copia mutable de los datos POST
+        post_data = request.POST.copy()
+        
+        # Asegurarse de que tipo_expediente esté correctamente formateado
+        if ':' in tipo_id:
+            tipo_principal, subtipo = tipo_id.split(':', 1)
+            post_data['tipo_expediente'] = tipo_principal
+            post_data['subtipo_expediente'] = subtipo
+        else:
+            post_data['tipo_expediente'] = tipo_id
+            
+        # Asegurarse de que tipo_adquisicion tenga un valor por defecto si no está presente
+        if 'tipo_adquisicion' not in post_data or not post_data['tipo_adquisicion']:
+            post_data['tipo_adquisicion'] = 'bienes'
+        
+        # Si no se debe mostrar fuente_financiamiento, asegurarse de que no esté en los datos
+        if not mostrar_fuente_financiamiento:
+            if 'fuente_financiamiento' in post_data:
+                del post_data['fuente_financiamiento']
+            # Establecer un valor por defecto para licitaciones
+            if 'licitacion:recurso_propio' in tipo_id:
+                post_data['fuente_financiamiento'] = 'propio_municipal'
+            elif 'licitacion:fondo_federal' in tipo_id:
+                post_data['fuente_financiamiento'] = 'federal'
+        
+        # Crear el formulario con los datos procesados
+        form = ExpedienteForm(post_data, request.FILES, user=request.user)
+        
+        # Validar el formulario
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Crear el expediente manualmente
+                    expediente = Expediente(
+                        titulo=form.cleaned_data.get('titulo'),
+                        descripcion=form.cleaned_data.get('descripcion'),
+                        tipo_expediente=form.cleaned_data.get('tipo_expediente'),
+                        subtipo_expediente=form.cleaned_data.get('subtipo_expediente', ''),
+                        departamento=form.cleaned_data.get('departamento'),
+                        giro=form.cleaned_data.get('giro'),
+                        fuente_financiamiento=form.cleaned_data.get('fuente_financiamiento'),
+                        tipo_adquisicion=form.cleaned_data.get('tipo_adquisicion', 'bienes'),
+                        modalidad_monto=form.cleaned_data.get('modalidad_monto'),
+                        creado_por=request.user
+                    )
+                    expediente.save()
+                    
+                    # Procesar archivos adjuntos si los hay
+                    if 'archivos' in request.FILES:
+                        for archivo in request.FILES.getlist('archivos'):
+                            DocumentoExpendiente.objects.create(
+                                expediente=expediente,
+                                archivo=archivo,
+                                nombre=archivo.name,
+                                subido_por=request.user
+                            )
+                    
+                    messages.success(request, 'Expediente creado exitosamente')
+                    return redirect('expedientes:detalle', expediente_id=expediente.id)
+                    
+            except Exception as e:
+                logger.error(f'Error al guardar el expediente: {str(e)}', exc_info=True)
+                messages.error(request, f'Error al guardar el expediente: {str(e)}')
+        else:
+            logger.error(f'Error de validación del formulario: {form.errors}')
+            # Agregar los errores a los mensajes para mostrarlos al usuario
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'Error en {field}: {error}')
+    else:
+        # Para GET, establecer valores iniciales
+        initial_data = form.initial.copy()
+        initial_data['tipo_expediente'] = tipo_id.split(':')[0]  # Solo el tipo principal
+        if ':' in tipo_id:
+            initial_data['subtipo_expediente'] = tipo_id.split(':')[1]
+        initial_data['tipo_adquisicion'] = 'bienes'
+        if mostrar_fuente_financiamiento:
+            initial_data['fuente_financiamiento'] = 'propio_municipal'
+        form = ExpedienteForm(initial=initial_data, user=request.user)
+    
+    # Si hay errores de validación, mostrarlos en los logs
+    if request.method == 'POST' and not form.is_valid():
+        logger.error(f'Error de validación al crear expediente: {form.errors}')
+    
+    context = {
+        'form': form,
+        'tipo': tipo_id,
+        'tipo_nombre': tipo_nombre,
+        'titulo': f'Nuevo Expediente - {tipo_nombre}',
+        'departamentos': departamentos,
+        'mostrar_fuente_financiamiento': mostrar_fuente_financiamiento,
+        'subtipo': subtipo if ':' in tipo_id else None
+    }
+    
+    return render(request, 'digitalizacion/expedientes/crear_expediente.html', context)
+
+
+def seleccionar_tipo_expediente(request):
+    """
+    Vista para seleccionar el tipo de expediente antes de crearlo
+    """
+    try:
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.add_expediente'):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'No tiene permiso para crear expedientes'}, status=403)
+            django_messages.error(request, 'No tiene permiso para crear expedientes')
+            return redirect('expedientes:lista')
+        
+        # Tipos principales de expediente basados en el modelo
+        tipos = [
+            {
+                'key': 'licitacion',
+                'title': 'Licitación',
+                'description': 'Proceso de contratación pública para adquisiciones de bienes y servicios',
+                'tiene_subtipos': True,
+                'subtipos': [
+                    {
+                        'key': 'recurso_propio',
+                        'title': 'Recurso Propio',
+                        'description': 'Proceso de contratación con recursos propios',
+                        'icon': 'bi bi-cash-coin'
+                    },
+                    {
+                        'key': 'fondo_federal',
+                        'title': 'Fondo Federal',
+                        'description': 'Proceso de contratación con fondos federales',
+                        'icon': 'bi bi-bank2'
+                    }
+                ]
+            },
+            {
+                'key': 'adjudicacion_directa',
+                'title': 'Adjudicación Directa',
+                'description': 'Adjudicación directa en casos excepcionales según la normativa aplicable',
+                'tiene_subtipos': False,
+                'icon': 'bi bi-check2-circle'
+            },
+            {
+                'key': 'compra_directa',
+                'title': 'Compra Directa',
+                'description': 'Adquisición directa de bienes y servicios hasta el monto límite establecido',
+                'tiene_subtipos': False,
+                'icon': 'bi bi-cart-plus'
+            },
+            {
+                'key': 'concurso_invitacion',
+                'title': 'Concurso por Invitación',
+                'description': 'Proceso de contratación para cuando se invita a cuando menos a tres proveedores',
+                'tiene_subtipos': False,
+                'icon': 'bi bi-trophy'
+            }
+        ]
+        
+        # Manejar petición AJAX para obtener subtipos
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.GET.get('format') == 'json':
+            tipo = request.GET.get('tipo')
+            if tipo:
+                tipo_seleccionado = next((t for t in tipos if t['key'] == tipo), None)
+                if tipo_seleccionado and tipo_seleccionado.get('tiene_subtipos'):
+                    return JsonResponse({
+                        'tiene_subtipos': True,
+                        'subtipos': tipo_seleccionado.get('subtipos', [])
+                    })
+                return JsonResponse({'tiene_subtipos': False})
+            return JsonResponse({'error': 'Tipo no especificado'}, status=400)
+        
+        if request.method == 'POST':
+            tipo_id = request.POST.get('tipo_expediente')
+            subtipo_id = request.POST.get('subtipo')
+            
+            if tipo_id:
+                # Si tiene subtipos y no se seleccionó uno, mostrar error
+                tipo_seleccionado = next((t for t in tipos if t['key'] == tipo_id), None)
+                if tipo_seleccionado and tipo_seleccionado.get('tiene_subtipos') and not subtipo_id:
+                    django_messages.error(request, 'Debe seleccionar un tipo de licitación')
+                else:
+                    # Si es un subtipo de licitación, usar el formato tipo:subtipo
+                    if tipo_id == 'licitacion' and subtipo_id:
+                        tipo_a_usar = f"{tipo_id}:{subtipo_id}"
+                    else:
+                        tipo_a_usar = tipo_id
+                    return redirect('expedientes:crear', tipo_id=tipo_a_usar)
+            else:
+                django_messages.error(request, 'Debe seleccionar un tipo de expediente')
+        
+        context = {
+            'tipos': tipos,
+            'titulo': 'Seleccionar Tipo de Expediente'
+        }
+        
+        return render(request, 'digitalizacion/expedientes/seleccionar_tipo.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error al seleccionar tipo de expediente: {str(e)}', exc_info=True)
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'Ocurrió un error al cargar los tipos de expediente'}, status=500)
+        django_messages.error(request, 'Ocurrió un error al cargar los tipos de expediente')
+        return redirect('expedientes:lista')
+
+
+@login_required
+def lista_expedientes(request):
+    """
+    Vista para listar todos los expedientes con opciones de filtrado y búsqueda
+    """
+    try:
+        # Obtener parámetros de filtrado
+        estado = request.GET.get('estado', '')
+        tipo = request.GET.get('tipo', '')
+        q = request.GET.get('q', '')
+        
+        # Construir consulta base
+        expedientes = Expediente.objects.select_related('departamento', 'creado_por')
+        
+        # Aplicar filtros
+        if estado:
+            expedientes = expedientes.filter(estado=estado)
+            
+        if tipo:
+            expedientes = expedientes.filter(tipo_id=tipo)
+            
+        if q:
+            expedientes = expedientes.filter(
+                Q(numero__icontains=q) |
+                Q(descripcion__icontains=q) |
+                Q(observaciones__icontains=q)
+            )
+        
+        # Ordenar por fecha de creación descendente por defecto
+        orden = request.GET.get('orden', '-fecha_creacion')
+        expedientes = expedientes.order_by(orden)
+        
+        # Paginación
+        page = request.GET.get('page', 1)
+        paginator = Paginator(expedientes, 25)  # 25 expedientes por página
+        
+        try:
+            expedientes_pagina = paginator.page(page)
+        except PageNotAnInteger:
+            expedientes_pagina = paginator.page(1)
+        except EmptyPage:
+            expedientes_pagina = paginator.page(paginator.num_pages)
+        
+        # Obtener opciones para los filtros
+        tipos_expediente = []  # Inicializamos como lista vacía ya que no tenemos el modelo TipoExpediente
+        
+        context = {
+            'expedientes': expedientes_pagina,
+            'tipos_expediente': tipos_expediente,
+            'estado_filtro': estado,
+            'tipo_filtro': tipo,
+            'busqueda': q,
+            'orden_actual': orden,
+            'titulo': 'Lista de Expedientes'
+        }
+        
+        return render(request, 'digitalizacion/expedientes/lista.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error al listar expedientes: {str(e)}')
+        django_messages.error(request, 'Ocurrió un error al cargar la lista de expedientes')
+        return redirect('digitalizacion:dashboard')
+        return redirect('inicio')
+
+
+@login_required
+def dashboard_expedientes(request):
+    """
+    Vista para el dashboard de expedientes
+    """
+    try:
+        # Obtener estadísticas generales
+        total_expedientes = Expediente.objects.count()
+        expedientes_activos = Expediente.objects.filter(estado='activo').count()
+        expedientes_completados = Expediente.objects.filter(estado='completado').count()
+        
+        # Obtener los últimos expedientes
+        ultimos_expedientes = Expediente.objects.select_related('creado_por').order_by('-fecha_creacion')[:10]
+        
+        # Obtener actividades recientes
+        actividades_recientes = HistorialExpediente.objects.select_related('usuario', 'expediente')\
+            .order_by('-fecha')[:15]
+        
+        context = {
+            'titulo': 'Panel de Control de Expedientes',
+            'total_expedientes': total_expedientes,
+            'expedientes_activos': expedientes_activos,
+            'expedientes_completados': expedientes_completados,
+            'ultimos_expedientes': ultimos_expedientes,
+            'actividades_recientes': actividades_recientes,
+        }
+        
+        return render(request, 'digitalizacion/expedientes/dashboard.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error en el dashboard de expedientes: {str(e)}')
+        messages.error(request, 'Ocurrió un error al cargar el panel de control')
+        return redirect('digitalizacion:inicio')
+
+@login_required
+def ver_historial(request, expediente_id):
+    """
+    Vista para ver el historial de un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            messages.error(request, 'No tiene permiso para ver el historial de este expediente')
+            return redirect('expedientes:lista')
+        
+        # Obtener el historial del expediente
+        historial = HistorialExpediente.objects.filter(
+            expediente=expediente
+        ).select_related('usuario').order_by('-fecha_accion')
+        
+        # Paginación
+        page = request.GET.get('page', 1)
+        paginator = Paginator(historial, 20)  # 20 registros por página
+        
+        try:
+            historial_pagina = paginator.page(page)
+        except PageNotAnInteger:
+            historial_pagina = paginator.page(1)
+        except EmptyPage:
+            historial_pagina = paginator.page(paginator.num_pages)
+        
+        context = {
+            'expediente': expediente,
+            'historial': historial_pagina,
+            'titulo': f'Historial - {expediente.numero}'
+        }
+        
+        return render(request, 'digitalizacion/expedientes/historial.html', context)
+        
+    except Expediente.DoesNotExist:
+        messages.error(request, 'El expediente solicitado no existe')
+        return redirect('expedientes:lista')
+    except Exception as e:
+        logger.error(f'Error al cargar el historial del expediente {expediente_id}: {str(e)}')
+        messages.error(request, 'Ocurrió un error al cargar el historial del expediente')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def completar_etapa(request, expediente_id):
+    """
+    Vista para marcar una etapa como completada en un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        etapa = request.POST.get('etapa')
+        
+        if not etapa:
+            return JsonResponse({'success': False, 'error': 'No se especificó la etapa a completar'}, status=400)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            return JsonResponse({'success': False, 'error': 'No tiene permiso para completar esta etapa'}, status=403)
+        
+        # Actualizar el estado del expediente según la etapa completada
+        if hasattr(expediente, f'marcar_{etapa}_completada'):
+            getattr(expediente, f'marcar_{etapa}_completada')(request.user)
+        else:
+            # Si no hay un método específico, actualizar el campo correspondiente
+            campo_etapa = f'{etapa}_completada'
+            if hasattr(expediente, campo_etapa):
+                setattr(expediente, campo_etapa, True)
+                expediente.save()
+            else:
+                return JsonResponse({'success': False, 'error': f'Etapa {etapa} no válida'}, status=400)
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'ETAPA_COMPLETADA_{etapa.upper()}',
+            detalles=f'Se marcó como completada la etapa: {etapa}'
+        )
+        
+        return JsonResponse({'success': True})
+        
+    except Expediente.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Expediente no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f'Error al completar etapa: {str(e)}')
+        return JsonResponse({'success': False, 'error': 'Error al completar la etapa'}, status=500)
+
+
+@login_required
+def obtener_documentos_area(request, expediente_id, area_id):
+    """
+    Vista para obtener los documentos de un área específica de un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        area = get_object_or_404(AreaTipoExpediente, id=area_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            return JsonResponse({
+                'success': False,
+                'error': 'No tiene permiso para ver los documentos de este expediente'
+            }, status=403)
+        
+        # Obtener documentos del área específica
+        documentos = DocumentoExpediente.objects.filter(
+            expediente=expediente,
+            area=area
+        ).order_by('-fecha_subida')
+        
+        # Preparar datos para la respuesta
+        documentos_data = [{
+            'id': doc.id,
+            'nombre': doc.nombre_documento,  # Usar nombre_documento en lugar de nombre
+            'descripcion': doc.descripcion,
+            'fecha_subida': doc.fecha_subida.strftime('%d/%m/%Y %H:%M'),
+            'subido_por': {  # Cambiado de creado_por a subido_por
+                'id': doc.subido_por.id,
+                'nombre': doc.subido_por.get_full_name() or doc.subido_por.username
+            },
+            'url': doc.archivo.url if doc.archivo else None,
+            'tipo': doc.tipo_archivo or 'Documento'  # Usar tipo_archivo si está disponible
+        } for doc in documentos]
+        
+        return JsonResponse({
+            'success': True,
+            'expediente': {
+                'id': expediente.id,
+                'numero': expediente.numero_expediente,
+                'descripcion': expediente.descripcion
+            },
+            'area': {
+                'id': area.id,
+                'nombre': area.nombre,
+                'descripcion': area.descripcion
+            },
+            'documentos': documentos_data
+        })
+        
+    except Expediente.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Expediente no encontrado'}, status=404)
+    except AreaTipoExpediente.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Área no encontrada'}, status=404)
+    except Exception as e:
+        logger.error(f'Error al obtener documentos del área: {str(e)}')
+        return JsonResponse({
+            'success': False, 
+            'error': 'Error al obtener los documentos del área',
+            'debug': str(e) if settings.DEBUG else None
+        }, status=500)
+
+
+@login_required
+def eliminar_documento_area(request, documento_id):
+    """
+    Vista para eliminar un documento de un área específica de un expediente
+    """
+    documento = get_object_or_404(DocumentoExpediente, id=documento_id)
+    expediente = documento.expediente
+    
+    # Verificar permisos: el usuario debe ser propietario, administrador o tener permiso de eliminación
+    if not (request.user == expediente.creado_por or 
+            request.user.is_staff or 
+            request.user.has_perm('digitalizacion.delete_documentoexpediente')):
+        return JsonResponse(
+            {'success': False, 'error': 'No tiene permiso para eliminar este documento.'}, 
+            status=403
+        )
+    
+    try:
+        # Eliminar el archivo físico si existe
+        if documento.archivo:
+            if os.path.isfile(documento.archivo.path):
+                os.remove(documento.archivo.path)
+        
+        # Registrar la acción en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'Documento eliminado: {documento.nombre_archivo} (Área: {documento.area.nombre if documento.area else "Sin área"})',
+            detalles=f'Documento eliminado: {documento.nombre_archivo}'
+        )
+        
+        # Eliminar el registro de la base de datos
+        documento_nombre = documento.nombre_archivo
+        documento.delete()
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'Documento "{documento_nombre}" eliminado correctamente.'
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al eliminar documento {documento_id}: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Ocurrió un error al eliminar el documento.'}, 
+            status=500
+        )
+
+
+@login_required
+def obtener_detalles_expediente(request, expediente_id):
+    """
+    Obtiene los detalles de un expediente en formato JSON
+    """
+    try:
+        from django.core.exceptions import PermissionDenied
+        from django.http import JsonResponse
+        from django.shortcuts import get_object_or_404
+        from django.db.models import Q
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        # Obtener el expediente
+        try:
+            expediente = get_object_or_404(Expediente, id=expediente_id)
+        except Exception as e:
+            logger.error(f'Error al buscar expediente {expediente_id}: {str(e)}')
+            return JsonResponse(
+                {'success': False, 'error': 'Error al buscar el expediente'}, 
+                status=500
+            )
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            logger.warning(f'Intento de acceso no autorizado al expediente {expediente_id} por el usuario {request.user.username}')
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para ver este expediente'}, 
+                status=403
+            )
+        
+        # Obtener documentos agrupados por área
+        documentos_por_area = {}
+        try:
+            for doc in expediente.documentos.all().select_related('area'):
+                try:
+                    area_nombre = doc.area.nombre if doc.area else 'Sin asignar'
+                    if area_nombre not in documentos_por_area:
+                        documentos_por_area[area_nombre] = []
+                    
+                    documentos_por_area[area_nombre].append({
+                        'id': doc.id,
+                        'nombre': doc.nombre_archivo,
+                        'tipo': doc.get_tipo_display() if hasattr(doc, 'get_tipo_display') else 'Documento',
+                        'fecha_subida': doc.fecha_creacion.strftime('%d/%m/%Y %H:%M') if doc.fecha_creacion else 'Fecha no disponible',
+                        'tamano': f"{(doc.archivo.size / 1024):.1f} KB" if (hasattr(doc, 'archivo') and doc.archivo) else '0 KB',
+                        'url': doc.archivo.url if (hasattr(doc, 'archivo') and doc.archivo) else '#',
+                        'puede_eliminar': request.user.has_perm('digitalizacion.delete_documentoexpediente') or request.user == getattr(doc, 'creado_por', None)
+                    })
+                except Exception as e:
+                    logger.error(f'Error al procesar documento {getattr(doc, "id", "desconocido")}: {str(e)}')
+                    continue
+        except Exception as e:
+            logger.error(f'Error al obtener documentos del expediente {expediente_id}: {str(e)}')
+            documentos_por_area = {'Error': ['No se pudieron cargar los documentos']}
+        
+        # Obtener historial de cambios
+        historial_data = []
+        try:
+            from .models import HistorialExpediente
+            historial = HistorialExpediente.objects.filter(
+                expediente=expediente
+            ).select_related('usuario').order_by('-fecha')[:50]
+            
+            historial_data = [{
+                'fecha': h.fecha.strftime('%d/%m/%Y %H:%M') if h.fecha else 'Fecha no disponible',
+                'usuario': h.usuario.get_full_name() or getattr(h.usuario, 'username', 'Usuario desconocido'),
+                'accion': h.accion or 'Acción no especificada',
+                'detalles': h.detalles or ''
+            } for h in historial]
+        except Exception as e:
+            logger.error(f'Error al obtener historial del expediente {expediente_id}: {str(e)}')
+            historial_data = [{'error': 'No se pudo cargar el historial'}]
+        
+        # Datos del expediente
+        try:
+            creado_por = {
+                'id': expediente.creado_por.id,
+                'nombre': expediente.creado_por.get_full_name() or expediente.creado_por.username,
+                'username': expediente.creado_por.username
+            } if hasattr(expediente, 'creado_por') and expediente.creado_por else None
+            
+            asignado_a = None
+            if hasattr(expediente, 'asignado_a') and expediente.asignado_a:
+                asignado_a = {
+                    'id': expediente.asignado_a.id,
+                    'nombre': expediente.asignado_a.get_full_name() or expediente.asignado_a.username,
+                    'username': expediente.asignado_a.username
+                }
+                
+            area_actual = None
+            if hasattr(expediente, 'area_actual') and expediente.area_actual:
+                area_actual = {
+                    'id': expediente.area_actual.id,
+                    'nombre': expediente.area_actual.nombre
+                }
+            
+            expediente_data = {
+                'id': expediente.id,
+                'numero': getattr(expediente, 'numero', 'N/A'),
+                'asunto': getattr(expediente, 'asunto', 'Sin asunto'),
+                'descripcion': getattr(expediente, 'descripcion', 'Sin descripción'),
+                'estado': getattr(expediente, 'get_estado_display', lambda: 'Desconocido')(),
+                'fecha_creacion': expediente.fecha_creacion.strftime('%d/%m/%Y %H:%M') if hasattr(expediente, 'fecha_creacion') else 'Fecha no disponible',
+                'creado_por': creado_por,
+                'asignado_a': asignado_a,
+                'area_actual': area_actual,
+                'documentos_por_area': documentos_por_area,
+                'historial': historial_data,
+                'permisos': {
+                    'editar': request.user.has_perm('digitalizacion.change_expediente', expediente),
+                    'eliminar': request.user.has_perm('digitalizacion.delete_expediente', expediente),
+                    'cambiar_estado': request.user.has_perm('digitalizacion.change_estado_expediente', expediente),
+                    'subir_documentos': request.user.has_perm('digitalizacion.add_documentoexpediente')
+                }
+            }
+            
+            return JsonResponse({
+                'success': True,
+                'expediente': expediente_data
+            })
+            
+        except Exception as e:
+            logger.error(f'Error al procesar datos del expediente {expediente_id}: {str(e)}', exc_info=True)
+            return JsonResponse(
+                {'success': False, 'error': 'Error al procesar los datos del expediente'}, 
+                status=500
+            )
+            
+    except Exception as e:
+        logger.error(f'Error inesperado en obtener_detalles_expediente: {str(e)}', exc_info=True)
+        return JsonResponse(
+            {'success': False, 'error': 'Error interno del servidor al procesar la solicitud'}, 
+            status=500
+        )
+
+
+def obtener_usuarios_mencion(request):
+    """
+    Busca usuarios para mencionar en comentarios o notificaciones
+    """
+    try:
+        query = request.GET.get('q', '').strip()
+        
+        if not query:
+            return JsonResponse({
+                'success': True,
+                'usuarios': []
+            })
+        
+        # Buscar usuarios que coincidan con la consulta
+        usuarios = User.objects.filter(
+            Q(username__icontains=query) |
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(email__icontains=query)
+        ).exclude(id=request.user.id).distinct()[:10]
+        
+        # Formatear la respuesta
+        usuarios_data = [{
+            'id': usuario.id,
+            'username': usuario.username,
+            'nombre_completo': f"{usuario.first_name} {usuario.last_name}".strip() or usuario.username,
+            'iniciales': f"{usuario.first_name[0] if usuario.first_name else ''}{usuario.last_name[0] if usuario.last_name else ''}".upper() or usuario.username[0].upper(),
+            'email': usuario.email,
+            'foto': usuario.perfil.foto.url if hasattr(usuario, 'perfil') and usuario.perfil.foto else None
+        } for usuario in usuarios]
+        
+        return JsonResponse({
+            'success': True,
+            'usuarios': usuarios_data
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al buscar usuarios para mención: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al buscar usuarios'}, 
+            status=500
+        )
+
+
+@login_required
+def obtener_notificaciones(request):
+    """
+    Obtiene las notificaciones del usuario actual
+    """
+    try:
+        # Obtener las últimas 20 notificaciones no leídas
+        notificaciones = Notificacion.objects.filter(
+            usuario=request.user,
+            leida=False
+        ).select_related('expediente').order_by('-fecha_creacion')[:20]
+        
+        # Formatear las notificaciones
+        notificaciones_data = [{
+            'id': notif.id,
+            'mensaje': notif.mensaje,
+            'fecha_creacion': notif.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+            'leida': notif.leida,
+            'tipo': notif.tipo,
+            'url': notif.get_absolute_url() if hasattr(notif, 'get_absolute_url') else '#'
+        } for notif in notificaciones]
+        
+        # Contar notificaciones no leídas
+        total_no_leidas = Notificacion.objects.filter(
+            usuario=request.user,
+            leida=False
+        ).count()
+        
+        return JsonResponse({
+            'success': True,
+            'notificaciones': notificaciones_data,
+            'total_no_leidas': total_no_leidas
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al obtener notificaciones: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al cargar las notificaciones'}, 
+            status=500
+        )
+
+
+def listar_areas(request):
+    """
+    Vista para listar todas las áreas disponibles
+    """
+    try:
+        # Obtener todas las áreas activas
+        areas = AreaTipoExpediente.objects.filter(activo=True).order_by('nombre')
+        
+        # Preparar la respuesta
+        areas_data = [{
+            'id': area.id,
+            'nombre': area.nombre,
+            'descripcion': area.descripcion,
+            'icono': area.icono if hasattr(area, 'icono') else 'folder',
+            'color': area.color if hasattr(area, 'color') else '#6c757d'
+        } for area in areas]
+        
+        return JsonResponse({
+            'success': True,
+            'areas': areas_data
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al listar áreas: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al obtener la lista de áreas'}, 
+            status=500
+        )
+
+
+@login_required
+def marcar_notificacion_leida(request, notificacion_id):
+    """
+    Marca una notificación como leída
+    """
+    try:
+        # Obtener la notificación
+        notificacion = get_object_or_404(Notificacion, id=notificacion_id, usuario=request.user)
+        
+        # Verificar que la notificación pertenezca al usuario actual
+        if notificacion.usuario != request.user and not request.user.is_staff:
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para marcar esta notificación'}, 
+                status=403
+            )
+        
+        # Marcar como leída
+        notificacion.leida = True
+        notificacion.fecha_leida = timezone.now()
+        notificacion.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notificación marcada como leída',
+            'notificacion_id': notificacion.id
+        })
+        
+    except Notificacion.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Notificación no encontrada'}, 
+            status=404
+        )
+    except Exception as e:
+        logger.error(f'Error al marcar notificación como leída: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al procesar la solicitud'}, 
+            status=500
+        )
+
+
+@login_required
+def crear_comentario_area(request, expediente_id):
+    """
+    Vista para crear un comentario en un área específica de un expediente
+    """
+    if request.method != 'POST':
+        return JsonResponse(
+            {'success': False, 'error': 'Método no permitido'}, 
+            status=405
+        )
+    
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        data = json.loads(request.body)
+        
+        # Validar que el usuario tenga permiso para comentar
+        if not (request.user.has_perm('digitalizacion.comment_expediente', expediente) or 
+                request.user.is_staff or 
+                request.user == expediente.creado_por):
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para comentar en este expediente'}, 
+                status=403
+            )
+        
+        # Validar datos del comentario
+        contenido = data.get('contenido', '').strip()
+        area_id = data.get('area_id')
+        
+        if not contenido:
+            return JsonResponse(
+                {'success': False, 'error': 'El contenido del comentario es requerido'}, 
+                status=400
+            )
+        
+        # Crear el comentario
+        comentario = ComentarioArea.objects.create(
+            expediente=expediente,
+            area_id=area_id,
+            usuario=request.user,
+            contenido=contenido
+        )
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=f'Comentario agregado en área: {comentario.area.nombre if comentario.area else "General"}',
+            detalles=contenido[:100]  # Guardar los primeros 100 caracteres
+        )
+        
+        # Preparar datos de respuesta
+        response_data = {
+            'success': True,
+            'comentario': {
+                'id': comentario.id,
+                'contenido': comentario.contenido,
+                'fecha_creacion': comentario.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+                'usuario': {
+                    'id': request.user.id,
+                    'nombre': request.user.get_full_name() or request.user.username,
+                    'foto': request.user.perfil.foto.url if hasattr(request.user, 'perfil') and request.user.perfil.foto else None
+                }
+            }
+        }
+        
+        return JsonResponse(response_data)
+        
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'Formato de datos inválido'}, 
+            status=400
+        )
+    except Expediente.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Expediente no encontrado'}, 
+            status=404
+        )
+    except Exception as e:
+        logger.error(f'Error al crear comentario: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al crear el comentario'}, 
+            status=500
+        )
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_mensaje_expediente(request, expediente_id):
+    """
+    Vista para enviar un mensaje en un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        data = json.loads(request.body)
+        
+        # Verificar que el usuario tenga permiso para ver el expediente
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para ver este expediente'}, 
+                status=403
+            )
+        
+        # Validar el contenido del mensaje
+        contenido = data.get('contenido', '').strip()
+        if not contenido:
+            return JsonResponse(
+                {'success': False, 'error': 'El contenido del mensaje es requerido'}, 
+                status=400
+            )
+        
+        # Crear el mensaje
+        mensaje = MensajeExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            contenido=contenido
+        )
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion='Nuevo mensaje en el expediente',
+            detalles=f'Mensaje: {contenido[:100]}...'
+        )
+        
+        # Notificar a los usuarios mencionados
+        mencionados = re.findall(r'@(\w+)', contenido)
+        if mencionados:
+            for username in mencionados:
+                try:
+                    usuario_men = User.objects.get(username=username)
+                    if usuario_men != request.user:  # No notificar al remitente
+                        Notificacion.objects.create(
+                            usuario=usuario_men,
+                            titulo=f'Mencionado en expediente {expediente.numero_expediente}',
+                            mensaje=f'{request.user.get_full_name()} te mencionó en un mensaje: {contenido[:100]}...',
+                            url=reverse('expedientes:detalle', args=[expediente.id])
+                        )
+                except User.DoesNotExist:
+                    continue
+        
+        # Notificar a los participantes del expediente (excepto al remitente)
+        participantes = set()
+        
+        # Agregar creador del expediente
+        if expediente.creado_por != request.user:
+            participantes.add(expediente.creado_por)
+            
+        # Agregar usuario asignado si existe
+        if expediente.asignado_a and expediente.asignado_a != request.user:
+            participantes.add(expediente.asignado_a)
+            
+        # Notificar a los participantes
+        for participante in participantes:
+            Notificacion.objects.create(
+                usuario=participante,
+                titulo=f'Nuevo mensaje en expediente {expediente.numero_expediente}',
+                mensaje=f'{request.user.get_full_name()} ha enviado un mensaje en el expediente: {contenido[:100]}...',
+                url=reverse('expedientes:detalle', args=[expediente.id])
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': {
+                'id': mensaje.id,
+                'contenido': mensaje.contenido,
+                'fecha_envio': mensaje.fecha_envio.strftime('%d/%m/%Y %H:%M'),
+                'usuario': {
+                    'id': request.user.id,
+                    'nombre': request.user.get_full_name() or request.user.username,
+                    'foto': request.user.perfil.foto.url if hasattr(request.user, 'perfil') and request.user.perfil.foto else None
+                }
+            }
+        })
+        
+    except Expediente.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Expediente no encontrado'}, 
+            status=404
+        )
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'Formato de datos inválido'}, 
+            status=400
+        )
+    except Exception as e:
+        logger.error(f'Error al enviar mensaje en expediente {expediente_id}: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al enviar el mensaje'}, 
+            status=500
+        )
+
+
+@login_required
+def obtener_mensajes_expediente(request, expediente_id):
+    """
+    Vista para obtener los mensajes de un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar que el usuario tenga permiso para ver el expediente
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para ver este expediente'}, 
+                status=403
+            )
+        
+        # Obtener los últimos 50 mensajes del expediente
+        mensajes = MensajeExpediente.objects.filter(
+            expediente=expediente
+        ).select_related('usuario').order_by('fecha_envio')[:50]
+        
+        # Formatear los mensajes
+        mensajes_data = []
+        for mensaje in mensajes:
+            mensajes_data.append({
+                'id': mensaje.id,
+                'contenido': mensaje.contenido,
+                'fecha_envio': mensaje.fecha_envio.strftime('%d/%m/%Y %H:%M'),
+                'es_mio': mensaje.usuario == request.user,
+                'usuario': {
+                    'id': mensaje.usuario.id,
+                    'nombre': mensaje.usuario.get_full_name() or mensaje.usuario.username,
+                    'foto': mensaje.usuario.perfil.foto.url if hasattr(mensaje.usuario, 'perfil') and mensaje.usuario.perfil.foto else None
+                }
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'mensajes': mensajes_data
+        })
+        
+    except Expediente.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Expediente no encontrado'}, 
+            status=404
+        )
+    except Exception as e:
+        logger.error(f'Error al obtener mensajes del expediente {expediente_id}: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al cargar los mensajes'}, 
+            status=500
+        )
+
+
+@login_required
+@require_http_methods(["POST"])
+def enviar_mensaje_usuario(request):
+    """
+    Vista para enviar un mensaje directo a otro usuario
+    """
+    try:
+        data = json.loads(request.body)
+        
+        # Validar datos del formulario
+        usuario_destino_id = data.get('usuario_id')
+        asunto = data.get('asunto', '').strip()
+        contenido = data.get('contenido', '').strip()
+        
+        if not usuario_destino_id or not contenido:
+            return JsonResponse(
+                {'success': False, 'error': 'Usuario destino y contenido son requeridos'}, 
+                status=400
+            )
+        
+        # Verificar que el usuario destino exista
+        try:
+            usuario_destino = User.objects.get(id=usuario_destino_id)
+        except User.DoesNotExist:
+            return JsonResponse(
+                {'success': False, 'error': 'Usuario destino no encontrado'}, 
+                status=404
+            )
+        
+        # Crear el mensaje
+        mensaje = MensajePrivado.objects.create(
+            remitente=request.user,
+            destinatario=usuario_destino,
+            asunto=asunto,
+            contenido=contenido
+        )
+        
+        # Notificar al usuario
+        Notificacion.objects.create(
+            usuario=usuario_destino,
+            titulo=f'Nuevo mensaje de {request.user.get_full_name()}',
+            mensaje=f'Asunto: {asunto}\n{contenido[:100]}...',
+            tipo='mensaje_privado',
+            url=reverse('mensajes:ver', args=[mensaje.id])
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Mensaje enviado correctamente',
+            'mensaje_id': mensaje.id
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'Formato de datos inválido'}, 
+            status=400
+        )
+    except Exception as e:
+        logger.error(f'Error al enviar mensaje privado: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al enviar el mensaje'}, 
+            status=500
+        )
+
+
+@login_required
+@require_http_methods(["POST"])
+def agregar_sima(request, expediente_id):
+    """
+    Vista para agregar un número SIMA a un expediente
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        data = json.loads(request.body)
+        
+        # Verificar permisos (solo administradores o usuarios con permiso específico pueden agregar SIMA)
+        if not (request.user.is_staff or request.user.has_perm('digitalizacion.add_sima')):
+            return JsonResponse(
+                {'success': False, 'error': 'No tiene permiso para realizar esta acción'}, 
+                status=403
+            )
+        
+        # Validar el número SIMA
+        numero_sima = data.get('numero_sima', '').strip()
+        if not numero_sima:
+            return JsonResponse(
+                {'success': False, 'error': 'El número SIMA es requerido'}, 
+                status=400
+            )
+        
+        # Verificar si el número SIMA ya está en uso
+        if Expediente.objects.filter(numero_sima=numero_sima).exclude(id=expediente_id).exists():
+            return JsonResponse(
+                {'success': False, 'error': 'Este número SIMA ya está siendo utilizado por otro expediente'}, 
+                status=400
+            )
+        
+        # Guardar el número SIMA
+        expediente.numero_sima = numero_sima
+        expediente.fecha_actualizacion = timezone.now()
+        expediente.save()
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion='Número SIMA actualizado',
+            detalles=f'Nuevo número SIMA asignado: {numero_sima}'
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Número SIMA actualizado correctamente',
+            'numero_sima': numero_sima,
+            'fecha_actualizacion': expediente.fecha_actualizacion.strftime('%d/%m/%Y %H:%M')
+        })
+        
+    except Expediente.DoesNotExist:
+        return JsonResponse(
+            {'success': False, 'error': 'Expediente no encontrado'}, 
+            status=404
+        )
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {'success': False, 'error': 'Formato de datos inválido'}, 
+            status=400
+        )
+    except Exception as e:
+        logger.error(f'Error al actualizar número SIMA para el expediente {expediente_id}: {str(e)}')
+        return JsonResponse(
+            {'success': False, 'error': 'Error al actualizar el número SIMA'}, 
+            status=500
+        )
+
+
+@login_required
+def buscar_expedientes(request):
+    """
+    Vista para buscar expedientes según diferentes criterios
+    """
+    try:
+        query = request.GET.get('q', '').strip()
+        tipo = request.GET.get('tipo', '')
+        estado = request.GET.get('estado', '')
+        fecha_desde = request.GET.get('fecha_desde', '')
+        fecha_hasta = request.GET.get('fecha_hasta', '')
+        creado_por = request.GET.get('creado_por', '')
+        asignado_a = request.GET.get('asignado_a', '')
+        
+        # Construir la consulta base
+        expedientes = Expediente.objects.all()
+        
+        # Aplicar filtros según los parámetros recibidos
+        if query:
+            expedientes = expedientes.filter(
+                Q(numero_expediente__icontains=query) |
+                Q(asunto__icontains=query) |
+                Q(descripcion__icontains=query) |
+                Q(numero_sima__icontains=query)
+            )
+            
+        if tipo:
+            expedientes = expedientes.filter(tipo=tipo)
+            
+        if estado:
+            expedientes = expedientes.filter(estado=estado)
+            
+        if fecha_desde:
+            try:
+                fecha_desde_dt = datetime.strptime(fecha_desde, '%Y-%m-%d').date()
+                expedientes = expedientes.filter(fecha_creacion__date__gte=fecha_desde_dt)
+            except ValueError:
+                pass
+                
+        if fecha_hasta:
+            try:
+                fecha_hasta_dt = datetime.strptime(fecha_hasta, '%Y-%m-%d').date()
+                expedientes = expedientes.filter(fecha_creacion__date__lte=fecha_hasta_dt)
+            except ValueError:
+                pass
+                
+        if creado_por:
+            expedientes = expedientes.filter(creado_por__username__icontains=creado_por)
+            
+        if asignado_a:
+            expedientes = expedientes.filter(asignado_a__username__icontains=asignado_a)
+        
+        # Ordenar por fecha de creación descendente
+        expedientes = expedientes.order_by('-fecha_creacion')
+        
+        # Paginación
+        page = request.GET.get('page', 1)
+        paginator = Paginator(expedientes, 20)  # 20 expedientes por página
+        
+        try:
+            expedientes_pagina = paginator.page(page)
+        except PageNotAnInteger:
+            expedientes_pagina = paginator.page(1)
+        except EmptyPage:
+            expedientes_pagina = paginator.page(paginator.num_pages)
+        
+        # Preparar los datos para la respuesta
+        expedientes_data = []
+        for exp in expedientes_pagina:
+            expedientes_data.append({
+                'id': exp.id,
+                'numero_expediente': exp.numero_expediente,
+                'tipo': exp.get_tipo_display(),
+                'asunto': exp.asunto,
+                'estado': exp.get_estado_display(),
+                'fecha_creacion': exp.fecha_creacion.strftime('%d/%m/%Y'),
+                'creado_por': exp.creado_por.get_full_name() or exp.creado_por.username,
+                'asignado_a': exp.asignado_a.get_full_name() if exp.asignado_a else 'No asignado',
+                'url': reverse('expedientes:detalle_expediente', args=[exp.id])
+            })
+        
+        # Si es una petición AJAX, devolver JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'expedientes': expedientes_data,
+                'has_next': expedientes_pagina.has_next(),
+                'has_previous': expedientes_pagina.has_previous(),
+                'page_number': expedientes_pagina.number,
+                'num_pages': paginator.num_pages,
+                'count': paginator.count
+            })
+            
+        # Si no es AJAX, renderizar la plantilla
+        return render(request, 'expedientes/buscar_expedientes.html', {
+            'expedientes': expedientes_pagina,
+            'query': query,
+            'tipos': Expediente.TIPO_CHOICES,
+            'estados': Expediente.ESTADO_CHOICES,
+            'filtros': {
+                'tipo': tipo,
+                'estado': estado,
+                'fecha_desde': fecha_desde,
+                'fecha_hasta': fecha_hasta,
+                'creado_por': creado_por,
+                'asignado_a': asignado_a
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f'Error al buscar expedientes: {str(e)}')
+        
+        # Si es AJAX, devolver error en JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'error': 'Error al realizar la búsqueda'
+            }, status=500)
+            
+        # Si no es AJAX, mostrar mensaje de error
+        messages.error(request, 'Ocurrió un error al realizar la búsqueda')
+        return redirect('expedientes:lista_expedientes')
+
+
+def obtener_mensajes_usuario(request, usuario_id):
+    """Vista AJAX para obtener mensajes entre dos usuarios"""
+    try:
+        usuario = User.objects.get(id=usuario_id)
+
+        # Buscar expedientes que contengan conversaciones entre los dos usuarios
+        expedientes = Expediente.objects.filter(
+            Q(creado_por=request.user) |
+            Q(creado_por=usuario)
+        )
+
+        mensajes = MensajeExpediente.objects.filter(
+            expediente__in=expedientes
+        ).select_related('usuario').order_by('fecha_envio')
+
+        mensajes_data = []
+        for mensaje in mensajes:
+            mensajes_data.append({
+                'id': mensaje.id,
+                'contenido': mensaje.contenido,
+                'usuario': mensaje.usuario.get_full_name() or mensaje.usuario.username,
+                'fecha_envio': mensaje.fecha_envio.strftime('%H:%M'),
+                'es_mio': mensaje.usuario == request.user
+            })
+
+        return JsonResponse({'success': True, 'mensajes': mensajes_data})
+
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Usuario no encontrado'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(["POST"])
+def eliminar_documento_expediente(request, expediente_id, documento_id):
+    """
+    Vista para eliminar un documento de un expediente
+    """
+    try:
+        # Obtener el documento y verificar que pertenezca al expediente
+        documento = get_object_or_404(
+            DocumentoExpediente, 
+            id=documento_id, 
+            expediente_id=expediente_id
+        )
+        
+        expediente = documento.expediente
+        
+        # Verificar permisos
+        if not (request.user.has_perm('digitalizacion.delete_documentoexpediente') or 
+                request.user == documento.subido_por or
+                request.user == expediente.creado_por):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse(
+                    {'success': False, 'error': 'No tiene permiso para eliminar este documento.'},
+                    status=403
+                )
+            messages.error(request, 'No tiene permiso para eliminar este documento.')
+            return redirect('expedientes:detalle_expediente', expediente_id=expediente_id)
+        
+        # Guardar información para el historial
+        doc_nombre = documento.nombre_documento
+        area = documento.area if hasattr(documento, 'area') else None
+        
+        # Eliminar el archivo físico si existe
+        if documento.archivo and hasattr(documento.archivo, 'path') and os.path.isfile(documento.archivo.path):
+            try:
+                os.remove(documento.archivo.path)
+            except Exception as e:
+                logger.error(f'Error al eliminar archivo físico {documento.archivo.path}: {str(e)}')
+        
+        # Eliminar el registro de la base de datos
+        documento.delete()
+        
+        # Recalcular el progreso
+        from .models import AreaTipoExpediente, EtapaExpediente
+        
+        # Obtener todas las áreas para este tipo de expediente
+        areas_etapas = AreaTipoExpediente.objects.filter(
+            tipo_expediente=expediente.tipo_expediente,
+            activa=True
+        )
+        
+        if getattr(expediente, 'subtipo_expediente', None):
+            areas_etapas = areas_etapas.filter(
+                Q(subtipo_expediente=expediente.subtipo_expediente) |
+                Q(subtipo_expediente__isnull=True) |
+                Q(subtipo_expediente='')
+            )
+        
+        total_etapas = areas_etapas.count()
+        etapas_completadas = 0
+        
+        # Verificar cada área para ver si está completada
+        for area_etapa in areas_etapas:
+            # Verificar si el área tiene documentos
+            tiene_documentos = expediente.documentos.filter(area=area_etapa).exists()
+            
+            # Actualizar o crear registro de EtapaExpediente
+            etapa, created = EtapaExpediente.objects.update_or_create(
+                expediente=expediente,
+                area=area_etapa,
+                defaults={
+                    'completada': tiene_documentos,
+                    'fecha_completada': timezone.now() if tiene_documentos else None,
+                    'completada_por': request.user if tiene_documentos else None
+                }
+            )
+            
+            if tiene_documentos:
+                etapas_completadas += 1
+        
+        # Calcular progreso
+        progreso = int((etapas_completadas / total_etapas) * 100) if total_etapas > 0 else 0
+        
+        # Actualizar el progreso en el expediente
+        expediente.progreso = progreso
+        expediente.save(update_fields=['progreso', 'fecha_actualizacion'])
+        
+        # Registrar en el historial
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion='Documento eliminado',
+            detalles=f'Se eliminó el documento: {doc_nombre}'
+        )
+        
+        # Si es una petición AJAX, devolver respuesta JSON con datos de progreso
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': 'Documento eliminado correctamente',
+                'documento_id': documento_id,
+                'progreso': progreso,
+                'etapas_completadas': etapas_completadas,
+                'total_etapas': total_etapas
+            })
+        
+        messages.success(request, f'Documento "{doc_nombre}" eliminado correctamente.')
+        return redirect('expedientes:editar_expediente', expediente_id=expediente_id)
+        
+    except DocumentoExpediente.DoesNotExist:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'El documento no existe o no pertenece a este expediente'},
+                status=404
+            )
+        messages.error(request, 'El documento no existe o no pertenece a este expediente')
+        return redirect('expedientes:detalle_expediente', expediente_id=expediente_id)
+        
+    except Exception as e:
+        logger.error(f'Error al eliminar documento {documento_id} del expediente {expediente_id}: {str(e)}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse(
+                {'success': False, 'error': 'Ocurrió un error al intentar eliminar el documento'},
+                status=500
+            )
+        messages.error(request, 'Ocurrió un error al intentar eliminar el documento')
+        return redirect('expedientes:editar_expediente', expediente_id=expediente_id)
+
+
+@login_required
+def ver_documento_expediente(request, documento_id):
+    """
+    Vista para ver los detalles de un documento de un expediente
+    """
+    try:
+        documento = get_object_or_404(DocumentoExpediente, id=documento_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_documentoexpediente', documento):
+            return HttpResponseForbidden("No tiene permiso para ver este documento")
+            
+        context = {
+            'documento': documento,
+            'expediente': documento.expediente,
+            'puede_editar': request.user.has_perm('digitalizacion.change_documentoexpediente', documento),
+            'puede_eliminar': request.user.has_perm('digitalizacion.delete_documentoexpediente', documento),
+        }
+        
+        return render(request, 'digitalizacion/expedientes/ver_documento.html', context)
+        
+    except Exception as e:
+        logger.error(f'Error al ver documento {documento_id}: {str(e)}')
+        messages.error(request, 'Ocurrió un error al intentar ver el documento')
+        return redirect('expedientes:lista')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def editar_documento_expediente(request, expediente_id, documento_id):
+    """
+    Vista para editar los metadatos de un documento de un expediente
+    """
+    documento = get_object_or_404(DocumentoExpediente, id=documento_id, expediente_id=expediente_id)
+    
+    # Verificar permisos
+    if not request.user.has_perm('digitalizacion.change_documentoexpediente', documento):
+        return HttpResponseForbidden("No tiene permiso para editar este documento")
+    
+    if request.method == 'POST':
+        # Actualizar los campos del documento
+        nombre = request.POST.get('nombre')
+        descripcion = request.POST.get('descripcion', '')
+        
+        if nombre:
+            documento.nombre = nombre
+            documento.descripcion = descripcion
+            documento.modificado_por = request.user
+            documento.fecha_modificacion = timezone.now()
+            documento.save()
+            
+            # Registrar en el historial
+            HistorialExpediente.objects.create(
+                expediente=documento.expediente,
+                usuario=request.user,
+                accion=f'Documento actualizado: {documento.nombre}',
+                detalles=f'Se actualizaron los metadatos del documento {documento.nombre}.'
+            )
+            
+            messages.success(request, 'Documento actualizado correctamente')
+            return redirect('expedientes:ver_documento_expediente', documento_id=documento.id)
+        else:
+            messages.error(request, 'El nombre del documento es obligatorio')
+    
+    return render(request, 'digitalizacion/expedientes/editar_documento.html', {
+        'documento': documento,
+        'expediente': documento.expediente,
+        'titulo': f'Editar documento: {documento.nombre}'
+    })
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+@permission_required('digitalizacion.view_expediente', raise_exception=True)
+def descargar_documento_expediente(request, expediente_id, documento_id):
+    """
+    Vista para descargar un documento de un expediente
+    """
+    try:
+        documento = get_object_or_404(DocumentoExpediente, id=documento_id, expediente_id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_documentoexpediente', documento):
+            return HttpResponseForbidden("No tiene permiso para descargar este documento")
+        
+        # Verificar que el archivo existe
+        if not documento.archivo or not os.path.isfile(documento.archivo.path):
+            raise Http404("El archivo solicitado no existe")
+        
+        # Obtener el tipo MIME del archivo
+        content_type, encoding = mimetypes.guess_type(documento.archivo.name)
+        if content_type is None:
+            content_type = 'application/octet-stream'
+            
+        # Configurar la respuesta para la descarga
+        response = FileResponse(open(documento.archivo.path, 'rb'), content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(documento.archivo.name)}"'
+        response['Content-Length'] = documento.archivo.size
+        
+        # Registrar la descarga en el historial
+        HistorialExpediente.objects.create(
+            expediente=documento.expediente,
+            usuario=request.user,
+            accion=f'Documento descargado: {documento.nombre}',
+            detalles=f'Se descargó el documento {documento.nombre}.'
+        )
+        
+        return response
+        
+    except DocumentoExpediente.DoesNotExist:
+        raise Http404("El documento solicitado no existe")
+    except Exception as e:
+        logger.error(f'Error al descargar documento {documento_id}: {str(e)}')
+        messages.error(request, 'Ocurrió un error al intentar descargar el documento')
+        return redirect('expedientes:detalle', expediente_id=expediente_id)
+
+
+@login_required
+def obtener_progreso_expediente(request, expediente_id):
+    """
+    Vista para obtener el progreso actual de un expediente (usada para actualizaciones en tiempo real)
+    """
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+            return JsonResponse({'error': 'No tiene permiso para ver este expediente.'}, status=403)
+        
+        # Obtener áreas/etapas configuradas para este tipo de expediente
+        areas_etapas = AreaTipoExpediente.objects.filter(
+            tipo_expediente=expediente.tipo_expediente,
+            activa=True
+        )
+        
+        # Filtrar por subtipo si existe
+        if hasattr(expediente, 'subtipo_expediente') and expediente.subtipo_expediente:
+            # Obtener áreas específicas para el subtipo o las genéricas (sin subtipo)
+            areas_etapas = areas_etapas.filter(
+                Q(subtipo_expediente=expediente.subtipo_expediente) | 
+                Q(subtipo_expediente__isnull=True) | 
+                Q(subtipo_expediente='')
+            )
+        else:
+            # Si no hay subtipo, solo obtener áreas genéricas
+            areas_etapas = areas_etapas.filter(
+                Q(subtipo_expediente__isnull=True) | 
+                Q(subtipo_expediente='')
+            )
+            
+        # Ordenar por orden
+        areas_etapas = areas_etapas.order_by('orden')
+        
+        # Calcular el progreso
+        total_etapas = areas_etapas.count()
+        etapas_completadas = 0
+        
+        for area in areas_etapas:
+            if getattr(area, 'etapa_completada', lambda exp: False)(expediente):
+                etapas_completadas += 1
+        
+        progreso = 0
+        if total_etapas > 0:
+            progreso = int((etapas_completadas / total_etapas) * 100)
+        
+        # Actualizar el progreso en el modelo Expediente
+        expediente.progreso = progreso
+        expediente.save(update_fields=['progreso', 'fecha_actualizacion'])
+        
+        return JsonResponse({
+            'porcentaje': progreso,  # Cambiado de 'progreso' a 'porcentaje' para mantener consistencia
+            'completadas': etapas_completadas,  # Cambiado de 'etapas_completadas' a 'completadas' para mantener consistencia
+            'total': total_etapas,  # Cambiado de 'total_etapas' a 'total' para mantener consistencia
+            'estado': expediente.estado
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al obtener progreso del expediente {expediente_id}: {str(e)}")
+        return JsonResponse({'error': 'Error al obtener el progreso del expediente'}, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def editar_numero_sima(request, expediente_id):
+    """
+    Vista para editar el n�mero SIMA de un expediente mediante AJAX
+    """
+    logger = logging.getLogger('digitalizacion')
+    logger.info(f"=== INICIO editar_numero_sima ===")
+    logger.info(f"Expediente ID: {expediente_id}")
+    logger.info(f"Usuario: {request.user.get_full_name()} (ID: {request.user.id})")
+    logger.info(f"Datos POST: {request.POST}")
+
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            logger.warning(f"Usuario {request.user} no tiene permiso para editar el expediente {expediente_id}")
+            return JsonResponse({
+                'success': False,
+                'error': 'No tienes permiso para editar este expediente.'
+            }, status=403)
+        
+        # Obtener el n�mero SIMA del formulario
+        numero_sima = request.POST.get('numero_sima', '').strip()
+        
+        # Validar que el n�mero no est� vac�o si se est� asignando
+        if numero_sima == '':
+            numero_sima = None  # Permitir eliminar el n�mero SIMA
+        
+        # Obtener el valor anterior para el historial
+        valor_anterior = expediente.numero_sima
+        
+        # Actualizar el n�mero SIMA
+        expediente.numero_sima = numero_sima
+        expediente.save(update_fields=['numero_sima', 'fecha_actualizacion'])
+        
+        # Registrar en el historial
+        if valor_anterior and not numero_sima:
+            # Se elimin� el n�mero SIMA
+            accion = "Eliminaci�n de n�mero SIMA"
+            descripcion = f"Se elimin� el n�mero SIMA: {valor_anterior}"
+        elif not valor_anterior and numero_sima:
+            # Se agreg� un n�mero SIMA
+            accion = "Asignaci�n de n�mero SIMA"
+            descripcion = f"Se asign� el n�mero SIMA: {numero_sima}"
+        else:
+            # Se modific� el n�mero SIMA
+            accion = "Actualizaci�n de n�mero SIMA"
+            descripcion = f"Se actualiz� el n�mero SIMA de '{valor_anterior}' a '{numero_sima}'"
+        
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=accion,
+            descripcion=descripcion
+        )
+        
+        logger.info(f"N�mero SIMA actualizado correctamente a: {numero_sima}")
+        
+        return JsonResponse({
+            'success': True,
+            'numero_sima': expediente.numero_sima,
+            'mensaje': 'N�mero SIMA actualizado correctamente.'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al actualizar el n�mero SIMA: {str(e)}")
+        logger.error(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': f'Error al actualizar el n�mero SIMA: {str(e)}'
+        }, status=500)\n\n
+@login_required
+@require_http_methods(["POST"])
+def editar_numero_sima(request, expediente_id):
+    """
+    Vista para editar el número SIMA de un expediente mediante AJAX
+    """
+    logger = logging.getLogger('digitalizacion')
+    logger.info(f"=== INICIO editar_numero_sima ===")
+    logger.info(f"Expediente ID: {expediente_id}")
+    logger.info(f"Usuario: {request.user.get_full_name()} (ID: {request.user.id})")
+    logger.info(f"Datos POST: {request.POST}")
+
+    try:
+        expediente = get_object_or_404(Expediente, id=expediente_id)
+        
+        # Verificar permisos
+        if not request.user.has_perm('digitalizacion.change_expediente', expediente):
+            logger.warning(f"Usuario {request.user} no tiene permiso para editar el expediente {expediente_id}")
+            return JsonResponse({
+                'success': False,
+                'error': 'No tienes permiso para editar este expediente.'
+            }, status=403)
+        
+        # Obtener el número SIMA del formulario
+        numero_sima = request.POST.get('numero_sima', '').strip()
+        
+        # Validar que el número no esté vacío si se está asignando
+        if numero_sima == '':
+            numero_sima = None  # Permitir eliminar el número SIMA
+        
+        # Obtener el valor anterior para el historial
+        valor_anterior = expediente.numero_sima
+        
+        # Actualizar el número SIMA
+        expediente.numero_sima = numero_sima
+        expediente.save(update_fields=['numero_sima', 'fecha_actualizacion'])
+        
+        # Registrar en el historial
+        if valor_anterior and not numero_sima:
+            # Se eliminó el número SIMA
+            accion = "Eliminación de número SIMA"
+            descripcion = f"Se eliminó el número SIMA: {valor_anterior}"
+        elif not valor_anterior and numero_sima:
+            # Se agregó un número SIMA
+            accion = "Asignación de número SIMA"
+            descripcion = f"Se asignó el número SIMA: {numero_sima}"
+        else:
+            # Se modificó el número SIMA
+            accion = "Actualización de número SIMA"
+            descripcion = f"Se actualizó el número SIMA de '{valor_anterior}' a '{numero_sima}'"
+        
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=request.user,
+            accion=accion,
+            descripcion=descripcion
+        )
+        
+        logger.info(f"Número SIMA actualizado correctamente a: {numero_sima}")
+        
+        return JsonResponse({
+            'success': True,
+            'numero_sima': expediente.numero_sima,
+            'mensaje': 'Número SIMA actualizado correctamente.'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error al actualizar el número SIMA: {str(e)}")
+        logger.error(traceback.format_exc())
+        return JsonResponse({
+            'success': False,
+            'error': f'Error al actualizar el número SIMA: {str(e)}'
+        }, status=500)

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Gráficos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1f2937;
+            color: white;
+            padding: 20px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            background: #374151;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #374151;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba de Gráficos Chart.js</h1>
+    
+    <div class="test-section">
+        <h2>Gráfico de Línea - Expedientes por Mes</h2>
+        <div class="chart-container">
+            <canvas id="testLineChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Gráfico de Dona - Expedientes por Tipo</h2>
+        <div class="chart-container">
+            <canvas id="testDoughnutChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Gráfico de Barras - Expedientes por Estado</h2>
+        <div class="chart-container">
+            <canvas id="testBarChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Gráfico de Barras Horizontales - Usuarios Activos</h2>
+        <div class="chart-container">
+            <canvas id="testHorizontalBarChart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // Datos de prueba
+        const testData = {
+            expedientesPorMes: [
+                {mes: '2024-01', total: 15},
+                {mes: '2024-02', total: 22},
+                {mes: '2024-03', total: 18},
+                {mes: '2024-04', total: 25},
+                {mes: '2024-05', total: 30},
+                {mes: '2024-06', total: 28}
+            ],
+            expedientesPorTipo: [
+                {tipo_expediente: 'giro', total: 45},
+                {tipo_expediente: 'fuente', total: 32},
+                {tipo_expediente: 'tipo_adquisicion', total: 28},
+                {tipo_expediente: 'monto', total: 15}
+            ],
+            expedientesPorEstado: [
+                {estado_actual: 'inicio', total: 20},
+                {estado_actual: 'solicitud_area', total: 15},
+                {estado_actual: 'cotizacion', total: 12},
+                {estado_actual: 'completado', total: 8}
+            ],
+            usuariosActivos: [
+                {username: 'usuario1', total_expedientes: 25},
+                {username: 'usuario2', total_expedientes: 18},
+                {username: 'usuario3', total_expedientes: 15},
+                {username: 'usuario4', total_expedientes: 12}
+            ]
+        };
+
+        // Colores para los gráficos
+        const colors = [
+            '#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444',
+            '#84cc16', '#f97316', '#ec4899', '#6366f1', '#14b8a6', '#fbbf24'
+        ];
+
+        // Gráfico de línea
+        new Chart(document.getElementById('testLineChart'), {
+            type: 'line',
+            data: {
+                labels: testData.expedientesPorMes.map(item => item.mes),
+                datasets: [{
+                    label: 'Expedientes',
+                    data: testData.expedientesPorMes.map(item => item.total),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#f4f4f5' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    },
+                    y: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de dona
+        new Chart(document.getElementById('testDoughnutChart'), {
+            type: 'doughnut',
+            data: {
+                labels: testData.expedientesPorTipo.map(item => item.tipo_expediente),
+                datasets: [{
+                    data: testData.expedientesPorTipo.map(item => item.total),
+                    backgroundColor: colors.slice(0, testData.expedientesPorTipo.length),
+                    borderWidth: 2,
+                    borderColor: '#1f2937'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: '#f4f4f5' }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de barras
+        new Chart(document.getElementById('testBarChart'), {
+            type: 'bar',
+            data: {
+                labels: testData.expedientesPorEstado.map(item => item.estado_actual),
+                datasets: [{
+                    label: 'Expedientes',
+                    data: testData.expedientesPorEstado.map(item => item.total),
+                    backgroundColor: colors.slice(0, testData.expedientesPorEstado.length),
+                    borderWidth: 0,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    },
+                    y: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de barras horizontales
+        new Chart(document.getElementById('testHorizontalBarChart'), {
+            type: 'bar',
+            data: {
+                labels: testData.usuariosActivos.map(item => item.username),
+                datasets: [{
+                    label: 'Expedientes Creados',
+                    data: testData.usuariosActivos.map(item => item.total_expedientes),
+                    backgroundColor: '#10b981',
+                    borderWidth: 0,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    },
+                    y: {
+                        ticks: { color: '#9ca3af' },
+                        grid: { color: 'rgba(156, 163, 175, 0.2)' }
+                    }
+                }
+            }
+        });
+
+        console.log('Gráficos de prueba creados exitosamente');
+    </script>
+</body>
+</html>
