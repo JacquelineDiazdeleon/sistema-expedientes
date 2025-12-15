@@ -965,40 +965,50 @@ document.addEventListener('DOMContentLoaded', function() {
         if (btnLoading) btnLoading.classList.remove('d-none');
         
         // Mostrar progreso
-        actualizarProgresoEscaneo(10, 'Conectando con el servicio de escaneo...');
+        actualizarProgresoEscaneo(10, 'Preparando escaneo...');
         
         try {
-            // Simular progreso mientras se conecta
-            await new Promise(resolve => setTimeout(resolve, 500));
-            actualizarProgresoEscaneo(30, 'Iniciando escaneo...');
+            // Usar EscaneoUtils que maneja automáticamente modo local y remoto
+            if (typeof EscaneoUtils === 'undefined' || !EscaneoUtils.iniciarEscaneo) {
+                throw new Error('El módulo de escaneo no está cargado. Por favor, recarga la página.');
+            }
             
-            // Llamada al servicio local
-            const resp = await fetch("http://127.0.0.1:5001/scan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    expediente_id: expedienteId,
-                    etapa: etapa,
-                    area_id: parseInt(areaId),
-                    nombre_documento: nombreDoc.trim(),
-                    descripcion: descripcion.trim()
-                })
+            actualizarProgresoEscaneo(20, 'Verificando servicio de escaneo...');
+            
+            // Intentar escaneo (automáticamente usa modo remoto si el local no está disponible)
+            const resultado = await EscaneoUtils.iniciarEscaneo({
+                expedienteId: expedienteId,
+                areaId: parseInt(areaId),
+                nombreDocumento: nombreDoc.trim(),
+                descripcion: descripcion.trim(),
+                duplex: false
             });
             
-            actualizarProgresoEscaneo(60, 'Procesando documento escaneado...');
-            
-            const data = await resp.json();
-            
-            if (resp.ok && data.status === "ok") {
-                actualizarProgresoEscaneo(90, 'Subiendo a Django...');
-                
-                // Esperar un momento para que Django procese
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                actualizarProgresoEscaneo(100, '¡Completado!');
-                
-                // Mostrar notificación de éxito
-                mostrarNotificacion('Documento escaneado y subido correctamente.', 'success', 4000);
+            if (resultado.success) {
+                // Si es modo remoto, esperar a que se complete
+                if (resultado.modo === 'remoto' && resultado.pendiente) {
+                    actualizarProgresoEscaneo(30, 'Solicitud de escaneo creada. Esperando procesamiento...');
+                    
+                    // Esperar a que la solicitud se complete
+                    const solicitudId = resultado.data.solicitud_id;
+                    const resultadoFinal = await EscaneoUtils.esperarSolicitudEscaneo(
+                        solicitudId,
+                        (progreso, mensaje, intentos) => {
+                            actualizarProgresoEscaneo(30 + progreso * 0.6, mensaje);
+                        }
+                    );
+                    
+                    if (!resultadoFinal.success) {
+                        throw new Error(resultadoFinal.error || 'Error al procesar solicitud de escaneo');
+                    }
+                    
+                    actualizarProgresoEscaneo(100, '¡Completado!');
+                    mostrarNotificacion('Documento escaneado y subido correctamente (modo remoto).', 'success', 4000);
+                } else {
+                    // Modo local completado inmediatamente
+                    actualizarProgresoEscaneo(100, '¡Completado!');
+                    mostrarNotificacion('Documento escaneado y subido correctamente.', 'success', 4000);
+                }
                 
                 // Cerrar modal después de un breve delay
                 setTimeout(() => {
@@ -1019,23 +1029,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             } else {
                 // Error
-                console.error('Error en escaneo:', data);
-                const mensajeError = data.msg || data.error || 'Error desconocido al escanear';
-                
-                mostrarNotificacion(
-                    `Error al escanear: ${mensajeError}. Verifica que el servicio esté corriendo, el escáner esté encendido y los documentos estén en el alimentador.`,
-                    'error',
-                    6000
-                );
-                
-                ocultarProgresoEscaneo();
+                throw new Error(resultado.error || 'Error desconocido al escanear');
             }
             
         } catch (error) {
-            console.error('Error de conexión:', error);
+            console.error('Error en escaneo:', error);
             
+            const mensajeError = error.message || 'Error desconocido';
             mostrarNotificacion(
-                `Error de conexión con el servicio de escaneo. Verifica que el servicio esté corriendo en http://127.0.0.1:5001. Error: ${error.message}`,
+                `Error al escanear: ${mensajeError}`,
                 'error',
                 6000
             );
@@ -1088,22 +1090,19 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.warn('Servicio de escaneo no disponible:', error);
             
-            // Actualizar estado visual
+            // Actualizar estado visual - MODO REMOTO
             if (statusIndicator) {
-                statusIndicator.classList.remove('active');
-                statusIndicator.classList.add('inactive');
+                statusIndicator.classList.remove('active', 'inactive');
+                statusIndicator.classList.add('remote');
             }
             if (statusText) {
-                if (error.name === 'AbortError') {
-                    statusText.textContent = 'Timeout al verificar servicio';
-                } else {
-                    statusText.textContent = 'Servicio no disponible';
-                }
-                statusText.style.color = 'var(--danger, #ef4444)';
+                statusText.textContent = '📡 Modo remoto: El escaneo se enviará a la PC con el escáner';
+                statusText.style.color = 'var(--warning, #f59e0b)';
             }
+            // IMPORTANTE: NO deshabilitar el botón - modo remoto está disponible
             if (btnEscanear) {
-                btnEscanear.disabled = true;
-                btnEscanear.title = 'El servicio de escaneo no está disponible. Asegúrate de que esté corriendo en http://127.0.0.1:5001';
+                btnEscanear.disabled = false;
+                btnEscanear.title = 'Crear solicitud de escaneo remoto (se procesará en la PC con el escáner)';
             }
         }
     }
@@ -1133,5 +1132,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+{% load static %}
+<script src="{% static 'digitalizacion/js/escaneo.js' %}?v=2.0"></script>
 
 

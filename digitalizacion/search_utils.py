@@ -225,11 +225,11 @@ def extract_text(file_path):
             elif ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
                 # Para archivos de imagen, usar OCR directamente (si está disponible)
                 if TESSERACT_AVAILABLE:
-                    try:
-                        img = Image.open(file_path)
-                        return pytesseract.image_to_string(img, lang='spa')
-                    except Exception as img_error:
-                        logger.error(f"Error al procesar imagen {file_path} con OCR: {str(img_error)}")
+                try:
+                    img = Image.open(file_path)
+                    return pytesseract.image_to_string(img, lang='spa')
+                except Exception as img_error:
+                    logger.error(f"Error al procesar imagen {file_path} con OCR: {str(img_error)}")
                         return ""
                 else:
                     logger.warning(f"OCR no disponible para procesar imagen {file_path}")
