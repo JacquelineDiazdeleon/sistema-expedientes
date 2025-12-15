@@ -2,11 +2,9 @@ import os
 import tempfile
 import logging
 import platform
-import pytesseract
 import time
 from PIL import Image
 from io import BytesIO
-import fitz  # PyMuPDF
 from whoosh.fields import Schema, TEXT, ID, STORED, DATETIME
 from whoosh.analysis import StemmingAnalyzer, StandardAnalyzer
 from whoosh import index
@@ -19,8 +17,24 @@ from docx import Document
 # Configurar el logger
 logger = logging.getLogger(__name__)
 
+# pytesseract es opcional - solo para OCR
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    logger.warning("pytesseract no está disponible. OCR deshabilitado.")
+
+# PyMuPDF (fitz) es opcional
+try:
+    import fitz
+    PYMUPDF_AVAILABLE = True
+except ImportError:
+    PYMUPDF_AVAILABLE = False
+    logger.warning("PyMuPDF no está disponible. Extracción avanzada de PDF deshabilitada.")
+
 # Configuración de Tesseract para Windows
-if platform.system() == 'Windows':
+if TESSERACT_AVAILABLE and platform.system() == 'Windows':
     # Ruta específica donde está instalado Tesseract
     tesseract_path = r'C:\Users\jacqu\AppData\Local\Programs\Tesseract-OCR\tesseract.exe'
     tesseract_data_dir = r'C:\Users\jacqu\AppData\Local\Programs\Tesseract-OCR\tessdata'
@@ -32,7 +46,7 @@ if platform.system() == 'Windows':
         logger.info(f'Directorio de datos: {tesseract_data_dir}')
     else:
         logger.warning(f'Tesseract no encontrado en {tesseract_path}. La extracción de texto de imágenes no funcionará correctamente.')
-else:
+elif TESSERACT_AVAILABLE:
     # Para Linux/macOS
     pytesseract.pytesseract.tesseract_cmd = 'tesseract'
     logger.info('Usando Tesseract del PATH del sistema')
@@ -125,8 +139,8 @@ def extract_text_from_pdf(file_path):
                 page_text = page.extract_text() or ""
                 text += page_text + "\n"
         
-        # Si no se pudo extraer suficiente texto, intentamos con OCR
-        if not text.strip() or len(text.strip()) < 50:  # Umbral de 50 caracteres
+        # Si no se pudo extraer suficiente texto, intentamos con OCR (si está disponible)
+        if (not text.strip() or len(text.strip()) < 50) and TESSERACT_AVAILABLE and PYMUPDF_AVAILABLE:
             logger.info(f"Usando OCR para extraer texto de {file_path}")
             doc = fitz.open(file_path)
             ocr_text = ""
@@ -209,12 +223,16 @@ def extract_text(file_path):
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     return f.read()
             elif ext in ['.jpg', '.jpeg', '.png', '.tiff', '.bmp']:
-                # Para archivos de imagen, usar OCR directamente
-                try:
-                    img = Image.open(file_path)
-                    return pytesseract.image_to_string(img, lang='spa')
-                except Exception as img_error:
-                    logger.error(f"Error al procesar imagen {file_path} con OCR: {str(img_error)}")
+                # Para archivos de imagen, usar OCR directamente (si está disponible)
+                if TESSERACT_AVAILABLE:
+                    try:
+                        img = Image.open(file_path)
+                        return pytesseract.image_to_string(img, lang='spa')
+                    except Exception as img_error:
+                        logger.error(f"Error al procesar imagen {file_path} con OCR: {str(img_error)}")
+                        return ""
+                else:
+                    logger.warning(f"OCR no disponible para procesar imagen {file_path}")
                     return ""
             else:
                 logger.warning(f"Tipo de archivo no soportado para extracción de texto: {ext}")
