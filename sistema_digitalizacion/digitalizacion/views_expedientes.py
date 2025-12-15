@@ -1216,7 +1216,93 @@ def obtener_usuarios_mencion(request):
     return JsonResponse({'usuarios': data})
 
 
+def expedientes_por_tipo(request):
+    """API endpoint para obtener estadísticas de expedientes por tipo"""
+    expedientes_por_tipo = Expediente.objects.values('tipo_expediente').annotate(
+        total=Count('id')
+    ).order_by('tipo_expediente')
+    
+    # Mapear nombres de tipos
+    tipo_labels = dict(Expediente.TIPO_CHOICES) if hasattr(Expediente, 'TIPO_CHOICES') else {}
+    
+    data = []
+    for item in expedientes_por_tipo:
+        data.append({
+            'tipo': item['tipo_expediente'],
+            'label': tipo_labels.get(item['tipo_expediente'], item['tipo_expediente']),
+            'total': item['total']
+        })
+    
+    return JsonResponse({'data': data})
+
+
+def estadisticas_semanales(request):
+    """API endpoint para obtener estadísticas semanales de expedientes"""
+    from datetime import timedelta
+    
+    # Obtener los últimos 7 días
+    hoy = timezone.now().date()
+    inicio_semana = hoy - timedelta(days=6)
+    
+    # Generar datos por día
+    data = []
+    for i in range(7):
+        fecha = inicio_semana + timedelta(days=i)
+        expedientes_creados = Expediente.objects.filter(
+            fecha_creacion__date=fecha
+        ).count()
+        expedientes_completados = Expediente.objects.filter(
+            fecha_actualizacion__date=fecha,
+            estado_actual='completado'
+        ).count()
+        
+        data.append({
+            'fecha': fecha.strftime('%Y-%m-%d'),
+            'dia': fecha.strftime('%a'),
+            'creados': expedientes_creados,
+            'completados': expedientes_completados
+        })
+    
+    return JsonResponse({'data': data})
+
+
 @login_required
+def eliminar_documento_area(request, documento_id):
+    """Vista para eliminar un documento de un área"""
+    documento = get_object_or_404(DocumentoExpediente, pk=documento_id)
+    expediente = documento.expediente
+    
+    if request.method == 'POST':
+        nombre_doc = documento.nombre_documento
+        
+        # Eliminar el archivo físico si existe
+        if documento.archivo:
+            try:
+                if os.path.exists(documento.archivo.path):
+                    os.remove(documento.archivo.path)
+            except Exception:
+                pass  # Ignorar errores al eliminar archivo físico
+        
+        # Eliminar el registro
+        documento.delete()
+        
+        # Registrar en historial
+        usuario = request.user if request.user.is_authenticated else get_demo_user()
+        HistorialExpediente.objects.create(
+            expediente=expediente,
+            usuario=usuario,
+            accion='Documento eliminado',
+            descripcion=f'Documento "{nombre_doc}" eliminado'
+        )
+        
+        messages.success(request, f'Documento "{nombre_doc}" eliminado correctamente.')
+        
+        if request.headers.get('Accept') == 'application/json':
+            return JsonResponse({'success': True, 'mensaje': 'Documento eliminado correctamente'})
+    
+    return redirect('expedientes:detalle', pk=expediente.pk)
+
+
 @login_required
 def obtener_progreso_documentos(request, expediente_id):
     """Vista para obtener el progreso de documentos por área"""
