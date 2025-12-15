@@ -20,12 +20,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-e2_9lv0y^6gp6xxzn03va)aw#i!uugs3sufuyky9nl-n#vya2c"
+import os
+SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-e2_9lv0y^6gp6xxzn03va)aw#i!uugs3sufuyky9nl-n#vya2c")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "sistema-expedientes-u2em.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
+
+# CSRF trusted origins para formularios en producción
+CSRF_TRUSTED_ORIGINS = [
+    "https://sistema-expedientes-u2em.onrender.com",
+]
 
 # Configuración de Caché
 CACHES = {
