@@ -175,7 +175,7 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # Token de autenticación para el servicio de escaneo
-SCANNER_UPLOAD_TOKEN = "CAMBIA_POR_TU_TOKEN_SECRETO_AQUI"
+SCANNER_UPLOAD_TOKEN = os.environ.get('SCANNER_UPLOAD_TOKEN', 'token_escaner_seguro_2024_ssp')
 
 # Configuración para archivos grandes (hasta 500MB)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500MB

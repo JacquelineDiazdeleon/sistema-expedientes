@@ -1,0 +1,13 @@
+# Dependencias adicionales para Windows (escaneo)
+# Instalar con: pip install -r requirements-local.txt
+
+# Dependencias base
+-r requirements.txt
+
+# Dependencias de Windows para escaneo
+pywin32; sys_platform == 'win32'
+pytwain; sys_platform == 'win32'
+
+# OCR (requiere Tesseract instalado)
+pytesseract==0.3.10
+
