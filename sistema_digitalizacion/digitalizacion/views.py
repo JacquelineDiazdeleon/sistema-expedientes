@@ -13,8 +13,21 @@ import json
 
 
 def dashboard(request):
-    """Vista principal del dashboard - redirige al nuevo sistema de expedientes"""
-    return redirect('expedientes:dashboard')
+    """Vista principal del dashboard - página de inicio del sistema"""
+    from .models import Expediente
+    
+    # Estadísticas básicas para mostrar en el inicio
+    total_expedientes = Expediente.objects.count()
+    expedientes_en_proceso = Expediente.objects.exclude(estado_actual='completado').count()
+    expedientes_completados = Expediente.objects.filter(estado_actual='completado').count()
+    
+    context = {
+        'total_expedientes': total_expedientes,
+        'expedientes_en_proceso': expedientes_en_proceso,
+        'expedientes_completados': expedientes_completados,
+    }
+    
+    return render(request, 'digitalizacion/inicio.html', context)
 
 
 def lista_documentos(request):
