@@ -253,15 +253,41 @@ class EtapaExpedienteAdmin(admin.ModelAdmin):
 class DocumentoExpedienteAdmin(admin.ModelAdmin):
     list_display = [
         'expediente', 'nombre_documento', 'etapa', 
-        'validado', 'subido_por', 'fecha_subida'
+        'validado', 'subido_por', 'fecha_subida', 'tiene_ruta_externa'
     ]
-    list_filter = ['etapa', 'validado', 'fecha_subida']
+    list_filter = ['etapa', 'validado', 'fecha_subida', 'ruta_externa']
     search_fields = [
-        'expediente__numero_expediente', 'nombre_documento', 'descripcion'
+        'expediente__numero_expediente', 'nombre_documento', 'descripcion',
+        'ruta_externa'
     ]
     ordering = ['-fecha_subida']
     
-    readonly_fields = ['fecha_subida', 'tamano_archivo', 'tipo_archivo']
+    readonly_fields = ['fecha_subida', 'fecha_descargado', 'tamano_archivo', 'tipo_archivo']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('expediente', 'area', 'nombre_documento', 'descripcion', 'etapa')
+        }),
+        ('Archivo', {
+            'fields': ('archivo', 'tamano_archivo', 'tipo_archivo')
+        }),
+        ('Ubicación Externa', {
+            'fields': ('ruta_externa', 'fecha_descargado'),
+            'description': 'Ruta del archivo en la PC local si fue descargado desde Render'
+        }),
+        ('Validación', {
+            'fields': ('validado', 'validado_por', 'fecha_validacion')
+        }),
+        ('Usuario y Fechas', {
+            'fields': ('subido_por', 'fecha_subida')
+        })
+    )
+    
+    def tiene_ruta_externa(self, obj):
+        """Indica si el archivo tiene ruta externa configurada"""
+        return bool(obj.ruta_externa)
+    tiene_ruta_externa.boolean = True
+    tiene_ruta_externa.short_description = 'Descargado a PC'
 
 
 @admin.register(RolUsuario)

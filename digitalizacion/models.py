@@ -705,6 +705,19 @@ class DocumentoExpediente(models.Model):
         help_text="Ãrea especÃ­fica a la que pertenece este documento"
     )
     
+    # Ruta externa para archivos descargados a PC local
+    ruta_externa = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="Ruta del archivo en el servidor local (PC) si fue descargado desde Render"
+    )
+    fecha_descargado = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Fecha en que el archivo fue descargado a la PC local"
+    )
+    
     class Meta:
         verbose_name = "Documento de Expediente"
         verbose_name_plural = "Documentos de Expedientes"

@@ -6,6 +6,7 @@ from . import views_admin
 from . import views_areas
 from . import views_documentos
 from . import views_escaneo
+from . import views_archivos
 
 app_name = 'digitalizacion'
 
@@ -82,6 +83,11 @@ urlpatterns = [
             path('solicitar/', views_escaneo.crear_solicitud_escaneo, name='api_solicitar_escaneo'),
             path('<int:solicitud_id>/estado/', views_escaneo.estado_solicitud_escaneo, name='api_estado_escaneo'),
             path('<int:solicitud_id>/cancelar/', views_escaneo.cancelar_solicitud_escaneo, name='api_cancelar_escaneo'),
+        ])),
+        # API de archivos (para descarga a PC local)
+        path('archivos/', include([
+            path('pendientes/', views_archivos.api_archivos_pendientes, name='api_archivos_pendientes'),
+            path('<int:documento_id>/marcar-descargado/', views_archivos.api_marcar_descargado, name='api_marcar_descargado'),
         ])),
     ])),
     
