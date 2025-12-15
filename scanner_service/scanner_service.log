@@ -517,3 +517,39 @@ FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Te
 2025-12-15 17:20:34,169 - __main__ - INFO - [REMOTO] Subiendo PDF a Django: https://sistema-expedientes-u2em.onrender.com/expedientes/1/etapa/inicial/subir-documento/
 2025-12-15 17:20:35,969 - __main__ - INFO - [REMOTO] Documento subido exitosamente para solicitud #2
 2025-12-15 17:20:35,970 - __main__ - INFO - [REMOTO] Guardando copia local y creando respaldo...
+2025-12-15 17:27:10,952 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:27:10,958 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:27:10] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:27:13,215 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:27:13,216 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:27:13] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:27:13,755 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:27:13,756 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:27:13] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:27:13,770 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:27:13] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-15 17:27:13,781 - __main__ - INFO - Recibida solicitud de escaneo: expediente=1, etapa=1, área=1, nombre=Scan_1765841233752
+2025-12-15 17:27:13,783 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-15 17:27:13,784 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300, modo: simplex (un lado)
+2025-12-15 17:27:13,784 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_ui4mpx24\scanned.pdf
+2025-12-15 17:27:13,785 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_ui4mpx24\scanned.pdf --force
+2025-12-15 17:27:26,699 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-15 17:27:26,700 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_ui4mpx24\scanned.pdf (3897718 bytes)
+2025-12-15 17:27:26,700 - __main__ - INFO - Subiendo PDF a Django: https://sistema-expedientes-u2em.onrender.com/expedientes/1/etapa/1/subir-documento/
+2025-12-15 17:27:28,964 - __main__ - INFO - Documento subido exitosamente a Django: {'success': True, 'documento': {'id': 1, 'nombre': 'Scan_1765841233752', 'url': '/media/expedientes/2025/12/EXP-20251215-232708_20251215_232728.pdf', 'fecha_subida': '15/12/2025 23:27', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '3806.4 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 1, 'etapa_actual': 'area1', 'etapa_completada': True}
+2025-12-15 17:27:28,964 - __main__ - INFO - Guardando copia local y creando respaldo...
+2025-12-15 17:27:29,050 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:27:29] "POST /scan HTTP/1.1" 200 -
+2025-12-15 17:29:11,271 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:29:11,728 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:29:11] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:29:13,411 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:29:13,412 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:29:13] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:29:25,812 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 17:29:25,812 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:29:25] "GET /health HTTP/1.1" 200 -
+2025-12-15 17:29:25,832 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:29:25] "[35m[1mOPTIONS /scan HTTP/1.1[0m" 204 -
+2025-12-15 17:29:25,840 - __main__ - INFO - Recibida solicitud de escaneo: expediente=2, etapa=1, área=1, nombre=Scan_1765841365806
+2025-12-15 17:29:25,841 - __main__ - INFO - Iniciando escaneo con NAPS2...
+2025-12-15 17:29:25,841 - __main__ - INFO - Iniciando escaneo con perfil:  HP_ADF_300, modo: simplex (un lado)
+2025-12-15 17:29:25,842 - __main__ - INFO - Salida: C:\Users\Usuario\AppData\Local\Temp\scan_7s434uzx\scanned.pdf
+2025-12-15 17:29:25,842 - __main__ - INFO - Ejecutando: C:\Program Files\NAPS2\NAPS2.Console.exe --profile  HP_ADF_300 -o C:\Users\Usuario\AppData\Local\Temp\scan_7s434uzx\scanned.pdf --force
+2025-12-15 17:29:34,993 - __main__ - INFO - NAPS2 código de salida: 0
+2025-12-15 17:29:34,994 - __main__ - INFO - PDF generado: C:\Users\Usuario\AppData\Local\Temp\scan_7s434uzx\scanned.pdf (1049757 bytes)
+2025-12-15 17:29:34,994 - __main__ - INFO - Subiendo PDF a Django: https://sistema-expedientes-u2em.onrender.com/expedientes/2/etapa/1/subir-documento/
+2025-12-15 17:29:36,460 - __main__ - INFO - Documento subido exitosamente a Django: {'success': True, 'documento': {'id': 2, 'nombre': 'Scan_1765841365806', 'url': '/media/expedientes/2025/12/EXP-20251215-232908_20251215_232936.pdf', 'fecha_subida': '15/12/2025 23:29', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '1025.2 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 1, 'etapa_actual': 'area1', 'etapa_completada': True}
+2025-12-15 17:29:36,461 - __main__ - INFO - Guardando copia local y creando respaldo...
+2025-12-15 17:29:36,526 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 17:29:36] "POST /scan HTTP/1.1" 200 -
