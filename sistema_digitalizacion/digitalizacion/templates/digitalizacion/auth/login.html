@@ -61,11 +61,17 @@
                         </button>
                     </form>
 
-                    <!-- Enlaces adicionales -->
+                    <!-- Separador -->
+                    <div class="text-center my-4">
+                        <hr class="my-3">
+                        <span class="text-muted bg-white px-3" style="position: relative; top: -1.7rem;">o</span>
+                    </div>
+
+                    <!-- Enlace a registro -->
                     <div class="text-center">
-                        <p class="text-muted mb-0">¿No tienes cuenta?</p>
-                        <a href="{% url 'digitalizacion:register' %}" class="text-decoration-none">
-                            <i class="fas fa-user-plus me-2"></i>Crear una cuenta nueva
+                        <p class="text-muted mb-3">¿No tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:register' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>Registrarse
                         </a>
                     </div>
                 </div>
