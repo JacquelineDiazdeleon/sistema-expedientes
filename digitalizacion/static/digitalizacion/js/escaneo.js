@@ -1,38 +1,88 @@
 /**
  * escaneo.js - Módulo de escaneo de documentos
  * Maneja la comunicación con el servicio de escaneo local (NAPS2)
+ * Soporta escaneo desde la PC local o desde otros dispositivos en la red
  */
 
 // Configuración del servicio de escaneo
-const SCANNER_SERVICE_URL = 'http://127.0.0.1:5001';
+const SCANNER_PORT = 5001;
+const SCANNER_LOCAL_URL = `http://127.0.0.1:${SCANNER_PORT}`;
+
+// Obtener URL del servidor de escaneo (puede ser localhost o IP de red)
+function getScannerServiceUrl() {
+    // Primero verificar si hay una IP guardada en localStorage
+    const savedIp = localStorage.getItem('scanner_server_ip');
+    if (savedIp) {
+        return `http://${savedIp}:${SCANNER_PORT}`;
+    }
+    return SCANNER_LOCAL_URL;
+}
+
+// Guardar IP del servidor de escaneo
+function setScannerServerIp(ip) {
+    if (ip && ip.trim()) {
+        localStorage.setItem('scanner_server_ip', ip.trim());
+        console.log(`✅ IP del servidor de escaneo guardada: ${ip}`);
+        return true;
+    }
+    return false;
+}
+
+// Limpiar IP guardada (volver a localhost)
+function clearScannerServerIp() {
+    localStorage.removeItem('scanner_server_ip');
+    console.log('✅ IP del servidor de escaneo eliminada. Usando localhost.');
+}
+
+// Obtener la IP guardada actual
+function getScannerServerIp() {
+    return localStorage.getItem('scanner_server_ip') || '127.0.0.1';
+}
 
 /**
  * Verificar si el servicio de escaneo está disponible
- * @returns {Promise<{available: boolean, data?: object, error?: string}>}
+ * @param {string} customUrl - URL personalizada para verificar (opcional)
+ * @returns {Promise<{available: boolean, data?: object, error?: string, url?: string}>}
  */
-async function verificarServicioEscaneo() {
-    try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+async function verificarServicioEscaneo(customUrl = null) {
+    const urlsToTry = [];
+    
+    if (customUrl) {
+        urlsToTry.push(customUrl);
+    } else {
+        // Intentar primero con la URL guardada/local
+        urlsToTry.push(getScannerServiceUrl());
         
-        const response = await fetch(`${SCANNER_SERVICE_URL}/health`, {
-            signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (response.ok) {
-            const data = await response.json();
-            return { available: true, data };
-        } else {
-            return { available: false, error: 'Servicio no disponible' };
+        // Si no es localhost, también intentar localhost
+        if (getScannerServiceUrl() !== SCANNER_LOCAL_URL) {
+            urlsToTry.push(SCANNER_LOCAL_URL);
         }
-    } catch (error) {
-        if (error.name === 'AbortError') {
-            return { available: false, error: 'Timeout al conectar con el servicio' };
-        }
-        return { available: false, error: error.message };
     }
+    
+    for (const url of urlsToTry) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            
+            const response = await fetch(`${url}/health`, {
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const data = await response.json();
+                return { available: true, data, url };
+            }
+        } catch (error) {
+            console.log(`No se pudo conectar a ${url}: ${error.message}`);
+        }
+    }
+    
+    return { 
+        available: false, 
+        error: 'Servicio de escaneo no disponible. Verifica que esté corriendo.' 
+    };
 }
 
 /**
@@ -58,8 +108,16 @@ async function iniciarEscaneo(params) {
         return { success: false, error: 'Nombre del documento requerido' };
     }
     
+    // Primero verificar disponibilidad
+    const status = await verificarServicioEscaneo();
+    if (!status.available) {
+        return { success: false, error: status.error };
+    }
+    
+    const scannerUrl = status.url || getScannerServiceUrl();
+    
     try {
-        const response = await fetch(`${SCANNER_SERVICE_URL}/scan`, {
+        const response = await fetch(`${scannerUrl}/scan`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -87,7 +145,7 @@ async function iniciarEscaneo(params) {
         console.error('Error de conexión con el servicio de escaneo:', error);
         return { 
             success: false, 
-            error: `Error de conexión: ${error.message}. Verifica que el servicio esté corriendo en ${SCANNER_SERVICE_URL}` 
+            error: `Error de conexión: ${error.message}. Verifica que el servicio esté corriendo.` 
         };
     }
 }
@@ -101,6 +159,8 @@ async function iniciarEscaneo(params) {
  * @param {string} message - Mensaje de estado opcional
  */
 function actualizarEstadoServicio(statusIndicator, statusText, btnEscanear, available, message = '') {
+    const scannerUrl = getScannerServiceUrl();
+    
     if (available) {
         if (statusIndicator) {
             statusIndicator.classList.remove('inactive');
@@ -120,14 +180,47 @@ function actualizarEstadoServicio(statusIndicator, statusText, btnEscanear, avai
             statusIndicator.classList.add('inactive');
         }
         if (statusText) {
-            statusText.textContent = message || 'Servicio no disponible';
+            const ipInfo = getScannerServerIp() !== '127.0.0.1' 
+                ? ` (IP: ${getScannerServerIp()})` 
+                : '';
+            statusText.textContent = message || `Servicio no disponible${ipInfo}`;
             statusText.style.color = '#ef4444';
         }
         if (btnEscanear) {
             btnEscanear.disabled = true;
-            btnEscanear.title = `El servicio de escaneo no está disponible. Asegúrate de que esté corriendo en ${SCANNER_SERVICE_URL}`;
+            btnEscanear.title = `El servicio de escaneo no está disponible. Asegúrate de que esté corriendo en ${scannerUrl}`;
         }
     }
+}
+
+/**
+ * Mostrar diálogo para configurar IP del servidor de escaneo
+ */
+function mostrarConfiguracionEscaner() {
+    const currentIp = getScannerServerIp();
+    const newIp = prompt(
+        '📡 Configurar servidor de escaneo\n\n' +
+        'Si el escáner está conectado a otra computadora en la red, ' +
+        'ingresa su dirección IP.\n\n' +
+        'Ejemplos:\n' +
+        '• 192.168.1.100\n' +
+        '• 10.0.0.50\n\n' +
+        'Deja vacío o ingresa "127.0.0.1" para usar el escáner local.',
+        currentIp
+    );
+    
+    if (newIp === null) return; // Cancelado
+    
+    if (!newIp.trim() || newIp.trim() === '127.0.0.1' || newIp.trim() === 'localhost') {
+        clearScannerServerIp();
+        alert('✅ Configurado para usar escáner local');
+    } else {
+        setScannerServerIp(newIp.trim());
+        alert(`✅ Servidor de escaneo configurado: ${newIp.trim()}`);
+    }
+    
+    // Recargar página para aplicar cambios
+    location.reload();
 }
 
 /**
@@ -185,10 +278,16 @@ function setProgresoVisible(progressContainer, visible) {
 
 // Exportar funciones para uso global
 window.EscaneoUtils = {
-    SCANNER_SERVICE_URL,
+    SCANNER_PORT,
+    SCANNER_LOCAL_URL,
+    getScannerServiceUrl,
+    setScannerServerIp,
+    clearScannerServerIp,
+    getScannerServerIp,
     verificarServicioEscaneo,
     iniciarEscaneo,
     actualizarEstadoServicio,
+    mostrarConfiguracionEscaner,
     setBotonEscaneoLoading,
     actualizarProgresoEscaneo,
     setProgresoVisible
@@ -196,4 +295,4 @@ window.EscaneoUtils = {
 
 // Log de carga
 console.log('✅ Módulo de escaneo cargado correctamente');
-
+console.log(`📡 Servidor de escaneo: ${getScannerServiceUrl()}`);

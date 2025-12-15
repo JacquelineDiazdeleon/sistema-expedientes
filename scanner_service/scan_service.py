@@ -379,11 +379,23 @@ if __name__ == "__main__":
         logger.info(f"NAPS2 Profile: {NAPS2_PROFILE}")
         logger.info(f"Django URL: {DJANGO_BASE_URL}")
         logger.info(f"Campo archivo: {ARCHIVO_FIELD_NAME}")
-        logger.info(f"Escuchando en http://127.0.0.1:5001")
+        
+        # Obtener IP de la red local
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        
+        logger.info(f"=" * 50)
+        logger.info(f"Servicio de escaneo disponible en:")
+        logger.info(f"  - Local:     http://127.0.0.1:5001")
+        logger.info(f"  - Red local: http://{local_ip}:5001")
+        logger.info(f"=" * 50)
+        logger.info(f"Otros dispositivos pueden escanear usando: http://{local_ip}:5001")
+        
     except FileNotFoundError as e:
         logger.error(f"Error de configuración: {e}")
         logger.error("Por favor, verifica la instalación de NAPS2 o ajusta NAPS2_CLI en config.json")
         exit(1)
     
-    # Iniciar servidor Flask (solo localhost)
-    app.run(host='127.0.0.1', port=5001, debug=False)
+    # Iniciar servidor Flask en todas las interfaces (accesible desde la red)
+    app.run(host='0.0.0.0', port=5001, debug=False)

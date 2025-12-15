@@ -5,5 +5,7 @@
     "NAPS2_CLI": "C:\\Program Files\\NAPS2\\NAPS2.Console.exe",
     "NAPS2_PROFILE": " HP_ADF_300",
     "SCAN_TIMEOUT": 180,
-    "UPLOAD_TIMEOUT": 120
+    "UPLOAD_TIMEOUT": 120,
+    "SCANNER_PORT": 5001,
+    "ALLOW_NETWORK_ACCESS": true
 }
