@@ -4,6 +4,10 @@ python-decouple==3.8
 django-crispy-forms==2.1
 crispy-bootstrap5==0.7
 django-bootstrap5==23.3
-python-sane==1.2.0
-pywin32
-pytwain
+PyPDF2==3.0.1
+reportlab==4.0.9
+python-docx==1.1.0
+openpyxl==3.1.2
+gunicorn==21.2.0
+whitenoise==6.6.0
+whoosh==2.7.4

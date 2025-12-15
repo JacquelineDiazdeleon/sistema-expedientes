@@ -38,3 +38,22 @@ __pycache__/
 # Archivos de sistema operativo
 .DS_Store
 Thumbs.db
+
+# Logs
+*.log
+debug.log
+
+# Backups
+*.bak
+*.backup
+
+# Whoosh index (will be recreated)
+whoosh_index/
+whoosh_index_backup/
+
+# Carpeta antigua de sistema_digitalizacion (ya no se usa)
+sistema_digitalizacion/digitalizacion/
+sistema_digitalizacion/digitalizacion_2/
+sistema_digitalizacion/db.sqlite3
+sistema_digitalizacion/staticfiles/
+sistema_digitalizacion/media/
