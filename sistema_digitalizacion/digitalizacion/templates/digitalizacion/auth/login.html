@@ -1,263 +1,91 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Sistema de Digitalización</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-        }
-        
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 48px 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-        }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-        
-        .login-icon {
-            width: 64px;
-            height: 64px;
-            background: linear-gradient(135deg, #0ea5e9, #22c55e);
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            color: white;
-            font-size: 28px;
-        }
-        
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 8px;
-        }
-        
-        .login-subtitle {
-            color: #64748b;
-            font-size: 15px;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .form-control {
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 16px;
-            font-size: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .form-control:focus {
-            border-color: #0ea5e9;
-            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1);
-        }
-        
-        .btn-login {
-            width: 100%;
-            background: linear-gradient(135deg, #1e293b, #334155);
-            border: none;
-            border-radius: 12px;
-            padding: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            color: white;
-            transition: all 0.3s ease;
-            margin-top: 8px;
-        }
-        
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(30, 41, 59, 0.3);
-            color: white;
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 28px 0;
-            color: #94a3b8;
-            font-size: 14px;
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: #e2e8f0;
-        }
-        
-        .divider span {
-            padding: 0 16px;
-        }
-        
-        .btn-register {
-            width: 100%;
-            background: transparent;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            color: #475569;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: block;
-            text-align: center;
-        }
-        
-        .btn-register:hover {
-            border-color: #0ea5e9;
-            color: #0ea5e9;
-            background: rgba(14, 165, 233, 0.05);
-        }
-        
-        .register-text {
-            text-align: center;
-            color: #64748b;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
-        
-        .alert {
-            border-radius: 12px;
-            border: none;
-            padding: 14px 16px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        
-        .alert-danger {
-            background: #fef2f2;
-            color: #dc2626;
-        }
-        
-        .alert-success {
-            background: #f0fdf4;
-            color: #16a34a;
-        }
-        
-        .text-danger {
-            font-size: 13px;
-            margin-top: 6px;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <!-- Header -->
-            <div class="login-header">
-                <div class="login-icon">
-                    <i class="bi bi-building"></i>
-                </div>
-                <h1 class="login-title">Iniciar Sesión</h1>
-                <p class="login-subtitle">Sistema de Digitalización de Archivos</p>
-            </div>
-            
-            <!-- Mensajes -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
+{% extends 'digitalizacion/base_auth.html' %}
+
+{% block title %}Iniciar Sesión - Secretaría de Servicios Públicos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-blue-dark {
+        background-color: #0A1A2F !important;
+        border-color: #0A1A2F !important;
+        color: white !important;
+    }
+    .btn-blue-dark:hover {
+        background-color: #0D243D !important;
+        border-color: #0D243D !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-zinc-950">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+
+            <div class="card shadow-lg border-0 bg-zinc-900 border-zinc-800">
+                <div class="card-body p-5">
+
+                    <!-- Logo y título -->
+                    <div class="text-center mb-4">
+                        <div class="auth-logo mb-3">
+                            <i class="bi bi-building text-zinc-300" style="font-size: 3rem;"></i>
+                        </div>
+                        <h2 class="h3 mb-2 text-zinc-100 fw-bold">Iniciar Sesión</h2>
+                        <p class="text-zinc-400">Accede al sistema de la Secretaría de Servicios Públicos</p>
                     </div>
-                {% endfor %}
-            {% endif %}
-            
-            <!-- Formulario -->
-            <form method="post">
-                {% csrf_token %}
-                
-                <div class="mb-3">
-                    <label for="id_username" class="form-label">
-                        <i class="bi bi-person me-2"></i>Usuario
-                    </label>
-                    <input type="text" 
-                           name="username" 
-                           id="id_username" 
-                           class="form-control" 
-                           placeholder="Ingresa tu usuario"
-                           required
-                           autofocus>
-                    {% if form.username.errors %}
-                        <div class="text-danger">{{ form.username.errors.0 }}</div>
+
+                    <!-- Mensajes -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                            </div>
+                        {% endfor %}
                     {% endif %}
+
+                    <!-- Formulario -->
+                    <form method="post" class="auth-form">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label text-zinc-300">
+                                <i class="bi bi-person me-2"></i>Usuario
+                            </label>
+                            <input type="text" name="username" id="id_username" class="form-control" placeholder="Ingresa tu usuario" required autofocus>
+                            {% if form.username.errors %}
+                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label text-zinc-300">
+                                <i class="bi bi-lock me-2"></i>Contraseña
+                            </label>
+                            <input type="password" name="password" id="id_password" class="form-control" placeholder="Ingresa tu contraseña" required>
+                            {% if form.password.errors %}
+                                <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-blue-dark w-100 py-3 fw-bold mb-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                        </button>
+                    </form>
+
+                    <!-- Enlace a registro -->
+                    <div class="text-center mt-4 pt-3 border-top border-zinc-800">
+                        <p class="text-zinc-400 mb-2">¿No tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:register' %}" class="btn btn-outline-light w-100">
+                            <i class="bi bi-person-plus me-2"></i>Registrarse
+                        </a>
+                    </div>
+
                 </div>
-                
-                <div class="mb-4">
-                    <label for="id_password" class="form-label">
-                        <i class="bi bi-lock me-2"></i>Contraseña
-                    </label>
-                    <input type="password" 
-                           name="password" 
-                           id="id_password" 
-                           class="form-control" 
-                           placeholder="Ingresa tu contraseña"
-                           required>
-                    {% if form.password.errors %}
-                        <div class="text-danger">{{ form.password.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                
-                <button type="submit" class="btn btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-                </button>
-            </form>
-            
-            <!-- Separador -->
-            <div class="divider">
-                <span>o</span>
             </div>
-            
-            <!-- Registro -->
-            <p class="register-text">¿No tienes cuenta?</p>
-            <a href="{% url 'digitalizacion:register' %}" class="btn-register">
-                <i class="bi bi-person-plus me-2"></i>Registrarse
-            </a>
+
         </div>
     </div>
-    
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+
+{% endblock %}

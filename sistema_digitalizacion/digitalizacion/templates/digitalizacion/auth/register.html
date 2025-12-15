@@ -1,21 +1,21 @@
-{% extends 'digitalizacion/base.html' %}
-{% load crispy_forms_tags %}
+{% extends 'digitalizacion/base_auth.html' %}
 
-{% block title %}Registrarse - Secretaría de Servicios Públicos{% endblock %}
+{% block title %}Crear Cuenta - Secretaría de Servicios Públicos{% endblock %}
 
 {% block content %}
-<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center">
+<div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-zinc-950">
     <div class="row w-100 justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-lg border-0 glassmorphism">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-lg border-0 bg-zinc-900 border-zinc-800">
                 <div class="card-body p-5">
-                    <!-- Logo y título -->
+                    
+                    <!-- Header -->
                     <div class="text-center mb-4">
                         <div class="auth-logo mb-3">
-                            <i class="fas fa-user-plus fa-3x text-primary"></i>
+                            <i class="bi bi-person-plus-fill text-emerald-400" style="font-size: 3rem;"></i>
                         </div>
-                        <h2 class="h3 mb-2 text-primary fw-bold">Crear Cuenta</h2>
-                        <p class="text-muted">Únete al sistema de la Secretaría de Servicios Públicos</p>
+                        <h2 class="h3 mb-2 text-zinc-100 fw-bold">Crear Cuenta</h2>
+                        <p class="text-zinc-400">Completa tus datos para acceder al sistema</p>
                     </div>
 
                     <!-- Mensajes -->
@@ -32,55 +32,68 @@
                     <form method="post" class="auth-form">
                         {% csrf_token %}
                         
+                        <!-- Usuario -->
                         <div class="mb-3">
-                            <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
-                                <i class="fas fa-user me-2"></i>Nombre de usuario
+                            <label for="id_username" class="form-label text-zinc-300">
+                                <i class="bi bi-person me-2"></i>Nombre de usuario
                             </label>
-                            {{ form.username }}
+                            <input type="text" name="username" id="id_username" class="form-control" 
+                                   placeholder="Elige un nombre de usuario" required autofocus
+                                   value="{{ form.username.value|default:'' }}">
                             {% if form.username.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.username.errors.0 }}
-                                </div>
+                                <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
                             {% endif %}
-                            <div class="form-text">Requerido. 150 caracteres como máximo. Solo letras, números y @/./+/-/_</div>
+                            <small class="text-zinc-500">Requerido. 150 caracteres o menos. Letras, dígitos y @/./+/-/_ solamente.</small>
                         </div>
 
+                        <!-- Contraseña -->
                         <div class="mb-3">
-                            <label for="{{ form.password1.id_for_label }}" class="form-label fw-semibold">
-                                <i class="fas fa-lock me-2"></i>Contraseña
+                            <label for="id_password1" class="form-label text-zinc-300">
+                                <i class="bi bi-lock me-2"></i>Contraseña
                             </label>
-                            {{ form.password1 }}
+                            <input type="password" name="password1" id="id_password1" class="form-control" 
+                                   placeholder="Crea una contraseña" required>
                             {% if form.password1.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.password1.errors.0 }}
-                                </div>
+                                <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
                             {% endif %}
+                            <small class="text-zinc-500">Mínimo 8 caracteres, no puede ser solo números.</small>
                         </div>
 
+                        <!-- Confirmar contraseña -->
                         <div class="mb-4">
-                            <label for="{{ form.password2.id_for_label }}" class="form-label fw-semibold">
-                                <i class="fas fa-lock me-2"></i>Confirmar contraseña
+                            <label for="id_password2" class="form-label text-zinc-300">
+                                <i class="bi bi-lock-fill me-2"></i>Confirmar contraseña
                             </label>
-                            {{ form.password2 }}
+                            <input type="password" name="password2" id="id_password2" class="form-control" 
+                                   placeholder="Repite la contraseña" required>
                             {% if form.password2.errors %}
-                                <div class="text-danger small mt-1">
-                                    {{ form.password2.errors.0 }}
-                                </div>
+                                <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
                             {% endif %}
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 auth-btn mb-3">
-                            <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                        <!-- Errores generales del formulario -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Botón de envío -->
+                        <button type="submit" class="btn btn-emerald-600 w-100 py-3 fw-bold mb-3">
+                            <i class="bi bi-person-plus me-2"></i>Crear Cuenta
                         </button>
                     </form>
 
-                    <!-- Enlaces adicionales -->
-                    <div class="text-center">
-                        <p class="text-muted mb-0">¿Ya tienes cuenta?</p>
-                        <a href="{% url 'digitalizacion:login' %}" class="text-decoration-none">
-                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                    <!-- Enlace a login -->
+                    <div class="text-center mt-4 pt-3 border-top border-zinc-800">
+                        <p class="text-zinc-400 mb-2">¿Ya tienes cuenta?</p>
+                        <a href="{% url 'digitalizacion:login' %}" class="text-emerald-400 text-decoration-none fw-semibold">
+                            <i class="bi bi-arrow-left me-2"></i>Iniciar sesión
                         </a>
                     </div>
+
                 </div>
             </div>
         </div>
