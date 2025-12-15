@@ -374,3 +374,29 @@ FileNotFoundError: NAPS2 no generó el archivo: C:\Users\Usuario\AppData\Local\Te
 2025-12-15 15:14:58,629 - __main__ - INFO - Subiendo PDF a Django: https://sistema-expedientes-u2em.onrender.com/expedientes/1/etapa/1/subir-documento/
 2025-12-15 15:15:00,262 - __main__ - INFO - Documento subido exitosamente: {'success': True, 'documento': {'id': 2, 'nombre': 'Scan_1765833285841', 'url': '/media/expedientes/2025/12/EXP-20251215-211124_20251215_211500.pdf', 'fecha_subida': '15/12/2025 21:15', 'subido_por': 'Servicio Escáner Local', 'tipo': 'PDF', 'tamano': '5376.9 KB', 'estado': 'Pendiente de validar'}, 'progreso': 0, 'etapas_completadas': 0, 'total_etapas': 1, 'etapa_actual': 'area1', 'etapa_completada': True}
 2025-12-15 15:15:00,273 - werkzeug - INFO - 127.0.0.1 - - [15/Dec/2025 15:15:00] "POST /scan HTTP/1.1" 200 -
+2025-12-15 16:03:37,538 - __main__ - INFO - Configuración cargada desde D:\Resp\Documents\Sistema_Digitalizacion\scanner_service\config.json
+2025-12-15 16:03:37,540 - __main__ - INFO - NAPS2 encontrado en: C:\Program Files\NAPS2\NAPS2.Console.exe
+2025-12-15 16:03:37,540 - __main__ - INFO - Servicio de escaneo iniciado correctamente
+2025-12-15 16:03:37,541 - __main__ - INFO - NAPS2 Profile:  HP_ADF_300
+2025-12-15 16:03:37,541 - __main__ - INFO - Django URL: https://sistema-expedientes-u2em.onrender.com
+2025-12-15 16:03:37,541 - __main__ - INFO - Campo archivo: documento
+2025-12-15 16:03:37,546 - __main__ - INFO - ==================================================
+2025-12-15 16:03:37,546 - __main__ - INFO - Servicio de escaneo disponible en:
+2025-12-15 16:03:37,546 - __main__ - INFO -   - Local:     http://127.0.0.1:5001
+2025-12-15 16:03:37,546 - __main__ - INFO -   - Red local: http://10.2.17.85:5001
+2025-12-15 16:03:37,547 - __main__ - INFO - ==================================================
+2025-12-15 16:03:37,547 - __main__ - INFO - Otros dispositivos pueden escanear usando: http://10.2.17.85:5001
+2025-12-15 16:03:37,547 - __main__ - INFO - 
+2025-12-15 16:03:37,547 - __main__ - INFO - [ESCANEO REMOTO HABILITADO]
+2025-12-15 16:03:37,547 - __main__ - INFO - Otros dispositivos pueden solicitar escaneos desde la web.
+2025-12-15 16:03:37,548 - __main__ - INFO - El servicio consultará https://sistema-expedientes-u2em.onrender.com cada 5 segundos.
+2025-12-15 16:03:37,548 - __main__ - INFO - ==================================================
+2025-12-15 16:03:37,549 - __main__ - INFO - [POLLING] Iniciando servicio de polling para solicitudes remotas...
+2025-12-15 16:03:37,549 - __main__ - INFO - [POLLING] Hilo de polling iniciado
+2025-12-15 16:03:37,549 - __main__ - INFO - [POLLING] Intervalo: 5 segundos
+2025-12-15 16:03:37,549 - __main__ - INFO - [POLLING] Servidor: https://sistema-expedientes-u2em.onrender.com
+2025-12-15 16:03:37,573 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://10.2.17.85:5001
+2025-12-15 16:03:37,573 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
