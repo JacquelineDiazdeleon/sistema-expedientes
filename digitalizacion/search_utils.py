@@ -131,17 +131,27 @@ def get_or_create_index():
 def extract_text_from_pdf(file_path):
     """Extrae texto de un archivo PDF, con soporte para OCR si es necesario"""
     try:
+        logger.info(f"Extrayendo texto de PDF: {file_path}")
         # Primero intentamos extraer texto directamente del PDF
         text = ""
         with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            for page in reader.pages:
+            num_pages = len(reader.pages)
+            logger.info(f"PDF tiene {num_pages} páginas")
+            for page_num, page in enumerate(reader.pages, 1):
                 page_text = page.extract_text() or ""
                 text += page_text + "\n"
+                if page_text.strip():
+                    logger.debug(f"Página {page_num}: {len(page_text)} caracteres extraídos")
+        
+        text_stripped = text.strip()
+        logger.info(f"Texto extraído directamente: {len(text_stripped)} caracteres")
+        if text_stripped:
+            logger.debug(f"Primeros 200 caracteres: {text_stripped[:200]}")
         
         # Si no se pudo extraer suficiente texto, intentamos con OCR (si está disponible)
-        if (not text.strip() or len(text.strip()) < 50) and TESSERACT_AVAILABLE and PYMUPDF_AVAILABLE:
-            logger.info(f"Usando OCR para extraer texto de {file_path}")
+        if (not text_stripped or len(text_stripped) < 50) and TESSERACT_AVAILABLE and PYMUPDF_AVAILABLE:
+            logger.info(f"Texto insuficiente ({len(text_stripped)} caracteres), intentando OCR para {file_path}")
             doc = fitz.open(file_path)
             ocr_text = ""
             
@@ -159,26 +169,36 @@ def extract_text_from_pdf(file_path):
                 
                 if page_text:
                     ocr_text += page_text + "\n"
+                    logger.debug(f"OCR página {page_num + 1}: {len(page_text)} caracteres")
             
             doc.close()
             
             if ocr_text.strip():
-                logger.info(f"Texto extraído con OCR: {ocr_text[:200]}...")
+                logger.info(f"Texto extraído con OCR: {len(ocr_text.strip())} caracteres")
+                logger.debug(f"Primeros 200 caracteres OCR: {ocr_text.strip()[:200]}")
                 return ocr_text.strip()
+        elif not text_stripped:
+            logger.warning(f"No se pudo extraer texto del PDF {file_path} y OCR no está disponible")
         
-        return text.strip()
+        return text_stripped
         
     except Exception as e:
-        logger.error(f"Error procesando PDF {file_path}: {str(e)}")
+        logger.error(f"Error procesando PDF {file_path}: {str(e)}", exc_info=True)
         return ""
 
 def extract_text_from_docx(file_path):
     """Extrae texto de un archivo DOCX"""
     try:
+        logger.info(f"Extrayendo texto de DOCX: {file_path}")
         doc = Document(file_path)
-        return '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+        paragraphs = [paragraph.text for paragraph in doc.paragraphs]
+        text = '\n'.join(paragraphs)
+        logger.info(f"Texto extraído de DOCX: {len(text)} caracteres")
+        if text:
+            logger.debug(f"Primeros 200 caracteres: {text[:200]}")
+        return text
     except Exception as e:
-        logger.error(f"Error extrayendo texto de DOCX {file_path}: {str(e)}")
+        logger.error(f"Error extrayendo texto de DOCX {file_path}: {str(e)}", exc_info=True)
         return ""
 
 def extract_text(file_path):
@@ -284,24 +304,58 @@ def index_document(documento):
         # Extraer texto del archivo
         contenido = extract_text(file_path)
         
+        # Logging detallado para diagnóstico
+        logger.info(f"Indexando documento {documento.id}: {documento.nombre_documento}")
+        logger.info(f"Ruta del archivo: {file_path}")
+        logger.info(f"Tamaño del archivo: {os.path.getsize(file_path)} bytes")
+        logger.info(f"Texto extraído - Longitud: {len(contenido)} caracteres")
+        if contenido:
+            logger.info(f"Texto extraído (primeros 200 caracteres): {contenido[:200]}")
+        else:
+            logger.warning(f"⚠️ No se pudo extraer texto del archivo {file_path}")
+        
         # Abrir el índice
         ix = get_or_create_index()
         writer = ix.writer()
         
+        # Preparar los datos para el índice
+        doc_id = f"doc_{documento.id}"
+        expediente_id_str = str(documento.expediente_id) if documento.expediente_id else ''
+        titulo = documento.nombre_documento or 'Documento sin título'
+        contenido_index = contenido or ''
+        tipo_archivo = documento.tipo_archivo or ''
+        fecha_creacion = documento.fecha_subida
+        
+        logger.info(f"Guardando en índice - doc_id: {doc_id}, expediente_id: {expediente_id_str}, título: {titulo[:50]}")
+        logger.info(f"Contenido a indexar - Longitud: {len(contenido_index)} caracteres")
+        
         # Agregar documento al índice
         # IMPORTANTE: expediente_id debe ser string para el índice ID
         writer.update_document(
-            doc_id=f"doc_{documento.id}",
-            expediente_id=str(documento.expediente_id) if documento.expediente_id else '',
-            titulo=documento.nombre_documento or 'Documento sin título',
-            contenido=contenido or '',
-            tipo_archivo=documento.tipo_archivo or '',
-            fecha_creacion=documento.fecha_subida,
+            doc_id=doc_id,
+            expediente_id=expediente_id_str,
+            titulo=titulo,
+            contenido=contenido_index,
+            tipo_archivo=tipo_archivo,
+            fecha_creacion=fecha_creacion,
             ruta_archivo=file_path,
         )
         
         writer.commit()
-        logger.debug(f"Documento {documento.id} indexado correctamente")
+        logger.info(f"✓ Documento {documento.id} indexado correctamente con {len(contenido_index)} caracteres de contenido")
+        
+        # Verificar que se guardó correctamente
+        try:
+            with ix.searcher() as searcher:
+                stored_doc = searcher.document(doc_id=doc_id)
+                if stored_doc:
+                    contenido_almacenado = stored_doc.get('contenido', '')
+                    logger.info(f"✓ Verificado: Documento guardado en índice con {len(contenido_almacenado)} caracteres")
+                else:
+                    logger.error(f"✗ Error: Documento {doc_id} no se encontró en el índice después de guardar")
+        except Exception as verify_error:
+            logger.warning(f"Error al verificar documento en índice: {str(verify_error)}")
+        
         return True
     except Exception as e:
         logger.error(f"Error indexando documento {documento.id}: {str(e)}", exc_info=True)
@@ -509,11 +563,29 @@ def search_documents(query, expediente_id=None, limit=20, page=1):
                         'suggestions': []
                     }
             
+            # Logging de la consulta de búsqueda
+            logger.info(f"Buscando: '{query}' (expediente_id: {expediente_id_filter or 'todos'})")
+            logger.debug(f"Consulta Whoosh: {q}")
+            
             # Realizar la búsqueda con paginación y ordenamiento por relevancia
             # Usar limit=None para obtener todos los resultados y luego ordenarlos
             start = (page - 1) * limit
             try:
                 all_results = searcher.search(q, limit=None, terms=True)
+                logger.info(f"Búsqueda realizada: {len(all_results)} resultados encontrados")
+                
+                # Logging de los primeros resultados para diagnóstico
+                if len(all_results) > 0:
+                    logger.debug(f"Primeros 3 resultados:")
+                    for i, hit in enumerate(all_results[:3], 1):
+                        logger.debug(f"  {i}. doc_id: {hit.get('doc_id')}, score: {hit.score:.2f}, título: {hit.get('titulo', '')[:50]}")
+                else:
+                    logger.warning(f"No se encontraron resultados para: '{query}'")
+                    # Intentar búsqueda más simple para diagnóstico
+                    simple_query = QueryParser("contenido", ix.schema).parse(query)
+                    simple_results = searcher.search(simple_query, limit=5)
+                    logger.info(f"Búsqueda simple alternativa encontró {len(simple_results)} resultados")
+                    
             except Exception as search_error:
                 logger.error(f"Error en la búsqueda de Whoosh: {str(search_error)}", exc_info=True)
                 return {
