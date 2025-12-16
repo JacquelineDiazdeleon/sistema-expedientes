@@ -130,28 +130,65 @@ def get_or_create_index():
 
 def extract_text_from_pdf(file_path):
     """Extrae texto de un archivo PDF, con soporte para OCR si es necesario"""
+    text = ""
+    
+    # Método 1: Intentar con PyMuPDF (fitz) - más robusto y rápido
+    if PYMUPDF_AVAILABLE:
+        try:
+            logger.info(f"Extrayendo texto de PDF con PyMuPDF: {file_path}")
+            doc = fitz.open(file_path)
+            num_pages = len(doc)
+            logger.info(f"PDF tiene {num_pages} páginas")
+            
+            for page_num in range(num_pages):
+                page = doc.load_page(page_num)
+                page_text = page.get_text() or ""
+                text += page_text + "\n"
+                if page_text.strip():
+                    logger.debug(f"Página {page_num + 1}: {len(page_text)} caracteres extraídos")
+            
+            doc.close()
+            text_stripped = text.strip()
+            logger.info(f"Texto extraído con PyMuPDF: {len(text_stripped)} caracteres")
+            
+            if text_stripped and len(text_stripped) > 10:
+                logger.debug(f"Primeros 200 caracteres: {text_stripped[:200]}")
+                return text_stripped
+            else:
+                logger.warning(f"PyMuPDF extrajo poco texto ({len(text_stripped)} caracteres), intentando PyPDF2...")
+        except Exception as e:
+            logger.warning(f"Error con PyMuPDF: {str(e)}, intentando PyPDF2...")
+    
+    # Método 2: Intentar con PyPDF2 como respaldo
     try:
-        logger.info(f"Extrayendo texto de PDF: {file_path}")
-        # Primero intentamos extraer texto directamente del PDF
+        logger.info(f"Extrayendo texto de PDF con PyPDF2: {file_path}")
         text = ""
         with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
             num_pages = len(reader.pages)
             logger.info(f"PDF tiene {num_pages} páginas")
             for page_num, page in enumerate(reader.pages, 1):
-                page_text = page.extract_text() or ""
-                text += page_text + "\n"
-                if page_text.strip():
-                    logger.debug(f"Página {page_num}: {len(page_text)} caracteres extraídos")
+                try:
+                    page_text = page.extract_text() or ""
+                    text += page_text + "\n"
+                    if page_text.strip():
+                        logger.debug(f"Página {page_num}: {len(page_text)} caracteres extraídos")
+                except Exception as page_error:
+                    logger.warning(f"Error extrayendo página {page_num}: {str(page_error)}")
+                    continue
         
         text_stripped = text.strip()
-        logger.info(f"Texto extraído directamente: {len(text_stripped)} caracteres")
+        logger.info(f"Texto extraído con PyPDF2: {len(text_stripped)} caracteres")
         if text_stripped:
             logger.debug(f"Primeros 200 caracteres: {text_stripped[:200]}")
-        
-        # Si no se pudo extraer suficiente texto, intentamos con OCR (si está disponible)
-        if (not text_stripped or len(text_stripped) < 50) and TESSERACT_AVAILABLE and PYMUPDF_AVAILABLE:
-            logger.info(f"Texto insuficiente ({len(text_stripped)} caracteres), intentando OCR para {file_path}")
+    except Exception as e:
+        logger.error(f"Error con PyPDF2: {str(e)}", exc_info=True)
+        text_stripped = ""
+    
+    # Método 3: Si no se pudo extraer suficiente texto, intentar con OCR (si está disponible)
+    if (not text_stripped or len(text_stripped) < 50) and TESSERACT_AVAILABLE and PYMUPDF_AVAILABLE:
+        logger.info(f"Texto insuficiente ({len(text_stripped)} caracteres), intentando OCR para {file_path}")
+        try:
             doc = fitz.open(file_path)
             ocr_text = ""
             
@@ -177,25 +214,41 @@ def extract_text_from_pdf(file_path):
                 logger.info(f"Texto extraído con OCR: {len(ocr_text.strip())} caracteres")
                 logger.debug(f"Primeros 200 caracteres OCR: {ocr_text.strip()[:200]}")
                 return ocr_text.strip()
-        elif not text_stripped:
-            logger.warning(f"No se pudo extraer texto del PDF {file_path} y OCR no está disponible")
-        
-        return text_stripped
-        
-    except Exception as e:
-        logger.error(f"Error procesando PDF {file_path}: {str(e)}", exc_info=True)
-        return ""
+        except Exception as ocr_error:
+            logger.error(f"Error en OCR: {str(ocr_error)}", exc_info=True)
+    
+    if not text_stripped:
+        logger.warning(f"⚠️ No se pudo extraer texto del PDF {file_path}. Puede ser un PDF escaneado sin OCR disponible.")
+    
+    return text_stripped
 
 def extract_text_from_docx(file_path):
     """Extrae texto de un archivo DOCX"""
     try:
         logger.info(f"Extrayendo texto de DOCX: {file_path}")
         doc = Document(file_path)
-        paragraphs = [paragraph.text for paragraph in doc.paragraphs]
-        text = '\n'.join(paragraphs)
-        logger.info(f"Texto extraído de DOCX: {len(text)} caracteres")
+        
+        # Extraer texto de párrafos
+        paragraphs = [paragraph.text for paragraph in doc.paragraphs if paragraph.text.strip()]
+        
+        # También extraer texto de tablas
+        table_texts = []
+        for table in doc.tables:
+            for row in table.rows:
+                row_text = ' '.join([cell.text.strip() for cell in row.cells if cell.text.strip()])
+                if row_text:
+                    table_texts.append(row_text)
+        
+        # Combinar todo el texto
+        all_texts = paragraphs + table_texts
+        text = '\n'.join(all_texts)
+        
+        logger.info(f"Texto extraído de DOCX: {len(text)} caracteres ({len(paragraphs)} párrafos, {len(table_texts)} filas de tabla)")
         if text:
             logger.debug(f"Primeros 200 caracteres: {text[:200]}")
+        else:
+            logger.warning(f"⚠️ No se encontró texto en el DOCX {file_path}")
+        
         return text
     except Exception as e:
         logger.error(f"Error extrayendo texto de DOCX {file_path}: {str(e)}", exc_info=True)
@@ -302,17 +355,30 @@ def index_document(documento):
             return False
             
         # Extraer texto del archivo
-        contenido = extract_text(file_path)
-        
-        # Logging detallado para diagnóstico
         logger.info(f"Indexando documento {documento.id}: {documento.nombre_documento}")
         logger.info(f"Ruta del archivo: {file_path}")
         logger.info(f"Tamaño del archivo: {os.path.getsize(file_path)} bytes")
-        logger.info(f"Texto extraído - Longitud: {len(contenido)} caracteres")
+        logger.info(f"Tipo de archivo: {documento.tipo_archivo}")
+        
+        contenido = extract_text(file_path)
+        
+        # Limpiar y normalizar el texto extraído
         if contenido:
-            logger.info(f"Texto extraído (primeros 200 caracteres): {contenido[:200]}")
+            # Eliminar espacios múltiples y normalizar saltos de línea
+            contenido = ' '.join(contenido.split())
+            # Asegurar que el contenido tenga al menos algunos caracteres válidos
+            contenido = contenido.strip()
+        
+        # Logging detallado para diagnóstico
+        logger.info(f"Texto extraído - Longitud: {len(contenido)} caracteres")
+        if contenido and len(contenido) > 0:
+            logger.info(f"Texto extraído (primeros 300 caracteres): {contenido[:300]}")
+            logger.debug(f"Texto extraído (últimos 100 caracteres): ...{contenido[-100:]}")
         else:
             logger.warning(f"⚠️ No se pudo extraer texto del archivo {file_path}")
+            # Si no hay contenido, al menos indexar el nombre del documento para que sea buscable
+            contenido = documento.nombre_documento or 'Documento sin título'
+            logger.info(f"Usando nombre del documento como contenido indexable: {contenido}")
         
         # Abrir el índice
         ix = get_or_create_index()

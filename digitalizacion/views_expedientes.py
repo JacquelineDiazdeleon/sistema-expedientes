@@ -853,15 +853,39 @@ def subir_documento(request, expediente_id, etapa=None):
                 else:
                     usuario_subida = request.user
                 
-                # Crear una instancia del modelo
+                # Guardar el archivo físicamente ANTES de crear el modelo
+                # Esto asegura que el archivo exista en el disco antes de indexarlo
+                # Generar ruta usando la función upload_to del modelo
+                fecha = timezone.now()
+                ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
+                filename_upload = f"{expediente.numero_expediente}_{fecha.strftime('%Y%m%d_%H%M%S')}{ext}"
+                upload_path = os.path.join('expedientes', str(fecha.year), str(fecha.month), filename_upload)
+                
+                # Leer el contenido del archivo
+                archivo.seek(0)  # Asegurar que estamos al inicio del archivo
+                archivo_content = archivo.read()
+                
+                # Guardar el archivo usando default_storage
+                saved_path = default_storage.save(upload_path, ContentFile(archivo_content))
+                logger.info(f"Archivo guardado físicamente en: {saved_path}")
+                
+                # Verificar que el archivo se guardó correctamente
+                if not default_storage.exists(saved_path):
+                    logger.error(f"Error: El archivo no se guardó correctamente en {saved_path}")
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Error al guardar el archivo en el servidor'
+                    }, status=500)
+                
+                # Crear una instancia del modelo con la ruta del archivo guardado
                 documento = DocumentoExpediente(
                     expediente=expediente,
                     area=area_etapa,
                     etapa=etapa_valida,  # Usamos el valor validado
                     nombre_documento=nombre_documento,
-                    archivo=archivo,
+                    archivo=saved_path,  # Usar la ruta del archivo guardado
                     subido_por=usuario_subida,
-                    tamano_archivo=archivo.size,
+                    tamano_archivo=len(archivo_content),
                     tipo_archivo=archivo.content_type,
                     descripcion=request.POST.get('descripcion', f'Documento subido para el área {getattr(area_etapa, "titulo", getattr(area_etapa, "nombre", "Sin nombre"))}'),
                     validado=False
