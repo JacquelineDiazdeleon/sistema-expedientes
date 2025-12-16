@@ -50,23 +50,51 @@ def index_documento(sender, instance, created, **kwargs):
     Signal handler para indexar documentos cuando se crean o actualizan
     """
     try:
-        # Solo indexar si el documento tiene un archivo y el archivo existe
-        if instance.archivo:
-            import os
-            from django.conf import settings
+        # Solo indexar si el documento tiene un archivo
+        if not instance.archivo:
+            logger.debug(f"Documento {instance.id} no tiene archivo, no se indexará")
+            return
             
-            # Verificar que el archivo existe en el sistema de archivos
-            file_path = instance.archivo.path if hasattr(instance.archivo, 'path') else None
-            if file_path and os.path.exists(file_path):
-                index_document(instance)
-                logger.info(f"Documento {instance.id} indexado correctamente")
-            elif created:
-                # Si es nuevo y aún no tiene archivo, intentar indexar de todas formas
-                # (puede que el archivo se esté guardando)
-                index_document(instance)
-                logger.info(f"Documento {instance.id} indexado (nuevo documento)")
+        import os
+        from django.conf import settings
+        from django.db import transaction
+        
+        # Obtener la ruta del archivo
+        file_path = None
+        if hasattr(instance.archivo, 'path'):
+            file_path = instance.archivo.path
+        else:
+            # Construir la ruta desde el name
+            file_path = os.path.join(settings.MEDIA_ROOT, instance.archivo.name)
+        
+        # Verificar que el archivo existe en el sistema de archivos
+        if file_path and os.path.exists(file_path):
+            # Verificar que el archivo no esté vacío
+            if os.path.getsize(file_path) > 0:
+                # Indexar el documento
+                if index_document(instance):
+                    logger.info(f"Documento {instance.id} indexado correctamente desde signal")
+                else:
+                    logger.warning(f"No se pudo indexar documento {instance.id} desde signal")
             else:
-                logger.warning(f"Documento {instance.id} no se pudo indexar: archivo no encontrado en {file_path}")
+                logger.warning(f"Archivo vacío para documento {instance.id}: {file_path}")
+        elif created:
+            # Si es nuevo y el archivo aún no existe, intentar indexar de todas formas
+            # (puede que el archivo se esté guardando aún)
+            # Usar transaction.on_commit para indexar después de que la transacción se complete
+            def index_after_commit():
+                try:
+                    # Refrescar el documento desde la BD
+                    instance.refresh_from_db()
+                    if instance.archivo:
+                        index_document(instance)
+                        logger.info(f"Documento {instance.id} indexado después de commit (nuevo documento)")
+                except Exception as e:
+                    logger.error(f"Error al indexar documento {instance.id} después de commit: {str(e)}", exc_info=True)
+            
+            transaction.on_commit(index_after_commit)
+        else:
+            logger.warning(f"Documento {instance.id} no se pudo indexar: archivo no encontrado en {file_path}")
     except Exception as e:
         logger.error(f"Error al indexar documento {instance.id}: {str(e)}", exc_info=True)
 

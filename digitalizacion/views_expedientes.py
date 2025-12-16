@@ -889,6 +889,22 @@ def subir_documento(request, expediente_id, etapa=None):
                 try:
                     documento.save()
                     logger.info(f"Documento guardado exitosamente: ID {documento.id}")
+                    
+                    # Indexar el documento manualmente después de guardarlo
+                    # Esto asegura que el archivo esté completamente guardado antes de indexar
+                    try:
+                        from .search_utils import index_document
+                        # Refrescar el documento desde la BD para asegurar que tiene todos los datos
+                        documento.refresh_from_db()
+                        # Intentar indexar
+                        if index_document(documento):
+                            logger.info(f"Documento {documento.id} indexado correctamente después de guardar")
+                        else:
+                            logger.warning(f"No se pudo indexar documento {documento.id} inmediatamente, se intentará con el signal")
+                    except Exception as index_error:
+                        logger.error(f"Error al indexar documento {documento.id} manualmente: {str(index_error)}", exc_info=True)
+                        # No fallar la subida si la indexación falla, el signal lo intentará después
+                        
                 except Exception as save_error:
                     logger.error(f"Error al guardar documento: {str(save_error)}", exc_info=True)
                     return JsonResponse({

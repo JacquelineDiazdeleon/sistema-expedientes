@@ -135,12 +135,11 @@ def api_buscar_documentos(request):
     
     # Obtener los documentos con toda la información relacionada
     # IMPORTANTE: Filtrar solo documentos que tienen archivo y expediente válido
-    # Además, verificar que el expediente tenga al menos un documento
     documentos = DocumentoExpediente.objects.filter(
         id__in=doc_ids,
         archivo__isnull=False,  # Solo documentos con archivo
-        expediente__isnull=False,  # Solo documentos con expediente válido
-        expediente__documentos__isnull=False  # Asegurar que el expediente tenga documentos
+        archivo__gt='',  # Asegurar que el archivo no esté vacío
+        expediente__isnull=False  # Solo documentos con expediente válido
     ).select_related(
         'expediente',
         'subido_por',
@@ -160,17 +159,9 @@ def api_buscar_documentos(request):
     
     for doc in documentos:
         try:
-            # Validar que el expediente existe y tiene documentos
+            # Validar que el expediente existe
             if not doc.expediente:
                 logger.warning(f"Documento {doc.id} no tiene expediente asociado")
-                continue
-            
-            # Verificar que el expediente tenga al menos este documento
-            if not DocumentoExpediente.objects.filter(
-                expediente=doc.expediente,
-                archivo__isnull=False
-            ).exists():
-                logger.warning(f"Expediente {doc.expediente.id} no tiene documentos válidos")
                 continue
             
             # Verificar que el archivo existe físicamente
@@ -227,20 +218,12 @@ def api_buscar_documentos(request):
                 
             doc = documentos_dict[doc_id]
             
-            # Validar que el expediente existe y tiene documentos
+            # Validar que el expediente existe
             if not doc.expediente:
                 logger.warning(f"Documento {doc_id} no tiene expediente asociado")
                 continue
             
             expediente = doc.expediente
-            
-            # Verificación adicional: asegurar que el expediente tenga documentos
-            if not DocumentoExpediente.objects.filter(
-                expediente=expediente,
-                archivo__isnull=False
-            ).exists():
-                logger.warning(f"Expediente {expediente.id} no tiene documentos válidos, omitiendo")
-                continue
             
             # Obtener información del usuario que subió el documento
             usuario_nombre = 'Usuario desconocido'
