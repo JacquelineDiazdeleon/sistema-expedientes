@@ -42,6 +42,8 @@ Thumbs.db
 # Logs
 *.log
 debug.log
+scanner_service/*.log
+scanner_service/scanner_service.log
 
 # Backups
 *.bak
