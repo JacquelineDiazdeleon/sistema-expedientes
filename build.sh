@@ -39,5 +39,5 @@ EOF
 
 # Crear áreas automáticamente
 echo "Configurando áreas por defecto..."
-python manage.py configurar_areas
+python manage.py populate_areas || echo "Advertencia: No se pudieron crear todas las áreas"
 

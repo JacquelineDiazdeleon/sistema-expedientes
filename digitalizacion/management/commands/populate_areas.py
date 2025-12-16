@@ -243,22 +243,3 @@ class Command(BaseCommand):
             f'Se han actualizado las áreas para los tipos de expediente. '
             f'Creadas: {creadas}, Actualizadas: {actualizadas}'
         ))
-                        'tipo_area': 'archivo',  # Por defecto, permitir subida de archivos
-                        'orden': orden,
-                        'obligatoria': True,
-                        'tipos_archivo_permitidos': 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
-                        'tamaño_max_archivo': 10,  # 10MB
-                        'activa': True,
-                        'es_default': True,
-                        'creada_por': admin_user,
-                    }
-                )
-                
-                if created:
-                    created_count += 1
-                    self.stdout.write(self.style.SUCCESS(f'Área creada: {area}'))
-                else:
-                    updated_count += 1
-                    self.stdout.write(self.style.WARNING(f'Área actualizada: {area}'))
-
-        self.stdout.write(self.style.SUCCESS(f'\nProceso completado. {created_count} áreas creadas, {updated_count} actualizadas.'))
