@@ -1585,12 +1585,15 @@
                     </svg>
                     Expedientes
                 </a>
+                {% load role_tags %}
+                {% if user|puede_crear_exp %}
                 <a href="{% url 'expedientes:seleccionar_tipo' %}" role="menuitem" class="menu-item" tabindex="0">
                     <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
                     Crear
                 </a>
+                {% endif %}
                 <a href="{% url 'digitalizacion:buscar_documentos' %}" role="menuitem" class="menu-item" tabindex="0" id="buscarDocumentoBtn">
                     <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -1603,6 +1606,7 @@
                     </svg>
                     Reportes
                 </a>
+                {% if user|puede_administrar %}
                 <a href="{% url 'areas:gestionar' %}" role="menuitem" class="menu-item" tabindex="0">
                     <svg class="menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -1660,14 +1664,18 @@
                         <span>Gestionar Solicitudes</span>
                     </a>
                     {% endif %}
+                    {% if user|puede_aprobar %}
                     <a href="{% url 'digitalizacion:gestion_usuarios' %}" class="user-menu-item">
                         <i class="fas fa-users-cog"></i>
                         <span>Gestión de Usuarios</span>
                     </a>
+                    {% endif %}
+                    {% if user|puede_administrar %}
                     <a href="{% url 'digitalizacion:panel_administracion' %}" class="user-menu-item">
                         <i class="fas fa-cog"></i>
                         <span>Configuración</span>
                     </a>
+                    {% endif %}
                     <div class="user-menu-divider"></div>
                     <a href="{% url 'digitalizacion:logout' %}" class="user-menu-item" style="color: #ef4444;">
                         <i class="fas fa-sign-out-alt"></i>

@@ -2288,14 +2288,18 @@
           <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/></svg>
           Expedientes
         </a>
+        {% load role_tags %}
+        {% if user|puede_crear_exp %}
         <a href="{% url 'expedientes:seleccionar_tipo' %}" role="menuitem" class="menu-item" tabindex="0">
           <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 7h3l3-4h8l3 4h3v10H2V7z"/></svg>
           Crear
         </a>
+        {% endif %}
         <a href="{% url 'digitalizacion:reportes' %}" role="menuitem" class="menu-item" tabindex="0">
           <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 12h14m-7-7v14"/></svg>
           Reportes
         </a>
+        {% if user|puede_administrar %}
         <a href="{% url 'areas:gestionar' %}" role="menuitem" class="menu-item" tabindex="0">
           <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="16" r="1"/><path d="M2 12h20"/></svg>
           Áreas
@@ -2304,6 +2308,7 @@
           <svg class="icon-svg" aria-hidden="true" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></svg>
           Configuración
         </a>
+        {% endif %}
       </nav>
     </div>
 

@@ -9,6 +9,7 @@ from .forms import SolicitudRegistroForm, LoginForm
 from .models import SolicitudRegistro, PerfilUsuario, Notificacion, RolUsuario
 from django.contrib.auth.models import User
 from django.middleware.csrf import get_token
+from .role_utils import puede_aprobar_usuarios
 
 
 def login_view(request):
@@ -127,7 +128,8 @@ def notificar_administradores_solicitud(solicitud):
 @login_required
 def solicitudes_pendientes(request):
     """Vista para administradores: listar solicitudes pendientes"""
-    if not request.user.perfil.rol.puede_aprobar_usuarios:
+    from .role_utils import puede_aprobar_usuarios
+    if not puede_aprobar_usuarios(request.user):
         messages.error(request, 'No tienes permisos para acceder a esta sección')
         return redirect('digitalizacion:dashboard')
     
@@ -147,8 +149,8 @@ def solicitudes_pendientes(request):
 
 @login_required
 def aprobar_solicitud(request, solicitud_id):
-    """Vista para aprobar una solicitud"""
-    if not request.user.perfil.rol.puede_aprobar_usuarios:
+    """Vista para aprobar una solicitud - Solo administradores"""
+    if not puede_aprobar_usuarios(request.user):
         return JsonResponse({'success': False, 'message': 'Sin permisos'})
     
     try:
@@ -168,8 +170,8 @@ def aprobar_solicitud(request, solicitud_id):
 
 @login_required
 def rechazar_solicitud(request, solicitud_id):
-    """Vista para rechazar una solicitud"""
-    if not request.user.perfil.rol.puede_aprobar_usuarios:
+    """Vista para rechazar una solicitud - Solo administradores"""
+    if not puede_aprobar_usuarios(request.user):
         return JsonResponse({'success': False, 'message': 'Sin permisos'})
     
     try:

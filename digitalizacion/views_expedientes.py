@@ -32,6 +32,11 @@ from .models import (
     TipoDocumento,
     Expediente  # Importación del modelo Expediente
 )
+from .role_utils import (
+    puede_ver_expedientes, puede_crear_expedientes, puede_editar_expedientes,
+    puede_eliminar_expedientes, puede_administrar_sistema, puede_aprobar_usuarios,
+    es_visualizador, es_editor, es_administrador
+)
 logger = logging.getLogger(__name__)
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, F, Value, CharField, Case, When, Value, BooleanField
@@ -1146,10 +1151,10 @@ def detalle_expediente(request, expediente_id):
         logger.info(f"Expediente encontrado: {expediente.numero_expediente}")
         logger.info(f"Tipo: {expediente.tipo_expediente}, Subtipo: {getattr(expediente, 'subtipo_expediente', 'No definido')}")
         
-        # Verificar permisos
-        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
-            logger.warning(f"Usuario {request.user.id} no tiene permiso para ver el expediente {expediente_id}")
-            messages.error(request, 'No tienes permiso para ver este expediente.')
+        # Verificar permisos - todos los usuarios autenticados pueden ver expedientes
+        if not puede_ver_expedientes(request.user):
+            logger.warning(f"Usuario {request.user.id} no tiene permiso para ver expedientes")
+            messages.error(request, 'No tienes permiso para ver expedientes.')
             return redirect('expedientes:lista')
         
         # Inicializar variable de áreas (se llenará más adelante con la consulta completa)
@@ -1266,17 +1271,29 @@ def detalle_expediente(request, expediente_id):
         # Obtener departamentos para el formulario
         departamentos = Departamento.objects.filter(activo=True).order_by('nombre')
         
-        # Verificar permisos adicionales
-        puede_editar = (request.user.is_superuser or 
-                       expediente.creado_por == request.user or 
-                       request.user.has_perm('digitalizacion.change_expediente', expediente))
+        # Verificar permisos adicionales según el rol del usuario
+        # Visualizador: solo puede ver, no puede editar, eliminar ni rechazar
+        # Editor: puede editar, pero no eliminar ni rechazar
+        # Administrador: puede hacer todo
         
-        puede_rechazar = (request.user.is_superuser or 
-                         request.user.has_perm('digitalizacion.rechazar_expediente'))
+        puede_editar_exp = puede_editar_expedientes(request.user)
+        puede_eliminar_exp = puede_eliminar_expedientes(request.user)
+        puede_adm_sistema = puede_administrar_sistema(request.user)
         
-        puede_eliminar = (request.user.is_superuser or 
-                         (expediente.creado_por == request.user and 
-                          expediente.estado != 'aprobado'))
+        # Solo visualizador: no puede hacer nada más que ver
+        es_visual = es_visualizador(request.user)
+        
+        # Puede editar solo si tiene permiso de editar expedientes Y no es solo visualizador
+        puede_editar = puede_editar_exp and not es_visual
+        
+        # Puede rechazar solo si es administrador
+        puede_rechazar = puede_adm_sistema
+        
+        # Puede eliminar solo si tiene permiso Y no es visualizador
+        puede_eliminar = puede_eliminar_exp and not es_visual and (
+            request.user.is_superuser or 
+            (expediente.creado_por == request.user and expediente.estado != 'aprobado')
+        )
         
         # Obtener usuarios asignables (solo superusuarios o personal autorizado)
         usuarios_asignables = User.objects.filter(
@@ -1382,7 +1399,14 @@ def detalle_expediente(request, expediente_id):
             'puede_eliminar': puede_eliminar,
             'usuarios_asignables': usuarios_asignables,
             'es_rechazado': estado_actual == 'rechazado',
-            'motivo_rechazo': getattr(expediente, 'razon_rechazo', None) or getattr(expediente, 'motivo_rechazo', '')
+            'motivo_rechazo': getattr(expediente, 'razon_rechazo', None) or getattr(expediente, 'motivo_rechazo', ''),
+            # Variables de permisos según rol
+            'puede_crear_expedientes': puede_crear_expedientes(request.user),
+            'puede_administrar_sistema': puede_administrar_sistema(request.user),
+            'puede_aprobar_usuarios': puede_aprobar_usuarios(request.user),
+            'es_visualizador': es_visualizador(request.user),
+            'es_editor': es_editor(request.user),
+            'es_administrador': es_administrador(request.user),
         }
         
         logger.info("Renderizando plantilla...")
@@ -1711,9 +1735,9 @@ def ver_documentos_expediente(request, expediente_id):
         # Obtener el expediente
         expediente = get_object_or_404(Expediente, id=expediente_id)
         
-        # Verificar permisos
-        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
-            messages.error(request, 'No tiene permiso para ver este expediente.')
+        # Verificar permisos - todos los usuarios autenticados pueden ver documentos
+        if not puede_ver_expedientes(request.user):
+            messages.error(request, 'No tiene permiso para ver expedientes.')
             return redirect('expedientes:lista')
         
         # Obtener documentos del expediente ordenados por fecha de subida
@@ -2215,8 +2239,9 @@ def crear_expediente(request, tipo_id):
     logger.debug(f"Tipo ID recibido: {tipo_id}")
     logger.debug(f"Método: {request.method}")
     logger.debug(f"Permiso add_expediente: {request.user.has_perm('digitalizacion.add_expediente')}")
-    # Verificar permisos
-    if not request.user.has_perm('digitalizacion.add_expediente'):
+    # Verificar permisos - solo editor y administrador pueden crear expedientes
+    if not puede_crear_expedientes(request.user):
+        messages.error(request, 'No tienes permisos para crear expedientes.')
         return redirect('expedientes:lista')
     # Validar tipo de expediente
     tipo_opciones = dict(Expediente.TIPO_CHOICES)
