@@ -39,5 +39,10 @@ EOF
 
 # Crear áreas automáticamente
 echo "Configurando áreas por defecto..."
-python manage.py populate_areas || echo "Advertencia: No se pudieron crear todas las áreas"
+python manage.py cargar_areas_expedientes || echo "Advertencia: No se pudieron crear todas las áreas"
+
+# Indexar documentos para búsqueda (importante para que funcione la búsqueda en producción)
+# En Render, el índice se pierde al reiniciar, por eso lo recreamos en cada deploy
+echo "Indexando documentos para búsqueda..."
+python manage.py indexar_documentos --limite 500 || echo "Advertencia: Error al indexar documentos (puede continuar)"
 
