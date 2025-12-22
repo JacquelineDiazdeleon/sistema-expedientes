@@ -2815,11 +2815,13 @@ def lista_expedientes(request):
                     return 0
                 
                 # 2. Calcular directamente contando áreas completadas (método más confiable)
-                from .models import AreaTipoExpediente, DocumentoExpediente
-                
                 # Obtener áreas configuradas para este expediente
-                areas = expediente.get_areas_configuradas()
-                total_areas = areas.count()
+                try:
+                    areas = expediente.get_areas_configuradas()
+                    total_areas = areas.count()
+                except Exception as areas_error:
+                    logger.error(f'[PROGRESO] Expediente {expediente.id}: Error al obtener áreas: {str(areas_error)}', exc_info=True)
+                    return 0
                 
                 logger.info(f'[PROGRESO] Expediente {expediente.id} ({expediente.numero_expediente}): Total áreas configuradas: {total_areas}')
                 
