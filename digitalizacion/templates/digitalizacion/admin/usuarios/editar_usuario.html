@@ -1,0 +1,153 @@
+{% extends 'digitalizacion/base.html' %}
+{% load static %}
+
+{% block title %}Editar Usuario - {{ usuario_editar.get_full_name|default:usuario_editar.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">Editar Usuario</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'digitalizacion:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'digitalizacion:gestion_usuarios' %}">Usuarios</a></li>
+        <li class="breadcrumb-item active">Editar</li>
+    </ol>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-user-edit me-1"></i>
+            Información del Usuario
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">Nombre de Usuario *</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ usuario_editar.username }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Correo Electrónico *</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ usuario_editar.email }}" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="first_name" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="first_name" name="first_name" value="{{ usuario_editar.first_name }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="last_name" class="form-label">Apellidos</label>
+                        <input type="text" class="form-control" id="last_name" name="last_name" value="{{ usuario_editar.last_name }}">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="rol" class="form-label">Rol</label>
+                        <select class="form-select" id="rol" name="rol">
+                            <option value="">Sin rol asignado</option>
+                            {% for rol in roles %}
+                                <option value="{{ rol.id }}" {% if perfil.rol.id == rol.id %}selected{% endif %}>
+                                    {{ rol.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if departamentos %}
+                    <div class="col-md-6">
+                        <label for="departamento" class="form-label">Departamento</label>
+                        <select class="form-select" id="departamento" name="departamento">
+                            <option value="">Sin departamento</option>
+                            {% for dept in departamentos %}
+                                <option value="{{ dept.id }}" {% if perfil.departamento.id == dept.id %}selected{% endif %}>
+                                    {{ dept.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Dejar en blanco para no cambiar">
+                        <small class="form-text text-muted">Dejar en blanco si no deseas cambiar la contraseña</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="confirm_password" class="form-label">Confirmar Nueva Contraseña</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirmar nueva contraseña">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if usuario_editar.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Usuario Activo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                {% if request.user.is_superuser %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" {% if usuario_editar.is_staff %}checked{% endif %}>
+                            <label class="form-check-label" for="is_staff">
+                                Es Staff
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" {% if usuario_editar.is_superuser %}checked{% endif %}>
+                            <label class="form-check-label" for="is_superuser">
+                                Es Superusuario
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if perfil.telefono %}
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="telefono" name="telefono" value="{{ perfil.telefono }}">
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'digitalizacion:gestion_usuarios' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validar que las contraseñas coincidan si se proporcionan
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        
+        if (password && password !== confirmPassword) {
+            e.preventDefault();
+            alert('Las contraseñas no coinciden. Por favor, verifica e intenta nuevamente.');
+            return false;
+        }
+    });
+</script>
+{% endblock %}
+
