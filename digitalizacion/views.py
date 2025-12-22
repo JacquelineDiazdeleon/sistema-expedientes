@@ -2813,9 +2813,11 @@ def subir_documento_expediente(request, expediente_id):
             return JsonResponse({'error': 'No se ha proporcionado ningún archivo'}, status=400)
         
         archivo = request.FILES['documento']
-        nombre_documento = request.POST.get('nombre_documento', archivo.name)
+        nombre_documento = request.POST.get('nombre_documento', '').strip()
+        if not nombre_documento:
+            return JsonResponse({'error': 'El nombre del documento es obligatorio'}, status=400)
         area_id = request.POST.get('area_id')
-        observaciones = request.POST.get('observaciones', '')
+        observaciones = request.POST.get('observaciones', '').strip()
         
         # Validar tamaño del archivo (máximo 10MB)
         max_size = 10 * 1024 * 1024  # 10MB

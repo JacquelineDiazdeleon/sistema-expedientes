@@ -298,8 +298,8 @@ def scan_route():
         expediente_id = data.get("expediente_id")
         etapa = data.get("etapa")
         area_id = data.get("area_id")
-        nombre_documento = data.get("nombre_documento", f"scan_{int(time.time())}")
-        descripcion = data.get("descripcion", "")
+        nombre_documento = data.get("nombre_documento", "").strip()
+        descripcion = data.get("descripcion", "").strip()
         duplex = data.get("duplex", False)  # Escaneo dúplex (dos lados)
         
         # Validar campos requeridos

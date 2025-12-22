@@ -214,7 +214,7 @@ def subir_documento_escaneado_api(request):
             # Crear el documento en la base de datos
             documento = DocumentoExpediente(
                 nombre_documento=nombre_documento,
-                descripcion=descripcion or f'Documento escaneado para el área {area.titulo}',
+                descripcion=descripcion,
                 archivo=saved_path,
                 tipo_archivo=tipo_archivo,
                 subido_por=servicio_user,

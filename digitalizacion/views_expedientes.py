@@ -828,10 +828,13 @@ def subir_documento(request, expediente_id, etapa=None):
         # Crear el documento en la base de datos
         try:
             with transaction.atomic():
-                # Obtener el nombre del documento del POST o usar el nombre del archivo
+                # Obtener el nombre del documento del POST (obligatorio)
                 nombre_documento = request.POST.get('nombre_documento', '').strip()
                 if not nombre_documento:
-                    nombre_documento = archivo.name
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'El nombre del documento es obligatorio'
+                    }, status=400)
                 
                 # Obtener usuario para subido_por
                 # Si es del servicio de escaneo, usar o crear usuario 'servicio_local'
