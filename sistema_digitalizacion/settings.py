@@ -173,14 +173,21 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files
 MEDIA_URL = "/media/"
 # Configurar MEDIA_ROOT usando variable de entorno o ruta por defecto
-# Puedes configurar la variable de entorno MEDIA_ROOT para cambiar la ubicación
-# Ejemplo: export MEDIA_ROOT="D:\Expedientes" o en Windows: set MEDIA_ROOT=D:\Expedientes
-MEDIA_ROOT = os.environ.get('MEDIA_ROOT', r'C:\servidor\Expedientes')
-# Asegurar que MEDIA_ROOT sea un objeto Path
-if isinstance(MEDIA_ROOT, str):
-    MEDIA_ROOT = Path(MEDIA_ROOT)
-# Crear el directorio si no existe
-MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+# Los archivos se guardarán en la computadora servidor en C:\servidor\Expedientes
+# Si necesitas cambiar la ruta, configura la variable de entorno MEDIA_ROOT
+# Ejemplo en Windows: set MEDIA_ROOT=D:\Expedientes
+# En producción (Render) se mantendrá la ruta por defecto para desarrollo local
+if os.environ.get('RENDER'):
+    # Si está en Render, usar ruta temporal (aunque idealmente deberías usar almacenamiento externo)
+    MEDIA_ROOT = BASE_DIR / "media"
+else:
+    # Servidor local: guardar en disco del servidor
+    MEDIA_ROOT = os.environ.get('MEDIA_ROOT', r'C:\servidor\Expedientes')
+    # Asegurar que MEDIA_ROOT sea un objeto Path
+    if isinstance(MEDIA_ROOT, str):
+        MEDIA_ROOT = Path(MEDIA_ROOT)
+    # Crear el directorio si no existe
+    MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Token de autenticación para el servicio de escaneo
 SCANNER_UPLOAD_TOKEN = os.environ.get('SCANNER_UPLOAD_TOKEN', 'token_escaner_seguro_2024_ssp')
