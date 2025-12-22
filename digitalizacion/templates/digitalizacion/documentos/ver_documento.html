@@ -99,7 +99,7 @@
                         <p><strong>Subido por:</strong> {{ documento.subido_por.get_full_name|default:documento.subido_por.username }}</p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Fecha de subida:</strong> {{ documento.fecha_subida|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Fecha de subida:</strong> {% load tz %}{{ documento.fecha_subida|localtime|date:"d/m/Y H:i" }}</p>
                         <p><strong>Tamaño:</strong> {{ documento.tamano_archivo_formateado|default:"N/A" }}</p>
                         <p><strong>Tipo de archivo:</strong> {{ documento.tipo_archivo|default:"N/A" }}</p>
                     </div>

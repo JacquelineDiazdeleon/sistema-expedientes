@@ -3099,13 +3099,15 @@ def obtener_documentos_area(request, expediente_id, area_id):
                 # Obtener el nombre del archivo
                 nombre_archivo = os.path.basename(doc.archivo.name) if doc.archivo and hasattr(doc.archivo, 'name') else 'documento'
                 
-                # Formatear la fecha de subida con fecha y hora
+                # Formatear la fecha de subida con fecha y hora (convertir a zona horaria local)
                 fecha_subida = ''
                 fecha_subida_completa = ''
                 if doc.fecha_subida:
                     try:
-                        fecha_subida = doc.fecha_subida.strftime('%Y-%m-%d')
-                        fecha_subida_completa = doc.fecha_subida.strftime('%d/%m/%Y %H:%M')
+                        # Convertir a zona horaria local antes de formatear
+                        fecha_local = timezone.localtime(doc.fecha_subida)
+                        fecha_subida = fecha_local.strftime('%Y-%m-%d')
+                        fecha_subida_completa = fecha_local.strftime('%d/%m/%Y %H:%M')
                     except Exception as e:
                         logger.error(f'Error formateando fecha del documento {doc.id}: {str(e)}')
                         fecha_subida = str(doc.fecha_subida)

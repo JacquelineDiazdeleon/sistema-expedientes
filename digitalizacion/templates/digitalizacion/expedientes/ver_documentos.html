@@ -906,7 +906,7 @@
                                                 <span>{{ doc_info.documento.archivo.name|slice:'-4:'|upper }}</span>
                                                 <span>•</span>
                                                 <i class="bi bi-calendar3"></i>
-                                                <span>{{ doc_info.documento.fecha_subida|date:"d/m/Y H:i" }}</span>
+                                                <span>{% load tz %}{{ doc_info.documento.fecha_subida|localtime|date:"d/m/Y H:i" }}</span>
                                             </small>
                                         </div>
                                     </div>

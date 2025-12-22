@@ -267,10 +267,11 @@ def api_buscar_documentos(request):
                     if doc.etapa:
                         area_nombre = doc.etapa.replace('_', ' ').title()
             
-            # Formatear fecha
+            # Formatear fecha (convertir a zona horaria local)
             fecha_str = ''
             if doc.fecha_subida:
-                fecha_str = doc.fecha_subida.strftime('%d/%m/%Y %H:%M')
+                fecha_local = timezone.localtime(doc.fecha_subida)
+                fecha_str = fecha_local.strftime('%d/%m/%Y %H:%M')
             
             # Obtener fragmento destacado
             fragmento = result.get('fragmento', '')

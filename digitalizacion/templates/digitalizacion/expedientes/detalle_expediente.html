@@ -1,6 +1,7 @@
 {% load dict_extras %}
 {% load estado_filters %}
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="es" data-theme="light">
 <head>
@@ -1205,7 +1206,7 @@
                                                             </div>
                                                             <div class="small text-muted">
                                                                 <div class="d-flex flex-wrap gap-3 mb-1">
-                                                                    <span><i class="bi bi-calendar3 me-1"></i>{{ documento.fecha_subida|date:"d/m/Y H:i" }}</span>
+                                                                    <span><i class="bi bi-calendar3 me-1"></i>{{ documento.fecha_subida|localtime|date:"d/m/Y H:i" }}</span>
                                                                     <span><i class="bi bi-person-circle me-1"></i>{{ documento.subido_por.get_full_name|default:documento.subido_por.username }}</span>
                                                                 </div>
                                                                 {% if documento.descripcion %}
