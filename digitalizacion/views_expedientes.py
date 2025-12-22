@@ -890,7 +890,7 @@ def subir_documento(request, expediente_id, etapa=None):
                     subido_por=usuario_subida,
                     tamano_archivo=len(archivo_content),
                     tipo_archivo=archivo.content_type,
-                    descripcion=request.POST.get('descripcion', f'Documento subido para el área {getattr(area_etapa, "titulo", getattr(area_etapa, "nombre", "Sin nombre"))}'),
+                    descripcion=request.POST.get('descripcion', '').strip(),
                     validado=False
                 )
                 

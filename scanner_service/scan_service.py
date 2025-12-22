@@ -303,11 +303,11 @@ def scan_route():
         duplex = data.get("duplex", False)  # Escaneo dúplex (dos lados)
         
         # Validar campos requeridos
-        if not expediente_id or not etapa or not area_id:
+        if not expediente_id or not etapa or not area_id or not nombre_documento:
             logger.warning("Faltan campos requeridos")
             return jsonify({
                 "status": "error",
-                "msg": "Faltan campos requeridos: expediente_id, etapa y area_id son obligatorios"
+                "msg": "Faltan campos requeridos: expediente_id, etapa, area_id y nombre_documento son obligatorios"
             }), 400
         
         duplex_str = " (dúplex)" if duplex else ""
