@@ -2705,7 +2705,6 @@ def seleccionar_tipo_expediente(request):
         return redirect('expedientes:lista')
 
 @login_required
-@login_required
 def lista_expedientes(request):
     """
     Vista para listar todos los expedientes con opciones de filtrado y búsqueda
@@ -2963,8 +2962,13 @@ def lista_expedientes(request):
         return render(request, 'digitalizacion/expedientes/lista.html', context)
         
     except Exception as e:
-        logger.error(f'Error al listar expedientes: {str(e)}', exc_info=True)
-        messages.error(request, 'Ocurrió un error al cargar la lista de expedientes')
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error(f'Error al listar expedientes: {str(e)}\n{error_trace}')
+        messages.error(request, f'Ocurrió un error al cargar la lista de expedientes: {str(e)}')
+        # En desarrollo, mostrar más detalles
+        if settings.DEBUG:
+            logger.error(f'Traceback completo: {error_trace}')
         return redirect('digitalizacion:dashboard')
 
 @login_required
