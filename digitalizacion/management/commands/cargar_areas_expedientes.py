@@ -82,6 +82,30 @@ class Command(BaseCommand):
                     'Anexos de licitación'
                 ]
             },
+            # LICITACIÓN (OTROS)
+            {
+                'tipo': 'licitacion',
+                'subtipo': 'otros',
+                'areas': [
+                    'Oficio y contestación de control patrimonial, TIC´s o capital humano',
+                    'Solicitud de requisición del área',
+                    'Requisición',
+                    'Cotización',
+                    'Invitación a licitación',
+                    'Acta de junta de aclaraciones',
+                    'Acta de recepción de propuestas técnicas',
+                    'Dictamen y comparativo comparativo',
+                    'Acta de elaboración del fallo',
+                    'Acta de lectura de fallo',
+                    'Contrato',
+                    'Solicitud de pago',
+                    'Factura, XML y validación',
+                    'Orden de compra',
+                    'Vale de entrada',
+                    'Oficio de conformidad y evidencia fotográfica',
+                    'Anexos de licitación'
+                ]
+            },
             # CONCURSO POR INVITACIÓN
             {
                 'tipo': 'concurso_invitacion',

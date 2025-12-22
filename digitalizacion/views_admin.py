@@ -520,7 +520,8 @@ def admin_areas(request, tipo_expediente=None):
         # IMPORTANTE: Usar formato sin prefijo para coincidir con Expediente.SUBTIPO_LICITACION_CHOICES
         subtipos_disponibles = [
             ('recurso_propio', 'Recurso Propio'),
-            ('fondo_federal', 'Fondo Federal')
+            ('fondo_federal', 'Fondo Federal'),
+            ('otros', 'Otros')
         ]
         
         # Obtener subtipo desde GET

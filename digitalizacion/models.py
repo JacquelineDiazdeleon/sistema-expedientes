@@ -62,6 +62,7 @@ class Expediente(models.Model):
     SUBTIPO_LICITACION_CHOICES = [
         ('recurso_propio', 'Recurso propio'),
         ('fondo_federal', 'Fondo federal'),
+        ('otros', 'Otros'),
     ]
 
     # Opciones para compatibilidad (mantener por ahora)
@@ -1426,6 +1427,7 @@ class AreaTipoExpediente(models.Model):
             'licitacion': [
                 ('recurso_propio', 'Recurso propio'),
                 ('fondo_federal', 'Fondo federal'),
+                ('otros', 'Otros'),
             ],
             'concurso_invitacion': [
                 ('bienes', 'Bienes'),
