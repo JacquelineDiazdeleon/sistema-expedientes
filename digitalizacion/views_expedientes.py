@@ -2601,6 +2601,12 @@ def seleccionar_tipo_expediente(request):
                         'title': 'Fondo Federal',
                         'description': 'Proceso de contratación con fondos federales',
                         'icon': 'bi bi-bank2'
+                    },
+                    {
+                        'key': 'otros',
+                        'title': 'Otros',
+                        'description': 'Otros tipos de licitación',
+                        'icon': 'bi bi-three-dots'
                     }
                 ]
             },

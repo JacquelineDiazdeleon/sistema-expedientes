@@ -273,16 +273,19 @@ def crear_area_tipo(request, tipo):
         # IMPORTANTE: Usar el formato sin prefijo 'licitacion_' para coincidir con Expediente.SUBTIPO_LICITACION_CHOICES
         subtipos_validos = {
             'recurso_propio': 'Recurso Propio',
-            'fondo_federal': 'Fondo Federal'
+            'fondo_federal': 'Fondo Federal',
+            'otros': 'Otros'
         }
         # También aceptar el formato con prefijo para compatibilidad
         subtipos_validos_con_prefijo = {
             'licitacion_recurso_propio': 'Recurso Propio',
-            'licitacion_fondo_federal': 'Fondo Federal'
+            'licitacion_fondo_federal': 'Fondo Federal',
+            'licitacion_otros': 'Otros'
         }
         subtipos_disponibles = [
             ('recurso_propio', 'Recurso Propio'),
-            ('fondo_federal', 'Fondo Federal')
+            ('fondo_federal', 'Fondo Federal'),
+            ('otros', 'Otros')
         ]
         
         # Obtener subtipo desde GET o POST
