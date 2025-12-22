@@ -1655,7 +1655,7 @@ def obtener_documentos_expediente_api(request, expediente_id):
                         'id': doc.id,
                         'nombre': doc.nombre_documento,
                         'tipo': os.path.splitext(doc.archivo.name)[1].lstrip('.').lower() if doc.archivo else '',
-                        'fecha_subida': doc.fecha_subida.strftime('%Y-%m-%d %H:%M:%S') if doc.fecha_subida else None,
+                        'fecha_subida': timezone.localtime(doc.fecha_subida).strftime('%Y-%m-%d %H:%M:%S') if doc.fecha_subida else None,
                         'tamano': doc.tamano_archivo if doc.tamano_archivo is not None else (doc.archivo.size if doc.archivo else 0),
                         'url': doc.archivo.url if doc.archivo else None,
                         'area': {
