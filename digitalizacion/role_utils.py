@@ -21,10 +21,16 @@ def puede_ver_expedientes(user):
     """Verifica si el usuario puede ver expedientes"""
     if not user or not user.is_authenticated:
         return False
+    # Superusuarios siempre pueden ver
     if user.is_superuser:
         return True
-    if not hasattr(user, 'perfil') or not user.perfil or not user.perfil.rol:
-        return False
+    # Si no tiene perfil, asumimos que puede ver (por defecto)
+    if not hasattr(user, 'perfil') or not user.perfil:
+        return True
+    # Si tiene perfil pero no tiene rol, puede ver (por defecto)
+    if not user.perfil.rol:
+        return True
+    # Si tiene rol, verificar el permiso del rol
     return user.perfil.rol.puede_ver_expedientes
 
 

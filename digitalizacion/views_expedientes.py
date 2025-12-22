@@ -1653,11 +1653,11 @@ def obtener_documentos_expediente_api(request, expediente_id):
         # Obtener el expediente
         expediente = get_object_or_404(Expediente, id=expediente_id)
         
-        # Verificar permisos
-        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+        # Verificar permisos - todos los usuarios autenticados pueden ver documentos
+        if not puede_ver_expedientes(request.user):
             logger.warning(f'Intento de acceso no autorizado a documentos del expediente {expediente_id} por el usuario {request.user.username}')
             return JsonResponse(
-                {'success': False, 'error': 'No tiene permiso para ver los documentos de este expediente'}, 
+                {'success': False, 'error': 'No tiene permiso para ver documentos de expedientes'}, 
                 status=403
             )
         
@@ -3340,11 +3340,11 @@ def obtener_detalles_expediente(request, expediente_id):
                 status=500
             )
         
-        # Verificar permisos
-        if not request.user.has_perm('digitalizacion.view_expediente', expediente):
+        # Verificar permisos - todos los usuarios autenticados pueden ver expedientes
+        if not puede_ver_expedientes(request.user):
             logger.warning(f'Intento de acceso no autorizado al expediente {expediente_id} por el usuario {request.user.username}')
             return JsonResponse(
-                {'success': False, 'error': 'No tiene permiso para ver este expediente'}, 
+                {'success': False, 'error': 'No tiene permiso para ver expedientes'}, 
                 status=403
             )
         
