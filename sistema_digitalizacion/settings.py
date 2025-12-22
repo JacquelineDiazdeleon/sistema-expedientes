@@ -172,7 +172,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Media files
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Configurar MEDIA_ROOT usando variable de entorno o ruta por defecto
+# Puedes configurar la variable de entorno MEDIA_ROOT para cambiar la ubicación
+# Ejemplo: export MEDIA_ROOT="D:\Expedientes" o en Windows: set MEDIA_ROOT=D:\Expedientes
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', r'C:\servidor\Expedientes')
+# Asegurar que MEDIA_ROOT sea un objeto Path
+if isinstance(MEDIA_ROOT, str):
+    MEDIA_ROOT = Path(MEDIA_ROOT)
+# Crear el directorio si no existe
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 
 # Token de autenticación para el servicio de escaneo
 SCANNER_UPLOAD_TOKEN = os.environ.get('SCANNER_UPLOAD_TOKEN', 'token_escaner_seguro_2024_ssp')
