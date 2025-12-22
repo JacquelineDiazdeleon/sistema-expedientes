@@ -210,7 +210,7 @@ class Command(BaseCommand):
                 if tipo_area in ['archivo', 'mixto']:
                     defaults.update({
                         'tipos_archivo_permitidos': 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png',
-                        'tamaño_max_archivo': 10  # MB
+                        'tamano_max_archivo': 10  # MB
                     })
                 
                 # Crear o actualizar el área

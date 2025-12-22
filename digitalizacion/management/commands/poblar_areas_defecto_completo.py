@@ -175,7 +175,7 @@ class Command(BaseCommand):
                             activa=True,
                             es_default=True,
                             tipos_archivo_permitidos='pdf,docx,xlsx,doc,xls,jpg,jpeg,png',
-                            tamaño_max_archivo=10,
+                            tamano_max_archivo=10,
                             creada_por=usuario_sistema
                         )
                         total_creadas += 1
