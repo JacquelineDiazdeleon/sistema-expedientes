@@ -3071,7 +3071,7 @@
                 tipoArchivo = 'docx';
             } else if (nombreLower.endsWith('.xlsx') || nombreLower.endsWith('.xls')) {
                 tipoArchivo = 'xlsx';
-            } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => nombreLower.endsWith(ext))) {
+            } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'].some(ext => nombreLower.endsWith(ext))) {
                 tipoArchivo = 'imagen';
             } else {
                 // Intentar detectar por extensión en la URL si no se encontró en el nombre
@@ -3082,8 +3082,12 @@
                     tipoArchivo = 'docx';
                 } else if (extension.endsWith('.xlsx') || extension.endsWith('.xls')) {
                     tipoArchivo = 'xlsx';
-                } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => extension.endsWith(ext))) {
+                } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.svg'].some(ext => extension.endsWith(ext))) {
                     tipoArchivo = 'imagen';
+                } else {
+                    // Si no se puede determinar el tipo, intentar como PDF primero (muchos archivos son PDFs)
+                    // Si falla, mostrar opciones de descarga/abrir
+                    tipoArchivo = 'intentar_pdf';
                 }
             }
             
@@ -3118,6 +3122,9 @@
             // Cargar contenido según el tipo - SIEMPRE usar urlProxy (vista proxy)
             if (tipoArchivo === 'pdf') {
                 cargarPDFEnModalDetalle(urlProxy, modalBody);
+            } else if (tipoArchivo === 'intentar_pdf') {
+                // Intentar cargar como PDF primero, si falla mostrar opciones
+                cargarPDFEnModalDetalle(urlProxy, modalBody, true); // true = mostrar opciones si falla
             } else if (tipoArchivo === 'docx') {
                 cargarWordEnModalDetalle(urlProxy, modalBody);
             } else if (tipoArchivo === 'xlsx') {
@@ -3125,21 +3132,35 @@
             } else if (tipoArchivo === 'imagen') {
                 cargarImagenEnModalDetalle(urlProxy, modalBody);
             } else {
+                // Para cualquier otro tipo, intentar mostrar en iframe o ofrecer descarga
                 modalBody.innerHTML = `
                     <div class="text-center py-5">
-                        <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
-                        <h5 class="mt-3">Tipo de archivo no soportado para visualización</h5>
-                        <p class="text-muted">Este tipo de archivo no se puede visualizar directamente.</p>
-                        <a href="${urlProxy}" class="btn btn-primary mt-3" download>
-                            <i class="bi bi-download me-2"></i>Descargar archivo
-                        </a>
+                        <div style="width: 100%; height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <iframe src="${urlProxy}" 
+                                    style="width: 100%; height: 100%; border: 1px solid #dee2e6; border-radius: 8px;"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            </iframe>
+                            <div style="display: none; margin-top: 20px;">
+                                <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
+                                <h5 class="mt-3">No se puede visualizar este tipo de archivo</h5>
+                                <p class="text-muted">Puedes descargarlo o abrirlo en una nueva pestaña.</p>
+                                <div class="mt-3">
+                                    <a href="${urlProxy}" target="_blank" class="btn btn-primary me-2">
+                                        <i class="bi bi-box-arrow-up-right me-2"></i>Abrir en nueva pestaña
+                                    </a>
+                                    <a href="${urlProxy}" download class="btn btn-outline-primary">
+                                        <i class="bi bi-download me-2"></i>Descargar archivo
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 `;
             }
         };
         
         // Función para cargar PDF en el modal usando PDF.js con alta calidad
-        function cargarPDFEnModalDetalle(urlArchivo, container) {
+        function cargarPDFEnModalDetalle(urlArchivo, container, mostrarOpcionesSiFalla = false) {
             if (!container) return;
             
             container.innerHTML = `
@@ -3181,16 +3202,48 @@
                 document.getElementById('pageCountDetalle').textContent = pdf.numPages;
                 renderPageDetalle(window.pdfPageNumDetalle);
             }).catch(function(error) {
-                container.innerHTML = `
-                    <div class="text-center py-5">
-                        <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: #dc3545;"></i>
-                        <h5 class="mt-3">Error al cargar el PDF</h5>
-                        <p class="text-muted">${error.message}</p>
-                        <a href="${urlArchivo}" class="btn btn-primary mt-3" download>
-                            <i class="bi bi-download me-2"></i>Descargar archivo
-                        </a>
-                    </div>
-                `;
+                // Si mostrarOpcionesSiFalla es true, mostrar opciones de abrir/descargar
+                if (mostrarOpcionesSiFalla) {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <div style="width: 100%; height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                <iframe src="${urlArchivo}" 
+                                        style="width: 100%; height: 100%; border: 1px solid #dee2e6; border-radius: 8px;"
+                                        onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                </iframe>
+                                <div style="display: none; margin-top: 20px;">
+                                    <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
+                                    <h5 class="mt-3">No se pudo cargar como PDF</h5>
+                                    <p class="text-muted">Puedes intentar abrirlo en una nueva pestaña o descargarlo.</p>
+                                    <div class="mt-3">
+                                        <a href="${urlArchivo}" target="_blank" class="btn btn-primary me-2">
+                                            <i class="bi bi-box-arrow-up-right me-2"></i>Abrir en nueva pestaña
+                                        </a>
+                                        <a href="${urlArchivo}" download class="btn btn-outline-primary">
+                                            <i class="bi bi-download me-2"></i>Descargar archivo
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 4rem; color: #dc3545;"></i>
+                            <h5 class="mt-3">Error al cargar el PDF</h5>
+                            <p class="text-muted">${error.message}</p>
+                            <div class="mt-3">
+                                <a href="${urlArchivo}" target="_blank" class="btn btn-primary me-2">
+                                    <i class="bi bi-box-arrow-up-right me-2"></i>Abrir en nueva pestaña
+                                </a>
+                                <a href="${urlArchivo}" download class="btn btn-outline-primary">
+                                    <i class="bi bi-download me-2"></i>Descargar archivo
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }
             });
         }
         
