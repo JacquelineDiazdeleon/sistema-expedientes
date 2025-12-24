@@ -351,34 +351,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Función para limpiar mensajes de error de un campo
+    function clearFieldErrors(field) {
+        // Remover clase de error
+        field.classList.remove('is-invalid');
+        
+        // Buscar y eliminar todos los mensajes de error relacionados con este campo
+        const parent = field.closest('.position-relative') || field.parentNode;
+        const errorMessages = parent.querySelectorAll('.invalid-feedback');
+        errorMessages.forEach(msg => msg.remove());
+        
+        // También buscar en el siguiente elemento hermano
+        let sibling = field.nextElementSibling;
+        while (sibling) {
+            if (sibling.classList && sibling.classList.contains('invalid-feedback')) {
+                sibling.remove();
+                break;
+            }
+            sibling = sibling.nextElementSibling;
+        }
+    }
+    
     // Password validation
     function validatePasswords() {
         const passwordValue = password.value;
         const confirmPasswordValue = confirmPassword.value;
         
-        // Limpiar mensajes de error previos
-        const existingFeedback = password.nextElementSibling;
-        if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
-            existingFeedback.remove();
-        }
+        // Limpiar TODOS los mensajes de error previos de ambos campos
+        clearFieldErrors(password);
+        clearFieldErrors(confirmPassword);
         
-        // Validar longitud mínima
+        // Validar longitud mínima solo si hay contenido
         if (passwordValue.length > 0 && passwordValue.length < 8) {
             const errorMsg = document.createElement('div');
             errorMsg.className = 'invalid-feedback d-block';
             errorMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
             password.classList.add('is-invalid');
-            password.parentNode.insertBefore(errorMsg, password.nextSibling);
+            const passwordContainer = password.closest('.position-relative') || password.parentNode;
+            passwordContainer.appendChild(errorMsg);
             return false;
         }
         
-        // Validar coincidencia
-        if (passwordValue !== confirmPasswordValue) {
+        // Validar coincidencia solo si ambos campos tienen contenido
+        if (confirmPasswordValue.length > 0 && passwordValue !== confirmPasswordValue) {
             const errorMsg = document.createElement('div');
             errorMsg.className = 'invalid-feedback d-block';
             errorMsg.textContent = 'Las contraseñas no coinciden.';
             confirmPassword.classList.add('is-invalid');
-            confirmPassword.parentNode.insertBefore(errorMsg, confirmPassword.nextSibling);
+            const confirmContainer = confirmPassword.closest('.position-relative') || confirmPassword.parentNode;
+            confirmContainer.appendChild(errorMsg);
             return false;
         }
         
@@ -388,8 +409,38 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     }
     
-    password.addEventListener('change', validatePasswords);
-    confirmPassword.addEventListener('keyup', validatePasswords);
+    // Validar solo cuando el usuario termine de escribir (blur) o cambie el campo
+    password.addEventListener('blur', validatePasswords);
+    password.addEventListener('input', function() {
+        // Solo validar longitud mientras escribe, no coincidencia
+        if (password.value.length > 0 && password.value.length < 8) {
+            clearFieldErrors(password);
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'invalid-feedback d-block';
+            errorMsg.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+            password.classList.add('is-invalid');
+            const passwordContainer = password.closest('.position-relative') || password.parentNode;
+            passwordContainer.appendChild(errorMsg);
+        } else {
+            clearFieldErrors(password);
+            // Si la contraseña es válida, validar coincidencia
+            if (confirmPassword.value.length > 0) {
+                validatePasswords();
+            }
+        }
+    });
+    
+    // Para confirmPassword, validar solo cuando el usuario termine de escribir
+    confirmPassword.addEventListener('blur', validatePasswords);
+    confirmPassword.addEventListener('input', function() {
+        // Solo validar si ambos campos tienen contenido
+        if (confirmPassword.value.length > 0 && password.value.length > 0) {
+            validatePasswords();
+        } else {
+            // Si está vacío, limpiar errores
+            clearFieldErrors(confirmPassword);
+        }
+    });
 });
 </script>
 {% endblock %}
