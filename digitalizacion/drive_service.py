@@ -31,6 +31,10 @@ def upload_to_drive(file_path, file_name, folder_id):
     Sube un archivo a una carpeta específica de Google Drive
     El secreto está en definir el 'parents' para que use el espacio de tu cuenta
     """
+    import mimetypes
+    import logging
+    logger = logging.getLogger(__name__)
+    
     service = get_drive_service()
     
     # El secreto está en definir el 'parents' para que use el espacio de tu cuenta
@@ -39,20 +43,31 @@ def upload_to_drive(file_path, file_name, folder_id):
         'parents': [folder_id]  # Esto obliga a que use el espacio de la carpeta, no del robot
     }
     
-    media = MediaFileUpload(file_path, resumable=True)
+    # Detectar el tipo MIME automáticamente
+    mimetype, _ = mimetypes.guess_type(file_name)
+    if not mimetype:
+        # Tipo por defecto si no se puede detectar
+        mimetype = 'application/octet-stream'
+    
+    # Cambiamos resumable=False para archivos pequeños/medianos
+    # Esto evita muchos problemas de cuota con Service Accounts
+    media = MediaFileUpload(
+        file_path, 
+        mimetype=mimetype,
+        resumable=False  # Cambiado a False para evitar problemas de cuota
+    )
     
     try:
-        # IMPORTANTE: Añadir supportsAllDrives=True por seguridad
+        # Esta línea es CLAVE para que use el espacio de la carpeta compartida
         file = service.files().create(
             body=file_metadata,
             media_body=media,
             fields='id',
             supportsAllDrives=True  # Añade esto por seguridad
         ).execute()
+        
         return file.get('id')
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Error detallado en Drive: {e}")
         raise e
 
