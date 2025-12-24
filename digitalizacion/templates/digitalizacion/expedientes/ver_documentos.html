@@ -932,34 +932,22 @@
                                                 </div>
                                             </div>
                                         {% elif ext == '.pdf' %}
-                                            {% if doc_info.documento.archivo_drive_id and doc_info.documento.archivo_drive_id|slice:":4" == "http" %}
-                                                {# PDF desde Cloudinary - abrir en visor nativo del navegador #}
-                                                <div class="text-center p-4" style="border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-                                                    <i class="bi bi-file-pdf-fill" style="font-size: 3rem; color: #dc3545;"></i>
-                                                    <p class="mt-2 mb-3 text-muted">PDF disponible en Cloudinary</p>
-                                                    <a href="{{ doc_info.documento.archivo_drive_id }}" 
-                                                       target="_blank" 
-                                                       rel="noopener noreferrer"
-                                                       class="btn btn-primary btn-sm">
-                                                        <i class="bi bi-box-arrow-up-right me-1"></i>Abrir PDF
-                                                    </a>
-                                                </div>
-                                            {% else %}
-                                                {# PDF local - usar PDF.js #}
-                                                <div id="pdf-viewer-{{ doc_info.documento.id }}" class="pdf-viewer">
-                                                    <div class="pdf-pages"></div>
-                                                    <div class="text-center py-5" style="width: 100%;">
-                                                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                                                            <span class="visually-hidden">Cargando documento...</span>
-                                                        </div>
-                                                        <p class="mt-3 text-muted">Cargando documento...</p>
+                                            {# PDF - usar PDF.js (funciona con URLs locales y de Cloudinary) #}
+                                            <div id="pdf-viewer-{{ doc_info.documento.id }}" class="pdf-viewer">
+                                                <div class="pdf-pages"></div>
+                                                <div class="text-center py-5" style="width: 100%;">
+                                                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                                        <span class="visually-hidden">Cargando documento...</span>
                                                     </div>
+                                                    <p class="mt-3 text-muted">Cargando documento...</p>
                                                 </div>
-                                                <script>
-                                                    // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
-                                                    document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', '{{ doc_info.documento.archivo.url }}');
-                                                </script>
-                                            {% endif %}
+                                            </div>
+                                            <script>
+                                                // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
+                                                // Priorizar URL de Cloudinary si está disponible, sino usar archivo local
+                                                var pdfUrl = '{% if doc_info.documento.archivo_drive_id and doc_info.documento.archivo_drive_id|slice:":4" == "http" %}{{ doc_info.documento.archivo_drive_id }}{% elif doc_info.documento.archivo %}{{ doc_info.documento.archivo.url }}{% endif %}';
+                                                document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', pdfUrl);
+                                            </script>
                                         {% else %}
                                             <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 400px;">
                                                 <div class="bg-light p-4 rounded-circle mb-3">

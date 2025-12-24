@@ -121,25 +121,36 @@
                     {% with archivo_url=documento.archivo_drive_id %}
                         {% with extension=archivo_url|slice:"-4:"|lower %}
                             {% if '.pdf' in extension %}
-                                <!-- PDF desde Cloudinary: abrir en visor nativo del navegador -->
-                                <div class="d-flex justify-content-center align-items-center p-5" style="height: 80vh; flex-direction: column;">
-                                    <div class="text-center mb-4">
-                                        <i class="bi bi-file-pdf-fill" style="font-size: 5rem; color: #dc3545;"></i>
-                                        <h4 class="mt-3">{{ documento.nombre_documento }}</h4>
-                                        <p class="text-muted">Haz clic en el botón para abrir el PDF en el visor nativo de tu navegador</p>
+                                <!-- PDF desde Cloudinary: usar PDF.js como antes -->
+                                <div class="pdf-viewer-wrapper">
+                                    <div class="pdf-toolbar">
+                                        <div>
+                                            <button id="pdf-prev" class="btn btn-sm btn-light me-2">
+                                                <i class="bi bi-chevron-left"></i> Anterior
+                                            </button>
+                                            <span id="pdf-page-info" style="margin: 0 15px; color: white;">Página 1 de 1</span>
+                                            <button id="pdf-next" class="btn btn-sm btn-light">
+                                                Siguiente <i class="bi bi-chevron-right"></i>
+                                            </button>
+                                        </div>
+                                        <div>
+                                            <button id="pdf-zoom-out" class="btn btn-sm btn-light me-2">
+                                                <i class="bi bi-zoom-out"></i>
+                                            </button>
+                                            <span id="pdf-zoom-info" style="margin: 0 10px; color: white;">100%</span>
+                                            <button id="pdf-zoom-in" class="btn btn-sm btn-light">
+                                                <i class="bi bi-zoom-in"></i>
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="text-center">
-                                        <a href="{{ archivo_url }}" 
-                                           target="_blank" 
-                                           rel="noopener noreferrer"
-                                           class="btn btn-primary btn-lg">
-                                            <i class="bi bi-box-arrow-up-right me-2"></i>Abrir PDF en nueva pestaña
-                                        </a>
-                                        <a href="{{ archivo_url }}" 
-                                           download 
-                                           class="btn btn-outline-primary btn-lg ms-2">
-                                            <i class="bi bi-download me-2"></i>Descargar PDF
-                                        </a>
+                                    <div class="pdf-canvas-container">
+                                        <canvas id="pdf-canvas" style="display: block; margin: 0 auto; box-shadow: 0 4px 8px rgba(0,0,0,0.3);"></canvas>
+                                        <div id="pdf-loading" style="text-align: center; padding: 50px; color: white;">
+                                            <div class="spinner-border text-light" role="status">
+                                                <span class="visually-hidden">Cargando PDF...</span>
+                                            </div>
+                                            <p class="mt-3">Cargando documento PDF...</p>
+                                        </div>
                                     </div>
                                 </div>
                             {% elif '.jpg' in extension or '.jpeg' in extension or '.png' in extension or '.gif' in extension or '.bmp' in extension or '.webp' in extension or '.svg' in extension %}
@@ -277,13 +288,11 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
     
-    // Cargar y mostrar PDF si es un archivo PDF local (no Cloudinary)
-    {% if not documento.archivo_drive_id or documento.archivo_drive_id|slice:":4" != "http" %}
-        {% if documento.archivo %}
-            {% with extension=documento.archivo.name|slice:"-4:"|lower %}
-            {% if extension == '.pdf' %}
-            (function() {
-                const pdfUrl = '{{ documento.archivo.url }}';
+    // Cargar y mostrar PDF (funciona con URLs locales y de Cloudinary)
+    {% if documento.archivo_drive_id and documento.archivo_drive_id|slice:":4" == "http" %}
+        {# PDF desde Cloudinary - usar PDF.js con URL de Cloudinary #}
+        (function() {
+            const pdfUrl = '{{ documento.archivo_drive_id }}';
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;
