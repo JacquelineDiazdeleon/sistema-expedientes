@@ -968,13 +968,13 @@ const DocumentosApp = {
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="${doc.archivo_url || '#'}" 
-                               class="btn-accion-documento" 
-                               target="_blank" 
-                               title="Ver documento">
+                            <button type="button"
+                                    class="btn-accion-documento" 
+                                    onclick="event.preventDefault(); if(typeof verDocumentoDetalle === 'function') { verDocumentoDetalle(${documentoId}, '${nombreEscapado.replace(/'/g, "\\'")}'); } else { alert('Error: La función de visualización no está disponible. Por favor, recarga la página.'); }"
+                                    title="Ver documento">
                                 <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="${doc.archivo_url || '#'}" 
+                            </button>
+                            <a href="/expedientes/documentos/${documentoId}/servir/" 
                                class="btn-accion-documento" 
                                download 
                                title="Descargar documento">
