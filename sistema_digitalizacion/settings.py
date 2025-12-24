@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,7 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-import os
 SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-e2_9lv0y^6gp6xxzn03va)aw#i!uugs3sufuyky9nl-n#vya2c")
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -104,11 +105,12 @@ WSGI_APPLICATION = "sistema_digitalizacion.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Sustituye la base de datos vieja por esta nueva:
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': dj_database_url.config(
+        default='postgresql://neondb_owner:npg_lf1FkOdMSxG9@ep-small-bonus-adhqbkcs-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require',
+        conn_max_age=600
+    )
 }
 
 
