@@ -18,3 +18,4 @@ google-auth-oauthlib
 dj-database-url
 psycopg2-binary
 cloudinary
+requests

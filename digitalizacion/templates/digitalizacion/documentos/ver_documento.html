@@ -383,12 +383,7 @@
         if (zoomOutBtn) zoomOutBtn.addEventListener('click', function() { cambiarZoom(0.8); });
         if (zoomInBtn) zoomInBtn.addEventListener('click', function() { cambiarZoom(1.25); });
     })();
-    {% elif documento.archivo %}
-        {# PDF local - usar PDF.js con URL local #}
-        {% with extension=documento.archivo.name|slice:"-4:"|lower %}
-        {% if extension == '.pdf' %}
-        (function() {
-            const pdfUrl = '{{ documento.archivo.url }}';
+    {% endif %}
             let pdfDoc = null;
             let pageNum = 1;
             let pageRendering = false;
