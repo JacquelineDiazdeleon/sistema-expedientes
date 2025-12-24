@@ -383,9 +383,104 @@
         if (zoomOutBtn) zoomOutBtn.addEventListener('click', function() { cambiarZoom(0.8); });
         if (zoomInBtn) zoomInBtn.addEventListener('click', function() { cambiarZoom(1.25); });
     })();
-    {% endif %}
-    {% endwith %}
-    {% endif %}
+    {% elif documento.archivo %}
+        {# PDF local - usar PDF.js con URL local #}
+        {% with extension=documento.archivo.name|slice:"-4:"|lower %}
+        {% if extension == '.pdf' %}
+        (function() {
+            const pdfUrl = '{{ documento.archivo.url }}';
+            let pdfDoc = null;
+            let pageNum = 1;
+            let pageRendering = false;
+            let pageNumPending = null;
+            let scale = 1.0;
+            
+            function renderPage(num) {
+                pageRendering = true;
+                pdfDoc.getPage(num).then(function(page) {
+                    const viewport = page.getViewport({scale: scale});
+                    const canvas = document.getElementById('pdf-canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    const renderTask = page.render(renderContext);
+                    
+                    renderTask.promise.then(function() {
+                        pageRendering = false;
+                        if (pageNumPending !== null) {
+                            renderPage(pageNumPending);
+                            pageNumPending = null;
+                        }
+                    });
+                });
+                
+                document.getElementById('pdf-page-info').textContent = 'Página ' + num + ' de ' + pdfDoc.numPages;
+                const prevBtn = document.getElementById('pdf-prev');
+                const nextBtn = document.getElementById('pdf-next');
+                if (prevBtn) prevBtn.disabled = num <= 1;
+                if (nextBtn) nextBtn.disabled = num >= pdfDoc.numPages;
+            }
+            
+            function queueRenderPage(num) {
+                if (pageRendering) {
+                    pageNumPending = num;
+                } else {
+                    renderPage(num);
+                }
+            }
+            
+            function cambiarPagina(delta) {
+                const newPage = pageNum + delta;
+                if (newPage >= 1 && newPage <= pdfDoc.numPages) {
+                    pageNum = newPage;
+                    queueRenderPage(pageNum);
+                }
+            }
+            
+            function cambiarZoom(factor) {
+                scale *= factor;
+                if (scale < 0.5) scale = 0.5;
+                if (scale > 3.0) scale = 3.0;
+                const zoomInfo = document.getElementById('pdf-zoom-info');
+                if (zoomInfo) zoomInfo.textContent = Math.round(scale * 100) + '%';
+                queueRenderPage(pageNum);
+            }
+            
+            // Cargar el PDF
+            const loadingDiv = document.getElementById('pdf-loading');
+            
+            if (typeof pdfjsLib === 'undefined') {
+                loadingDiv.innerHTML = '<p style="color: #ff6b6b;">Error: PDF.js no está cargado. Recarga la página.</p>';
+                return;
+            }
+            
+            pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+                pdfDoc = pdf;
+                document.getElementById('pdf-page-info').textContent = 'Página 1 de ' + pdf.numPages;
+                renderPage(1);
+                loadingDiv.style.display = 'none';
+            }).catch(function(error) {
+                loadingDiv.innerHTML = '<p style="color: #ff6b6b;">Error al cargar el PDF: ' + error.message + '</p><p><a href="' + pdfUrl + '" target="_blank" style="color: #4CAF50;">Abrir en nueva pestaña</a></p>';
+            });
+            
+            // Configurar eventos de los botones
+            const prevBtn = document.getElementById('pdf-prev');
+            const nextBtn = document.getElementById('pdf-next');
+            const zoomOutBtn = document.getElementById('pdf-zoom-out');
+            const zoomInBtn = document.getElementById('pdf-zoom-in');
+            
+            if (prevBtn) prevBtn.addEventListener('click', function() { cambiarPagina(-1); });
+            if (nextBtn) nextBtn.addEventListener('click', function() { cambiarPagina(1); });
+            if (zoomOutBtn) zoomOutBtn.addEventListener('click', function() { cambiarZoom(0.8); });
+            if (zoomInBtn) zoomInBtn.addEventListener('click', function() { cambiarZoom(1.25); });
+        })();
+        {% endif %}
+        {% endwith %}
     {% endif %}
 </script>
 {% endblock %}
