@@ -872,25 +872,10 @@ def subir_documento(request, expediente_id, etapa=None):
                 path_temporal = None
                 
                 try:
-                    from .drive_service import upload_to_drive
-                    # Comentado temporalmente: get_storage_usage causa error 403 en Service Accounts
-                    # from .drive_service import get_storage_usage
+                    from .drive_service import upload_to_cloudinary
                     
-                    # 1. VALIDACIÓN DE ESPACIO (TEMPORALMENTE DESHABILITADA)
-                    # Nota: Las Service Accounts no tienen cuota propia, usan el espacio de las carpetas compartidas
-                    # La validación de cuota causa error 403 antes de intentar subir el archivo
-                    # uso, limite = get_storage_usage()  # Comentado por ahora
-                    # if uso is not None and limite is not None and uso >= 14.5:  # Umbral de seguridad (14.5 GB de 15 GB)
-                    #     return JsonResponse({
-                    #         'success': False,
-                    #         'error': 'Capacidad de almacenamiento llena. Contacte a sistemas.'
-                    #     }, status=400)
-                    # elif uso is None or limite is None:
-                    #     # Service Account sin cuota propia - usar espacio de la carpeta compartida
-                    #     logger.info("Service Account sin cuota propia, usando espacio de la carpeta compartida")
-                    
-                    # 2. SUBIDA TEMPORAL Y ENVÍO A DRIVE
-                    # Guardamos el archivo temporalmente para poder enviarlo a Drive
+                    # SUBIDA A CLOUDINARY
+                    # Guardamos el archivo temporalmente para poder enviarlo a Cloudinary
                     import tempfile
                     fecha = timezone.now()
                     ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
@@ -901,36 +886,21 @@ def subir_documento(request, expediente_id, etapa=None):
                         temp_file.write(archivo_content)
                         path_temporal = temp_file.name
                     
-                    # ID de la carpeta que compartiste con el robot (configurar en settings o variable de entorno)
-                    FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
+                    # Subir a Cloudinary
+                    url_archivo = upload_to_cloudinary(path_temporal, archivo.name)
                     
-                    if FOLDER_ID:
-                        # Subir a Drive
-                        # NOTA: Para cuentas @gmail.com personales, las Service Accounts tienen limitaciones de cuota
-                        # Si falla, el archivo se guardará localmente como respaldo
-                        try:
-                            drive_id = upload_to_drive(path_temporal, archivo.name, FOLDER_ID)
-                            logger.info(f"Archivo subido a Google Drive con ID: {drive_id}")
-                        except Exception as drive_upload_error:
-                            error_msg = str(drive_upload_error)
-                            if 'storageQuotaExceeded' in error_msg or 'storage quota' in error_msg.lower():
-                                logger.warning(
-                                    "Google Drive no disponible (Service Account sin cuota). "
-                                    "Para cuentas @gmail.com personales, las Service Accounts no pueden usar tu espacio. "
-                                    "El archivo se guardará solo localmente. "
-                                    "Para usar Drive, considera implementar OAuth 2.0 o usar Google Workspace."
-                                )
-                            else:
-                                logger.error(f"Error al subir a Drive: {error_msg}")
-                            # No asignar drive_id, el archivo se guardará solo localmente
-                            drive_id = None
+                    if url_archivo:
+                        # Guardamos la URL completa en el campo que antes era para el ID de Drive
+                        drive_id = url_archivo
+                        logger.info(f"Archivo subido a Cloudinary con URL: {url_archivo}")
                     else:
-                        logger.info("GOOGLE_DRIVE_FOLDER_ID no configurado, el archivo se guardará solo localmente")
+                        logger.warning("No se pudo subir el archivo a Cloudinary, se guardará solo localmente")
+                        drive_id = None
                         
-                except Exception as drive_error:
-                    logger.error(f"Error al procesar subida a Google Drive: {str(drive_error)}", exc_info=True)
-                    # Continuar con el guardado local aunque falle Drive
-                    # No fallar la subida completa si Drive falla
+                except Exception as cloudinary_error:
+                    logger.error(f"Error al procesar subida a Cloudinary: {str(cloudinary_error)}", exc_info=True)
+                    # Continuar con el guardado local aunque falle Cloudinary
+                    # No fallar la subida completa si Cloudinary falla
                     drive_id = None
                 
                 # Guardar el archivo físicamente ANTES de crear el modelo (backup local)
@@ -1125,13 +1095,17 @@ def subir_documento(request, expediente_id, etapa=None):
                         nombre_area = getattr(area_etapa, 'titulo', getattr(area_etapa, 'nombre', 'Sin nombre'))
                     
                     # Obtener URL del archivo de forma segura
-                    # Priorizar Google Drive si tiene archivo_drive_id
+                    # Priorizar Cloudinary/Drive si tiene archivo_drive_id
                     archivo_url = ''
                     try:
                         if documento.archivo_drive_id:
-                            # Usar la vista de Drive para ver el documento
-                            from django.urls import reverse
-                            archivo_url = reverse('expedientes:ver_documento_drive', args=[documento.id])
+                            # Si es una URL directa (Cloudinary), usarla directamente
+                            if documento.archivo_drive_id.startswith('http://') or documento.archivo_drive_id.startswith('https://'):
+                                archivo_url = documento.archivo_drive_id
+                            else:
+                                # Si es un ID de Drive (legacy), usar la vista
+                                from django.urls import reverse
+                                archivo_url = reverse('expedientes:ver_documento_drive', args=[documento.id])
                         elif documento.archivo:
                             archivo_url = documento.archivo.url
                     except Exception as url_error:
@@ -3300,7 +3274,7 @@ def obtener_documentos_area(request, expediente_id, area_id):
                     'fecha_subida': fecha_subida,  # Fecha en formato YYYY-MM-DD para ordenamiento
                     'fecha_subida_completa': fecha_subida_completa,  # Fecha y hora formateada
                     'subido_por': usuario,  # Nombre del usuario que subió el documento
-                    'archivo_url': reverse('expedientes:ver_documento_drive', args=[doc.id]) if doc.archivo_drive_id else (doc.archivo.url if doc.archivo and hasattr(doc.archivo, 'url') else None),
+                    'archivo_url': doc.archivo_drive_id if (doc.archivo_drive_id and (doc.archivo_drive_id.startswith('http://') or doc.archivo_drive_id.startswith('https://'))) else (reverse('expedientes:ver_documento_drive', args=[doc.id]) if doc.archivo_drive_id else (doc.archivo.url if doc.archivo and hasattr(doc.archivo, 'url') else None)),
                     'tipo': tipo_archivo or 'ARCHIVO',
                     'tipo_archivo': tipo_archivo or 'ARCHIVO',  # Alias para compatibilidad
                     'tamano_archivo': tamano_archivo,  # Tamaño en bytes
@@ -4397,8 +4371,8 @@ def ver_documento_expediente(request, documento_id):
 @login_required
 def ver_documento_drive(request, documento_id):
     """
-    Vista para ver un documento desde Google Drive
-    Redirige al usuario al visor de Google Drive
+    Vista para ver un documento desde Cloudinary o Google Drive
+    Redirige al usuario a la URL del archivo
     """
     try:
         # Buscamos el documento en la base de datos de Neon
@@ -4410,27 +4384,29 @@ def ver_documento_drive(request, documento_id):
             return redirect('expedientes:lista')
         
         if documento.archivo_drive_id:
-            try:
-                from .drive_service import get_view_link
-                # Pedimos el link a Google
-                link = get_view_link(documento.archivo_drive_id)
-                # Redirigimos al usuario al visor de Google Drive
-                return redirect(link)
-            except Exception as e:
-                logger.error(f"Error al obtener enlace de Drive para documento {documento_id}: {str(e)}", exc_info=True)
-                messages.error(request, 'Error al obtener el enlace del documento desde Google Drive')
-                return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
+            # Si archivo_drive_id es una URL (Cloudinary), redirigir directamente
+            if documento.archivo_drive_id.startswith('http://') or documento.archivo_drive_id.startswith('https://'):
+                return redirect(documento.archivo_drive_id)
+            else:
+                # Si es un ID de Drive (legacy), intentar obtener el enlace
+                try:
+                    from .drive_service import get_view_link
+                    link = get_view_link(documento.archivo_drive_id)
+                    return redirect(link)
+                except Exception as e:
+                    logger.error(f"Error al obtener enlace de Drive para documento {documento_id}: {str(e)}", exc_info=True)
+                    messages.error(request, 'Error al obtener el enlace del documento')
+                    return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
         else:
-            # Si no tiene ID de Drive, intentar usar el archivo local como fallback
+            # Si no tiene URL/ID, intentar usar el archivo local como fallback
             if documento.archivo:
-                # Redirigir al archivo local
                 return redirect(documento.archivo.url)
             else:
-                messages.warning(request, 'Este documento no tiene un ID de Drive asociado ni archivo local.')
+                messages.warning(request, 'Este documento no tiene una URL asociada ni archivo local.')
                 return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
                 
     except Exception as e:
-        logger.error(f'Error al ver documento Drive {documento_id}: {str(e)}', exc_info=True)
+        logger.error(f'Error al ver documento {documento_id}: {str(e)}', exc_info=True)
         messages.error(request, 'Ocurrió un error al intentar ver el documento')
         return redirect('expedientes:lista')
 

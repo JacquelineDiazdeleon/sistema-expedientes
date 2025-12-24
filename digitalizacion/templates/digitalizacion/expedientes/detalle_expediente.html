@@ -1226,12 +1226,23 @@
                                                 <div class="document-actions ms-3">
                                                     <!-- Botón de vista previa (solo vista) -->
                                                     {% if documento.archivo_drive_id %}
-                                                        <a href="{% url 'expedientes:ver_documento_drive' documento.id %}" 
-                                                           class="btn-action btn-view"
-                                                           target="_blank"
-                                                           title="Ver documento en Google Drive">
-                                                            <i class="bi bi-eye-fill"></i>
-                                                        </a>
+                                                        {% if documento.archivo_drive_id|slice:":4" == "http" %}
+                                                            {# Es una URL de Cloudinary, usar directamente #}
+                                                            <a href="{{ documento.archivo_drive_id }}" 
+                                                               class="btn-action btn-view"
+                                                               target="_blank"
+                                                               title="Ver documento en Cloudinary">
+                                                                <i class="bi bi-eye-fill"></i>
+                                                            </a>
+                                                        {% else %}
+                                                            {# Es un ID de Drive (legacy), usar la vista #}
+                                                            <a href="{% url 'expedientes:ver_documento_drive' documento.id %}" 
+                                                               class="btn-action btn-view"
+                                                               target="_blank"
+                                                               title="Ver documento">
+                                                                <i class="bi bi-eye-fill"></i>
+                                                            </a>
+                                                        {% endif %}
                                                     {% elif documento.archivo %}
                                                         <button class="btn-action btn-view"
                                                                 onclick="event.preventDefault(); verDocumento('{{ documento.archivo.url }}', '{{ documento.nombre_documento|escapejs }}')"
