@@ -31,7 +31,7 @@ def upload_to_drive(file_path, file_name, folder_id):
     Sube un archivo a una carpeta específica de Google Drive
     IMPORTANTE: resumable=False es la clave para cuentas @gmail.com
     """
-    service = get_drive_service()
+    service = get_drive_service()  # Sigue usando tu google_keys.json
     
     file_metadata = {
         'name': file_name,
@@ -41,7 +41,7 @@ def upload_to_drive(file_path, file_name, folder_id):
     media = MediaFileUpload(file_path, resumable=False)
     
     try:
-        # 1. Subir el archivo (esto puede fallar si Google es muy estricto)
+        # Subida directa
         file = service.files().create(
             body=file_metadata,
             media_body=media,
@@ -50,27 +50,28 @@ def upload_to_drive(file_path, file_name, folder_id):
         ).execute()
         
         file_id = file.get('id')
-
-        # 2. TRUCO MAESTRO: Transferir la propiedad a tu correo personal inmediatamente
-        # Reemplaza 'tu-correo@gmail.com' con tu correo real
-        user_permission = {
+        
+        # TRANSFERENCIA DE PROPIEDAD INMEDIATA
+        # Esto hace que el archivo cuente contra TUS 15GB
+        permission = {
             'type': 'user',
             'role': 'owner',
-            'emailAddress': 'leondiazdeleondiazdeleon@gmail.com' 
+            'emailAddress': 'leondiazdeleondiazdeleon@gmail.com'
         }
         
         service.permissions().create(
             fileId=file_id,
-            body=user_permission,
+            body=permission,
             transferOwnership=True,
             supportsAllDrives=True
         ).execute()
         
         return file_id
+        
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Error detallado en Drive: {e}")
+        logger.error(f"Error en subida: {e}")
         raise e
 
 def get_storage_usage():
