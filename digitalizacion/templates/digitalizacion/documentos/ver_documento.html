@@ -272,11 +272,13 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
     
-    // Cargar y mostrar PDF si es un archivo PDF
-    {% with extension=documento.archivo.name|slice:"-4:"|lower %}
-    {% if extension == '.pdf' %}
-    (function() {
-        const pdfUrl = '{{ documento.archivo.url }}';
+    // Cargar y mostrar PDF si es un archivo PDF local (no Cloudinary)
+    {% if not documento.archivo_drive_id or documento.archivo_drive_id|slice:":4" != "http" %}
+        {% if documento.archivo %}
+            {% with extension=documento.archivo.name|slice:"-4:"|lower %}
+            {% if extension == '.pdf' %}
+            (function() {
+                const pdfUrl = '{{ documento.archivo.url }}';
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;
