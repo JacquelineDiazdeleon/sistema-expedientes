@@ -29,9 +29,11 @@ def get_drive_service():
 def upload_to_drive(file_path, file_name, folder_id):
     """
     Sube un archivo a una carpeta específica de Google Drive
+    El secreto está en definir el 'parents' para que use el espacio de tu cuenta
     """
     service = get_drive_service()
     
+    # El secreto está en definir el 'parents' para que use el espacio de tu cuenta
     file_metadata = {
         'name': file_name,
         'parents': [folder_id]  # Esto obliga a que use el espacio de la carpeta, no del robot
@@ -39,15 +41,20 @@ def upload_to_drive(file_path, file_name, folder_id):
     
     media = MediaFileUpload(file_path, resumable=True)
     
-    # IMPORTANTE: Añadir supportsAllDrives=True por si acaso
-    file = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id',
-        supportsAllDrives=True
-    ).execute()
-    
-    return file.get('id')
+    try:
+        # IMPORTANTE: Añadir supportsAllDrives=True por seguridad
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id',
+            supportsAllDrives=True  # Añade esto por seguridad
+        ).execute()
+        return file.get('id')
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error detallado en Drive: {e}")
+        raise e
 
 def get_storage_usage():
     """
