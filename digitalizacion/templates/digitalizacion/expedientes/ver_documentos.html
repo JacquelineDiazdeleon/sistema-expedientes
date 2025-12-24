@@ -1059,74 +1059,71 @@
                     container.innerHTML = '';
                     container.appendChild(pagesContainer);
                     
-                    // Función para renderizar una página en tamaño grande y centrado con alta calidad
+                    // Función para renderizar una página en tamaño normal con alta calidad
                     const renderPage = async (pageNum) => {
                         const page = await pdf.getPage(pageNum);
                         
-                        // Obtener el viewport natural de la página (escala 1.0 = tamaño real)
+                        // Obtener el viewport natural de la página (escala 1.0 = tamaño real del PDF)
                         const naturalViewport = page.getViewport({ scale: 1.0 });
                         
-                        // Calcular el scale para tamaño NORMAL notablemente más grande
-                        const maxWidth = window.innerWidth * 0.99; // 99% del ancho de la ventana
-                        const maxHeight = window.innerHeight * 0.92; // 92% de la altura de la ventana
+                        // Calcular el scale para tamaño NORMAL (como visualizadores estándar)
+                        // Usar el ancho del contenedor en lugar de la ventana completa
+                        const containerWidth = container.offsetWidth || window.innerWidth * 0.85;
+                        const containerHeight = window.innerHeight * 0.75; // 75% de altura para tamaño normal
                         
-                        // Calcular el scale máximo sin distorsión (permitir hasta 6.0x para tamaño normal grande)
-                        const scaleX = maxWidth / naturalViewport.width;
-                        const scaleY = maxHeight / naturalViewport.height;
-                        const displayScale = Math.min(scaleX, scaleY, 6.0); // Hasta 6.0x para tamaño normal grande
+                        // Calcular el scale para que quepa en el contenedor (tamaño normal, no gigante)
+                        const scaleX = (containerWidth - 40) / naturalViewport.width; // -40px para padding
+                        const scaleY = containerHeight / naturalViewport.height;
+                        const displayScale = Math.min(scaleX, scaleY, 1.5); // Máximo 1.5x para tamaño normal
                         
-                        // Asegurar un tamaño mínimo notable (mínimo 2.5x si es muy pequeño)
-                        let finalScale = Math.max(displayScale, Math.min(2.5, scaleX, scaleY));
+                        // Asegurar un tamaño mínimo razonable (mínimo 0.8x para que sea legible)
+                        let finalScale = Math.max(displayScale, 0.8);
                         
-                        // Si el documento es pequeño, forzar un tamaño mínimo más grande
-                        if (naturalViewport.width < 600) {
-                            const minScale = 3.0;
-                            if (finalScale < minScale) {
-                                const forcedScale = Math.min(minScale, scaleX, scaleY);
-                                if (forcedScale > finalScale) {
-                                    finalScale = forcedScale;
-                                }
-                            }
-                        }
-                        
-                        // Crear viewport con el scale calculado (mantiene proporciones)
+                        // Crear viewport con el scale calculado (tamaño normal)
                         const viewport = page.getViewport({ scale: finalScale });
                         
                         // Crear contenedor para la página
                         const pageContainer = document.createElement('div');
                         pageContainer.className = 'pdf-page-container';
+                        pageContainer.style.textAlign = 'center';
+                        pageContainer.style.marginBottom = '20px';
                         
-                        // Crear canvas para renderizar la página con alta resolución
+                        // Crear canvas para renderizar la página con ALTA RESOLUCIÓN
                         const canvas = document.createElement('canvas');
                         const context = canvas.getContext('2d');
                         
-                        // Configurar el canvas con alta resolución para pantallas Retina (solo para calidad, no para tamaño)
+                        // Configurar el canvas con ALTA resolución para mejor calidad
+                        // Usar devicePixelRatio multiplicado por 2-3 para mejor calidad sin aumentar tamaño visual
                         const devicePixelRatio = window.devicePixelRatio || 1;
-                        const renderScale = Math.min(devicePixelRatio, 5.0); // Hasta 5.0x para mejor calidad con tamaño normal grande
+                        const renderScale = devicePixelRatio * 2.5; // 2.5x el devicePixelRatio para mejor calidad
                         
-                        // Tamaño del canvas en píxeles (alta resolución para calidad)
+                        // Tamaño del canvas en píxeles (ALTA resolución para calidad nítida)
                         canvas.width = Math.floor(viewport.width * renderScale);
                         canvas.height = Math.floor(viewport.height * renderScale);
                         
-                        // Tamaño visual del canvas (tamaño grande de visualización)
+                        // Tamaño VISUAL del canvas (tamaño normal, no gigante)
                         canvas.style.width = Math.floor(viewport.width) + 'px';
                         canvas.style.height = Math.floor(viewport.height) + 'px';
-                        canvas.style.maxWidth = '99%';
-                        canvas.style.maxHeight = '95vh';
-                        canvas.style.margin = '0';
+                        canvas.style.maxWidth = '100%';
+                        canvas.style.height = 'auto';
+                        canvas.style.margin = '0 auto';
+                        canvas.style.display = 'block';
+                        canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                         
-                        // Escalar el contexto para renderizado de alta calidad
+                        // Escalar el contexto para renderizado de ALTA calidad
                         context.scale(renderScale, renderScale);
                         
-                        // Configurar renderizado de alta calidad
+                        // Configurar renderizado de ALTA calidad
                         context.imageSmoothingEnabled = true;
                         context.imageSmoothingQuality = 'high';
+                        context.textRenderingOptimization = 'optimizeQuality';
                         
-                        // Renderizar la página manteniendo proporciones naturales
+                        // Renderizar la página con alta calidad
                         await page.render({
                             canvasContext: context,
                             viewport: viewport,
-                            intent: 'display'
+                            intent: 'display', // 'display' para mejor calidad visual
+                            renderInteractiveForms: false
                         }).promise;
                         
                         // Agregar el canvas al contenedor
