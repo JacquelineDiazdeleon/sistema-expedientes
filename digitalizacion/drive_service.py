@@ -25,7 +25,18 @@ def upload_to_cloudinary(file_path, file_name, expediente_id=None, area_nombre=N
     """
     try:
         # 1. Limpiamos los nombres para evitar caracteres raros en las carpetas
-        clean_file_name = re.sub(r'[^a-zA-Z0-9.-]', '_', file_name)
+        # Primero, extraer la extensión correctamente
+        base_name, ext = os.path.splitext(file_name)
+        # Limpiar el nombre base
+        clean_base = re.sub(r'[^a-zA-Z0-9.-]', '_', base_name)
+        # Asegurar que la extensión no esté duplicada
+        if ext:
+            # Remover la extensión si ya está en el nombre base
+            if clean_base.lower().endswith(ext.lower()):
+                clean_base = clean_base[:-len(ext)]
+            clean_file_name = clean_base + ext.lower()
+        else:
+            clean_file_name = clean_base
         
         # 2. Determinar el nombre del expediente para la carpeta
         if expediente_nombre:
