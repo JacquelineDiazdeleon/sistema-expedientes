@@ -1042,11 +1042,14 @@
                     // Asegurar que la URL sea absoluta
                     const absoluteUrl = pdfUrl.startsWith('http') ? pdfUrl : window.location.origin + pdfUrl;
                     
-                    // Cargar el documento PDF
+                    // Cargar el documento PDF con configuración para Cloudinary
                     const loadingTask = pdfjsLib.getDocument({
                         url: absoluteUrl,
                         cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-                        cMapPacked: true
+                        cMapPacked: true,
+                        // Configuración para permitir CORS desde Cloudinary
+                        httpHeaders: {},
+                        withCredentials: false
                     });
                     
                     const pdf = await loadingTask.promise;
