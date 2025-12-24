@@ -34,15 +34,17 @@ def upload_to_drive(file_path, file_name, folder_id):
     
     file_metadata = {
         'name': file_name,
-        'parents': [folder_id]
+        'parents': [folder_id]  # Esto obliga a que use el espacio de la carpeta, no del robot
     }
     
     media = MediaFileUpload(file_path, resumable=True)
     
+    # IMPORTANTE: Añadir supportsAllDrives=True por si acaso
     file = service.files().create(
         body=file_metadata,
         media_body=media,
-        fields='id'
+        fields='id',
+        supportsAllDrives=True
     ).execute()
     
     return file.get('id')
@@ -50,13 +52,28 @@ def upload_to_drive(file_path, file_name, folder_id):
 def get_storage_usage():
     """
     Consulta cuánto espacio queda en la cuenta (Fase 4 y 5)
+    Nota: Las Service Accounts no tienen cuota propia, usan el espacio de las carpetas compartidas.
+    Si la Service Account no tiene cuota, retorna None, None para indicar que no se puede verificar.
     """
-    service = get_drive_service()
-    about = service.about().get(fields="storageQuota").execute()
-    usage = int(about['storageQuota']['usage']) / (1024**3) # Convertido a GB
-    limit = int(about['storageQuota']['limit']) / (1024**3) # Convertido a GB
-    
-    return usage, limit
+    try:
+        service = get_drive_service()
+        about = service.about().get(fields="storageQuota").execute()
+        
+        # Verificar si la Service Account tiene cuota propia
+        storage_quota = about.get('storageQuota', {})
+        
+        # Si no hay 'limit', significa que la Service Account no tiene cuota propia
+        if 'limit' not in storage_quota:
+            return None, None
+        
+        usage = int(storage_quota.get('usage', 0)) / (1024**3)  # Convertido a GB
+        limit = int(storage_quota.get('limit', 0)) / (1024**3)  # Convertido a GB
+        
+        return usage, limit
+    except Exception as e:
+        # Si hay error al consultar (por ejemplo, Service Account sin cuota), retornar None
+        # Esto permite que la subida continúe usando el espacio de la carpeta compartida
+        return None, None
 
 def get_view_link(file_id):
     """

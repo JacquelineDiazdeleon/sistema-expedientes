@@ -875,12 +875,17 @@ def subir_documento(request, expediente_id, etapa=None):
                     from .drive_service import upload_to_drive, get_storage_usage
                     
                     # 1. VALIDACIÓN DE ESPACIO (Fase 4 y 5)
+                    # Nota: Las Service Accounts no tienen cuota propia, usan el espacio de las carpetas compartidas
+                    # Si retorna None, None, significa que no se puede verificar (Service Account sin cuota)
                     uso, limite = get_storage_usage()
-                    if uso >= 14.5:  # Umbral de seguridad (14.5 GB de 15 GB)
+                    if uso is not None and limite is not None and uso >= 14.5:  # Umbral de seguridad (14.5 GB de 15 GB)
                         return JsonResponse({
                             'success': False,
                             'error': 'Capacidad de almacenamiento llena. Contacte a sistemas.'
                         }, status=400)
+                    elif uso is None or limite is None:
+                        # Service Account sin cuota propia - usar espacio de la carpeta compartida
+                        logger.info("Service Account sin cuota propia, usando espacio de la carpeta compartida")
                     
                     # 2. SUBIDA TEMPORAL Y ENVÍO A DRIVE
                     # Guardamos el archivo temporalmente para poder enviarlo a Drive
