@@ -886,8 +886,13 @@ def subir_documento(request, expediente_id, etapa=None):
                         temp_file.write(archivo_content)
                         path_temporal = temp_file.name
                     
-                    # Subir a Cloudinary
-                    url_archivo = upload_to_cloudinary(path_temporal, archivo.name)
+                    # Subir a Cloudinary con organización por expediente y área
+                    url_archivo = upload_to_cloudinary(
+                        path_temporal, 
+                        archivo.name, 
+                        expediente.id,   # ID del expediente actual
+                        area_etapa.nombre if area_etapa else None  # Nombre del área/etapa actual
+                    )
                     
                     if url_archivo:
                         # Guardamos la URL completa en el campo que antes era para el ID de Drive
