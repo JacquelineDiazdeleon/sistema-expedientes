@@ -1228,7 +1228,7 @@
                                                     {% if documento.archivo_drive_id or documento.archivo %}
                                                         {# Usar el modal de alta calidad para todos los documentos #}
                                                         <button class="btn-action btn-view"
-                                                                onclick="event.preventDefault(); verDocumentoDetalle({{ documento.id }}, '{{ documento.nombre_documento|escapejs }}', '{% url "expedientes:servir_documento" documento.id %}')"
+                                                                onclick="event.preventDefault(); verDocumentoDetalle({{ documento.id }}, '{{ documento.nombre_documento|escapejs }}')"
                                                                 title="Ver documento">
                                                             <i class="bi bi-eye-fill"></i>
                                                         </button>
@@ -3058,22 +3058,33 @@
         window.verDocumentoDetalle = function(documentoId, nombreDocumento, archivoUrl) {
             console.log('verDocumentoDetalle llamado:', {documentoId, nombreDocumento, archivoUrl});
             
-            // Si no hay URL, usar la vista proxy
-            if (!archivoUrl) {
-                archivoUrl = `/expedientes/documentos/${documentoId}/servir/`;
-            }
+            // SIEMPRE usar la vista proxy de nuestro servidor, nunca Cloudinary directamente
+            // Esto asegura que no haya problemas de CORS o autenticación
+            const urlProxy = `/expedientes/documentos/${documentoId}/servir/`;
             
-            // Determinar tipo de archivo
-            const extension = archivoUrl.toLowerCase();
+            // Determinar tipo de archivo basado en el nombre del documento
+            const nombreLower = (nombreDocumento || '').toLowerCase();
             let tipoArchivo = '';
-            if (extension.endsWith('.pdf')) {
+            if (nombreLower.endsWith('.pdf')) {
                 tipoArchivo = 'pdf';
-            } else if (extension.endsWith('.docx') || extension.endsWith('.doc')) {
+            } else if (nombreLower.endsWith('.docx') || nombreLower.endsWith('.doc')) {
                 tipoArchivo = 'docx';
-            } else if (extension.endsWith('.xlsx') || extension.endsWith('.xls')) {
+            } else if (nombreLower.endsWith('.xlsx') || nombreLower.endsWith('.xls')) {
                 tipoArchivo = 'xlsx';
-            } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => extension.endsWith(ext))) {
+            } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => nombreLower.endsWith(ext))) {
                 tipoArchivo = 'imagen';
+            } else {
+                // Intentar detectar por extensión en la URL si no se encontró en el nombre
+                const extension = (archivoUrl || '').toLowerCase();
+                if (extension.endsWith('.pdf')) {
+                    tipoArchivo = 'pdf';
+                } else if (extension.endsWith('.docx') || extension.endsWith('.doc')) {
+                    tipoArchivo = 'docx';
+                } else if (extension.endsWith('.xlsx') || extension.endsWith('.xls')) {
+                    tipoArchivo = 'xlsx';
+                } else if (['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'].some(ext => extension.endsWith(ext))) {
+                    tipoArchivo = 'imagen';
+                }
             }
             
             // Limpiar contenido previo del modal
@@ -3104,22 +3115,22 @@
                 $(modalElement).modal('show');
             }
             
-            // Cargar contenido según el tipo
+            // Cargar contenido según el tipo - SIEMPRE usar urlProxy (vista proxy)
             if (tipoArchivo === 'pdf') {
-                cargarPDFEnModalDetalle(archivoUrl, modalBody);
+                cargarPDFEnModalDetalle(urlProxy, modalBody);
             } else if (tipoArchivo === 'docx') {
-                cargarWordEnModalDetalle(archivoUrl, modalBody);
+                cargarWordEnModalDetalle(urlProxy, modalBody);
             } else if (tipoArchivo === 'xlsx') {
-                cargarExcelEnModalDetalle(archivoUrl, modalBody);
+                cargarExcelEnModalDetalle(urlProxy, modalBody);
             } else if (tipoArchivo === 'imagen') {
-                cargarImagenEnModalDetalle(archivoUrl, modalBody);
+                cargarImagenEnModalDetalle(urlProxy, modalBody);
             } else {
                 modalBody.innerHTML = `
                     <div class="text-center py-5">
                         <i class="bi bi-file-earmark" style="font-size: 4rem; color: #6c757d;"></i>
                         <h5 class="mt-3">Tipo de archivo no soportado para visualización</h5>
                         <p class="text-muted">Este tipo de archivo no se puede visualizar directamente.</p>
-                        <a href="${archivoUrl}" class="btn btn-primary mt-3" download>
+                        <a href="${urlProxy}" class="btn btn-primary mt-3" download>
                             <i class="bi bi-download me-2"></i>Descargar archivo
                         </a>
                     </div>
