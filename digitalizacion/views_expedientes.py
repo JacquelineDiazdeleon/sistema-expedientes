@@ -864,6 +864,10 @@ def subir_documento(request, expediente_id, etapa=None):
                 # ============================================
                 # INTEGRACIÓN CON GOOGLE DRIVE
                 # ============================================
+                # Leer el contenido del archivo primero (necesario para Drive y backup local)
+                archivo.seek(0)  # Asegurar que estamos al inicio del archivo
+                archivo_content = archivo.read()
+                
                 drive_id = None
                 path_temporal = None
                 
@@ -884,10 +888,6 @@ def subir_documento(request, expediente_id, etapa=None):
                     fecha = timezone.now()
                     ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
                     filename_upload = f"{expediente.numero_expediente}_{fecha.strftime('%Y%m%d_%H%M%S')}{ext}"
-                    
-                    # Crear archivo temporal
-                    archivo.seek(0)  # Asegurar que estamos al inicio del archivo
-                    archivo_content = archivo.read()
                     
                     # Guardar en archivo temporal
                     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
@@ -915,11 +915,6 @@ def subir_documento(request, expediente_id, etapa=None):
                 ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
                 filename_upload = f"{expediente.numero_expediente}_{fecha.strftime('%Y%m%d_%H%M%S')}{ext}"
                 upload_path = os.path.join('expedientes', str(fecha.year), str(fecha.month), filename_upload)
-                
-                # Leer el contenido del archivo (si no se leyó antes)
-                if not archivo_content:
-                    archivo.seek(0)
-                    archivo_content = archivo.read()
                 
                 # Guardar el archivo usando default_storage (backup local)
                 saved_path = default_storage.save(upload_path, ContentFile(archivo_content))
