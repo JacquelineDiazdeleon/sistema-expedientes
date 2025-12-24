@@ -29,69 +29,24 @@ def get_drive_service():
 def upload_to_drive(file_path, file_name, folder_id):
     """
     Sube un archivo a una carpeta específica de Google Drive
-    
-    IMPORTANTE: Si tienes una cuenta @gmail.com normal (no Google Workspace),
-    las Service Accounts pueden tener problemas con la cuota. En ese caso,
-    considera usar una Unidad Compartida (Shared Drive) si tienes acceso,
-    o usar OAuth delegation en lugar de Service Account.
+    IMPORTANTE: resumable=False es la clave para cuentas @gmail.com
     """
-    import mimetypes
-    import logging
-    logger = logging.getLogger(__name__)
-    
     service = get_drive_service()
     
-    # El secreto está en definir el 'parents' para que use el espacio de tu cuenta
     file_metadata = {
         'name': file_name,
-        'parents': [folder_id]  # Esto obliga a que use el espacio de la carpeta, no del robot
+        'parents': [folder_id]  # Esto es lo que vincula a tu espacio de 15GB
     }
     
-    # Detectar el tipo MIME automáticamente
-    mimetype, _ = mimetypes.guess_type(file_name)
-    if not mimetype:
-        # Tipo por defecto si no se puede detectar
-        mimetype = 'application/octet-stream'
+    # IMPORTANTE: resumable=False es la clave para cuentas @gmail.com
+    media = MediaFileUpload(file_path, resumable=False)
     
-    # Cambiamos resumable=False para archivos pequeños/medianos
-    # Esto evita muchos problemas de cuota con Service Accounts
-    media = MediaFileUpload(
-        file_path, 
-        mimetype=mimetype,
-        resumable=False  # Cambiado a False para evitar problemas de cuota
-    )
-    
-    try:
-        # 1. Crear el archivo
-        # Esta línea es CLAVE para que use el espacio de la carpeta compartida
-        file = service.files().create(
-            body=file_metadata,
-            media_body=media,
-            fields='id, owners',  # Incluimos 'owners' para verificar la propiedad
-            supportsAllDrives=True  # Añade esto por seguridad
-        ).execute()
-        
-        file_id = file.get('id')
-        logger.info(f"Archivo creado en Drive con ID: {file_id}")
-        
-        # 2. OPCIONAL/DE SEGURIDAD: Intentar mover la propiedad si falla la cuota
-        # Nota: Las Service Accounts NO pueden transferir propiedad directamente a usuarios normales
-        # Si el error persiste, la solución manual es usar una "Unidad Compartida" (Shared Drive)
-        # o cambiar a OAuth delegation en lugar de Service Account
-        
-        return file_id
-        
-    except Exception as e:
-        logger.error(f"Error detallado en Drive: {e}")
-        # Si el error es de cuota, proporcionar información útil
-        if 'storageQuotaExceeded' in str(e) or 'storage quota' in str(e).lower():
-            logger.error(
-                "ERROR: Service Account sin cuota. Soluciones:\n"
-                "1. Verifica que la carpeta esté compartida con el robot como Editor\n"
-                "2. Si tienes Google Workspace, usa una Unidad Compartida (Shared Drive)\n"
-                "3. Si es cuenta @gmail.com normal, considera usar OAuth delegation"
-            )
-        raise e
+    return service.files().create(
+        body=file_metadata,
+        media_body=media,
+        fields='id',
+        supportsAllDrives=True
+    ).execute().get('id')
 
 def get_storage_usage():
     """
