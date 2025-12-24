@@ -932,19 +932,36 @@
                                                 </div>
                                             </div>
                                         {% elif ext == '.pdf' %}
-                                            <div id="pdf-viewer-{{ doc_info.documento.id }}" class="pdf-viewer">
-                                                <div class="pdf-pages"></div>
-                                                <div class="text-center py-5" style="width: 100%;">
-                                                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                                                        <span class="visually-hidden">Cargando documento...</span>
-                                                    </div>
-                                                    <p class="mt-3 text-muted">Cargando documento...</p>
+                                            {% if doc_info.documento.archivo_drive_id and doc_info.documento.archivo_drive_id|slice:":4" == "http" %}
+                                                {# PDF desde Cloudinary - usar iframe directamente #}
+                                                <div style="width: 100%; height: 600px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+                                                    <iframe src="{{ doc_info.documento.archivo_drive_id }}" 
+                                                            style="width: 100%; height: 100%; border: none;" 
+                                                            frameborder="0"
+                                                            allowfullscreen>
+                                                    </iframe>
                                                 </div>
-                                            </div>
-                                            <script>
-                                                // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
-                                                document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', '{{ doc_info.documento.archivo.url }}');
-                                            </script>
+                                                <div class="mt-2 text-center">
+                                                    <a href="{{ doc_info.documento.archivo_drive_id }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-box-arrow-up-right me-1"></i>Abrir en nueva pestaña
+                                                    </a>
+                                                </div>
+                                            {% else %}
+                                                {# PDF local - usar PDF.js #}
+                                                <div id="pdf-viewer-{{ doc_info.documento.id }}" class="pdf-viewer">
+                                                    <div class="pdf-pages"></div>
+                                                    <div class="text-center py-5" style="width: 100%;">
+                                                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                                                            <span class="visually-hidden">Cargando documento...</span>
+                                                        </div>
+                                                        <p class="mt-3 text-muted">Cargando documento...</p>
+                                                    </div>
+                                                </div>
+                                                <script>
+                                                    // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
+                                                    document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', '{{ doc_info.documento.archivo.url }}');
+                                                </script>
+                                            {% endif %}
                                         {% else %}
                                             <div class="d-flex flex-column align-items-center justify-content-center py-5" style="min-height: 400px;">
                                                 <div class="bg-light p-4 rounded-circle mb-3">
