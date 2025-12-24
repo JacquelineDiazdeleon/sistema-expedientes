@@ -35,18 +35,43 @@ def upload_to_drive(file_path, file_name, folder_id):
     
     file_metadata = {
         'name': file_name,
-        'parents': [folder_id]  # Esto es lo que vincula a tu espacio de 15GB
+        'parents': [folder_id]
     }
     
-    # IMPORTANTE: resumable=False es la clave para cuentas @gmail.com
     media = MediaFileUpload(file_path, resumable=False)
     
-    return service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields='id',
-        supportsAllDrives=True
-    ).execute().get('id')
+    try:
+        # 1. Subir el archivo (esto puede fallar si Google es muy estricto)
+        file = service.files().create(
+            body=file_metadata,
+            media_body=media,
+            fields='id',
+            supportsAllDrives=True
+        ).execute()
+        
+        file_id = file.get('id')
+
+        # 2. TRUCO MAESTRO: Transferir la propiedad a tu correo personal inmediatamente
+        # Reemplaza 'tu-correo@gmail.com' con tu correo real
+        user_permission = {
+            'type': 'user',
+            'role': 'owner',
+            'emailAddress': 'leondiazdeleondiazdeleon@gmail.com' 
+        }
+        
+        service.permissions().create(
+            fileId=file_id,
+            body=user_permission,
+            transferOwnership=True,
+            supportsAllDrives=True
+        ).execute()
+        
+        return file_id
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error detallado en Drive: {e}")
+        raise e
 
 def get_storage_usage():
     """
