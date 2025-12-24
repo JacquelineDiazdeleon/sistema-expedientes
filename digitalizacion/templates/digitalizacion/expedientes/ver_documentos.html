@@ -943,9 +943,8 @@
                                                 </div>
                                             </div>
                                             <script>
-                                                // Almacenar la URL en un atributo de datos para cargarla cuando sea visible
-                                                // Priorizar URL de Cloudinary si está disponible, sino usar archivo local
-                                                var pdfUrl = '{% if doc_info.documento.archivo_drive_id and doc_info.documento.archivo_drive_id|slice:":4" == "http" %}{{ doc_info.documento.archivo_drive_id }}{% elif doc_info.documento.archivo %}{{ doc_info.documento.archivo.url }}{% endif %}';
+                                                // Usar la vista proxy de nuestro servidor para evitar problemas de CORS/autenticación
+                                                var pdfUrl = '{% url "expedientes:servir_documento" doc_info.documento.id %}';
                                                 document.getElementById('pdf-viewer-{{ doc_info.documento.id }}').setAttribute('data-pdf-url', pdfUrl);
                                             </script>
                                         {% else %}

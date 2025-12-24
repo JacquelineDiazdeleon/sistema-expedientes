@@ -288,11 +288,11 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
     
-    // Cargar y mostrar PDF (funciona con URLs locales y de Cloudinary)
-    {% if documento.archivo_drive_id and documento.archivo_drive_id|slice:":4" == "http" %}
-        {# PDF desde Cloudinary - usar PDF.js con URL de Cloudinary #}
+    // Cargar y mostrar PDF usando nuestro servidor como proxy (independiente de Cloudinary)
+    {% if documento.archivo_drive_id or documento.archivo %}
+        {# Usar la vista proxy de nuestro servidor para evitar problemas de CORS/autenticación #}
         (function() {
-            const pdfUrl = '{{ documento.archivo_drive_id }}';
+            const pdfUrl = '{% url "expedientes:servir_documento" documento.id %}';
         let pdfDoc = null;
         let pageNum = 1;
         let pageRendering = false;

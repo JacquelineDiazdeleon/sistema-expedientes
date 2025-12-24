@@ -4377,13 +4377,92 @@ def ver_documento_expediente(request, documento_id):
         return redirect('expedientes:lista')
 
 @login_required
-def ver_documento_drive(request, documento_id):
+def servir_documento(request, documento_id):
     """
-    Vista para ver un documento desde Cloudinary o Google Drive
-    Redirige al usuario a la URL del archivo
+    Vista que sirve el documento como proxy desde nuestro servidor
+    Esto permite que PDF.js funcione sin problemas de CORS o autenticación de Cloudinary
     """
     try:
-        # Buscamos el documento en la base de datos de Neon
+        documento = get_object_or_404(DocumentoExpediente, id=documento_id)
+        
+        # Verificar permisos
+        if not puede_ver_expedientes(request.user):
+            return HttpResponseForbidden("No tienes permiso para ver este documento")
+        
+        import requests
+        from mimetypes import guess_type
+        
+        # Si tiene archivo local, servirlo directamente
+        if documento.archivo and hasattr(documento.archivo, 'path'):
+            try:
+                file_path = documento.archivo.path
+                if os.path.exists(file_path):
+                    content_type, _ = guess_type(documento.archivo.name)
+                    if not content_type:
+                        content_type = 'application/octet-stream'
+                    return FileResponse(
+                        open(file_path, 'rb'),
+                        content_type=content_type
+                    )
+            except Exception as e:
+                logger.warning(f"Error al servir archivo local: {e}")
+        
+        # Si tiene URL de Cloudinary, descargarla y servirla como proxy
+        if documento.archivo_drive_id and (documento.archivo_drive_id.startswith('http://') or documento.archivo_drive_id.startswith('https://')):
+            try:
+                # Descargar el archivo desde Cloudinary
+                response = requests.get(documento.archivo_drive_id, stream=True, timeout=30)
+                response.raise_for_status()
+                
+                # Determinar content type
+                ext = os.path.splitext(documento.nombre_documento or 'archivo')[1]
+                content_type, _ = guess_type(f'archivo{ext}')
+                if not content_type:
+                    content_type = response.headers.get('Content-Type', 'application/octet-stream')
+                
+                # Servir el archivo directamente desde la respuesta
+                django_response = HttpResponse(
+                    response.content,
+                    content_type=content_type
+                )
+                django_response['Content-Disposition'] = f'inline; filename="{documento.nombre_documento or "documento"}"'
+                django_response['Content-Length'] = len(response.content)
+                return django_response
+                
+            except Exception as e:
+                logger.error(f"Error al descargar desde Cloudinary: {e}")
+                return HttpResponse(f"Error al cargar el documento desde Cloudinary: {str(e)}", status=500)
+        
+        # Si es ID de Drive (legacy), intentar obtener el enlace
+        elif documento.archivo_drive_id:
+            try:
+                from .drive_service import get_view_link
+                link = get_view_link(documento.archivo_drive_id)
+                if link:
+                    response = requests.get(link, stream=True, timeout=30)
+                    response.raise_for_status()
+                    content_type = response.headers.get('Content-Type', 'application/octet-stream')
+                    django_response = HttpResponse(
+                        response.content,
+                        content_type=content_type
+                    )
+                    django_response['Content-Disposition'] = f'inline; filename="{documento.nombre_documento or "documento"}"'
+                    return django_response
+            except Exception as e:
+                logger.error(f"Error al obtener archivo de Drive: {e}")
+        
+        return HttpResponse("Documento no encontrado", status=404)
+            
+    except Exception as e:
+        logger.error(f'Error al servir documento {documento_id}: {str(e)}', exc_info=True)
+        return HttpResponse(f"Error al cargar el documento: {str(e)}", status=500)
+
+@login_required
+def ver_documento_drive(request, documento_id):
+    """
+    Vista para ver un documento - redirige a la vista de visualización con PDF.js
+    """
+    try:
         documento = get_object_or_404(DocumentoExpediente, id=documento_id)
         
         # Verificar permisos básicos
@@ -4391,30 +4470,11 @@ def ver_documento_drive(request, documento_id):
             messages.error(request, 'No tienes permiso para ver este documento')
             return redirect('expedientes:lista')
         
-        if documento.archivo_drive_id:
-            # Si archivo_drive_id es una URL (Cloudinary), redirigir directamente
-            if documento.archivo_drive_id.startswith('http://') or documento.archivo_drive_id.startswith('https://'):
-                return redirect(documento.archivo_drive_id)
-            else:
-                # Si es un ID de Drive (legacy), intentar obtener el enlace
-                try:
-                    from .drive_service import get_view_link
-                    link = get_view_link(documento.archivo_drive_id)
-                    return redirect(link)
-                except Exception as e:
-                    logger.error(f"Error al obtener enlace de Drive para documento {documento_id}: {str(e)}", exc_info=True)
-                    messages.error(request, 'Error al obtener el enlace del documento')
-                    return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
-        else:
-            # Si no tiene URL/ID, intentar usar el archivo local como fallback
-            if documento.archivo:
-                return redirect(documento.archivo.url)
-            else:
-                messages.warning(request, 'Este documento no tiene una URL asociada ni archivo local.')
-                return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
+        # Redirigir a la vista de visualización que usa PDF.js
+        return redirect('expedientes:ver_documento', documento_id=documento_id)
                 
     except Exception as e:
-        logger.error(f'Error al ver documento {documento_id}: {str(e)}', exc_info=True)
+        logger.error(f'Error al ver documento Drive {documento_id}: {str(e)}', exc_info=True)
         messages.error(request, 'Ocurrió un error al intentar ver el documento')
         return redirect('expedientes:lista')
 

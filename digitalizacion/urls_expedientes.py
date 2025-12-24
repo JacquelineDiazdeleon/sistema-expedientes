@@ -127,6 +127,8 @@ urlpatterns = [
          ver_documento_expediente, name='ver_documento'),
     path('documentos/<int:documento_id>/drive/', 
          ver_documento_drive, name='ver_documento_drive'),
+    path('documentos/<int:documento_id>/servir/', 
+         servir_documento, name='servir_documento'),
     path('<int:expediente_id>/documentos/editar/<int:documento_id>/', 
          editar_documento_expediente, name='editar_documento'),
     path('<int:expediente_id>/documentos/descargar/<int:documento_id>/', 
