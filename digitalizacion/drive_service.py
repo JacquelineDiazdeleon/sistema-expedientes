@@ -1,24 +1,32 @@
 import cloudinary
 import cloudinary.uploader
 import os
+import re  # Para limpiar el nombre
 
-# Se configura usando las variables que pusiste en Render
+# Configuración blindada contra espacios accidentales
 cloudinary.config( 
-    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'), 
-    api_key = os.environ.get('CLOUDINARY_API_KEY'), 
-    api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
+    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', '').strip(), 
+    api_key = os.environ.get('CLOUDINARY_API_KEY', '').strip(), 
+    api_secret = os.environ.get('CLOUDINARY_API_SECRET', '').strip(),
     secure = True
 )
 
 def upload_to_cloudinary(file_path, file_name):
     """
     Sube un archivo a Cloudinary y devuelve la URL para acceder a él.
+    Limpia el nombre del archivo para evitar errores de firma.
     """
     try:
-        # 'resource_type="auto"' permite subir PDFs, Word y archivos de texto
+        # 1. Limpiamos el nombre: quitamos espacios y caracteres especiales
+        # Esto evita el error de "Invalid Signature"
+        # Reemplazamos todo lo que no sea letra, número, punto o guion con guion bajo
+        clean_name = re.sub(r'[^a-zA-Z0-9.-]', '_', file_name)
+        
+        # 2. Subimos el archivo con el nombre limpio
         response = cloudinary.uploader.upload(
             file_path, 
-            public_id = f"expedientes/{file_name}",
+            public_id = clean_name,  # Usamos el nombre limpio
+            folder = "expedientes",  # Carpeta separada
             resource_type = "auto"
         )
         # Devolvemos la URL segura (https)
@@ -26,7 +34,9 @@ def upload_to_cloudinary(file_path, file_name):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Error al subir a Cloudinary: {e}")
+        # Esto imprimirá el error real si las llaves están mal
+        logger.error(f"Error detallado en Cloudinary: {e}")
+        print(f"Error detallado en Cloudinary: {e}")
         return None
 
 # Funciones de compatibilidad (para no romper código existente)
