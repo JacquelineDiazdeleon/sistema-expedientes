@@ -108,7 +108,7 @@ WSGI_APPLICATION = "sistema_digitalizacion.wsgi.application"
 # Sustituye la base de datos vieja por esta nueva:
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgresql://neondb_owner:npg_lf1FkOdMSxG9@ep-small-bonus-adhqbkcs-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require',
+        default='postgresql://neondb_owner:npg_Yqvz4klsME9y@ep-divine-truth-ah8efc6z-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require',
         conn_max_age=600
     )
 }
