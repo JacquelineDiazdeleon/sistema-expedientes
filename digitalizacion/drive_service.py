@@ -1,38 +1,41 @@
 import os
-from pathlib import Path
-from django.conf import settings
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# Configuración de las credenciales
-# Buscar el archivo en la raíz del proyecto o usar variable de entorno
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-SERVICE_ACCOUNT_FILE = os.environ.get(
-    'GOOGLE_KEYS_PATH',
-    os.path.join(BASE_DIR, 'google_keys.json')
-)
-SCOPES = ['https://www.googleapis.com/auth/drive']
-
+# Mantendremos la estructura para que no rompa el resto del sistema
 def get_drive_service():
-    """Obtiene el servicio de Google Drive"""
-    if not os.path.exists(SERVICE_ACCOUNT_FILE):
-        raise FileNotFoundError(
-            f"Archivo de credenciales no encontrado: {SERVICE_ACCOUNT_FILE}. "
-            "Asegúrate de que google_keys.json esté en la raíz del proyecto o "
-            "configura GOOGLE_KEYS_PATH como variable de entorno."
-        )
+    # Intentaremos usar la cuenta de servicio con "Impersonación"
+    # Si tienes habilitada la delegación de dominio.
+    # Si no, este bloque asegura la conexión básica.
+    creds_path = os.environ.get('GOOGLE_KEYS_PATH', 'google_keys.json')
+    
+    if not os.path.exists(creds_path):
+        raise FileNotFoundError(f"Archivo de credenciales no encontrado: {creds_path}")
+        
+    scopes = ['https://www.googleapis.com/auth/drive']
+    
+    # Aquí está el truco: le decimos que el sujeto de la subida es tu correo
     creds = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-    return build('drive', 'v3', credentials=creds)
+        creds_path, scopes=scopes)
+    
+    # Delegamos la autoridad a tu cuenta personal para usar tus 15GB
+    # Nota: Esto solo funciona si activaste "Domain-wide Delegation" en la consola
+    delegate_creds = creds.with_subject('leondiazdeleondiazdeleon@gmail.com')
+    
+    return build('drive', 'v3', credentials=delegate_creds)
 
 def upload_to_drive(file_path, file_name, folder_id):
-    """
-    Sube un archivo a una carpeta específica de Google Drive
-    IMPORTANTE: resumable=False es la clave para cuentas @gmail.com
-    """
-    service = get_drive_service()  # Sigue usando tu google_keys.json
-    
+    try:
+        service = get_drive_service()
+    except Exception:
+        # Si la delegación falla, usamos el service normal para el intento final
+        from google.oauth2 import service_account
+        creds_path = os.environ.get('GOOGLE_KEYS_PATH', 'google_keys.json')
+        creds = service_account.Credentials.from_service_account_file(
+            creds_path, scopes=['https://www.googleapis.com/auth/drive'])
+        service = build('drive', 'v3', credentials=creds)
+
     file_metadata = {
         'name': file_name,
         'parents': [folder_id]
@@ -41,53 +44,31 @@ def upload_to_drive(file_path, file_name, folder_id):
     media = MediaFileUpload(file_path, resumable=False)
     
     try:
-        # Subida directa
         file = service.files().create(
             body=file_metadata,
             media_body=media,
             fields='id',
             supportsAllDrives=True
         ).execute()
-        
-        file_id = file.get('id')
-        
-        # TRANSFERENCIA DE PROPIEDAD INMEDIATA
-        # Esto hace que el archivo cuente contra TUS 15GB
-        permission = {
-            'type': 'user',
-            'role': 'owner',
-            'emailAddress': 'leondiazdeleondiazdeleon@gmail.com'
-        }
-        
-        service.permissions().create(
-            fileId=file_id,
-            body=permission,
-            transferOwnership=True,
-            supportsAllDrives=True
-        ).execute()
-        
-        return file_id
-        
+        return file.get('id')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Error en subida: {e}")
+        logger.error(f"Error crítico en Drive: {e}")
         raise e
 
 def get_storage_usage():
     """
     Consulta cuánto espacio queda en la cuenta (Fase 4 y 5)
-    Nota: Las Service Accounts no tienen cuota propia, usan el espacio de las carpetas compartidas.
-    Si la Service Account no tiene cuota, retorna None, None para indicar que no se puede verificar.
+    Nota: Con Domain-wide Delegation, consulta el espacio de tu cuenta personal
     """
     try:
         service = get_drive_service()
         about = service.about().get(fields="storageQuota").execute()
         
-        # Verificar si la Service Account tiene cuota propia
         storage_quota = about.get('storageQuota', {})
         
-        # Si no hay 'limit', significa que la Service Account no tiene cuota propia
+        # Si no hay 'limit', significa que no se puede verificar
         if 'limit' not in storage_quota:
             return None, None
         
@@ -96,8 +77,7 @@ def get_storage_usage():
         
         return usage, limit
     except Exception as e:
-        # Si hay error al consultar (por ejemplo, Service Account sin cuota), retornar None
-        # Esto permite que la subida continúe usando el espacio de la carpeta compartida
+        # Si hay error al consultar, retornar None
         return None, None
 
 def get_view_link(file_id):
