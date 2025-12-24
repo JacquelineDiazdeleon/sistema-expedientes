@@ -9,7 +9,7 @@ from .views_expedientes import (
     marcar_notificacion_leida, crear_comentario_area, enviar_mensaje_expediente,
     obtener_mensajes_expediente, enviar_mensaje_usuario, agregar_sima,
     buscar_expedientes, obtener_mensajes_usuario, eliminar_documento_expediente,
-    ver_documento_expediente, ver_documento_drive, editar_documento_expediente, descargar_documento_expediente,
+    ver_documento_expediente, ver_documento_drive, servir_documento, editar_documento_expediente, descargar_documento_expediente,
     descargar_expediente, generar_pdf_completo, obtener_progreso_expediente, 
     obtener_documentos_expediente_api, editar_numero_sima
 )
