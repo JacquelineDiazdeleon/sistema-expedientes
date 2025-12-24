@@ -861,19 +861,67 @@ def subir_documento(request, expediente_id, etapa=None):
                 else:
                     usuario_subida = request.user
                 
-                # Guardar el archivo físicamente ANTES de crear el modelo
+                # ============================================
+                # INTEGRACIÓN CON GOOGLE DRIVE
+                # ============================================
+                drive_id = None
+                path_temporal = None
+                
+                try:
+                    from .drive_service import upload_to_drive, get_storage_usage
+                    
+                    # 1. VALIDACIÓN DE ESPACIO (Fase 4 y 5)
+                    uso, limite = get_storage_usage()
+                    if uso >= 14.5:  # Umbral de seguridad (14.5 GB de 15 GB)
+                        return JsonResponse({
+                            'success': False,
+                            'error': 'Capacidad de almacenamiento llena. Contacte a sistemas.'
+                        }, status=400)
+                    
+                    # 2. SUBIDA TEMPORAL Y ENVÍO A DRIVE
+                    # Guardamos el archivo temporalmente para poder enviarlo a Drive
+                    import tempfile
+                    fecha = timezone.now()
+                    ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
+                    filename_upload = f"{expediente.numero_expediente}_{fecha.strftime('%Y%m%d_%H%M%S')}{ext}"
+                    
+                    # Crear archivo temporal
+                    archivo.seek(0)  # Asegurar que estamos al inicio del archivo
+                    archivo_content = archivo.read()
+                    
+                    # Guardar en archivo temporal
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
+                        temp_file.write(archivo_content)
+                        path_temporal = temp_file.name
+                    
+                    # ID de la carpeta que compartiste con el robot (configurar en settings o variable de entorno)
+                    FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID', '')
+                    
+                    if FOLDER_ID:
+                        # Subir a Drive
+                        drive_id = upload_to_drive(path_temporal, archivo.name, FOLDER_ID)
+                        logger.info(f"Archivo subido a Google Drive con ID: {drive_id}")
+                    else:
+                        logger.warning("GOOGLE_DRIVE_FOLDER_ID no configurado, el archivo no se subirá a Drive")
+                        
+                except Exception as drive_error:
+                    logger.error(f"Error al subir archivo a Google Drive: {str(drive_error)}", exc_info=True)
+                    # Continuar con el guardado local aunque falle Drive
+                    # No fallar la subida completa si Drive falla
+                
+                # Guardar el archivo físicamente ANTES de crear el modelo (backup local)
                 # Esto asegura que el archivo exista en el disco antes de indexarlo
-                # Generar ruta usando la función upload_to del modelo
                 fecha = timezone.now()
                 ext = os.path.splitext(archivo.name)[1] if '.' in archivo.name else ''
                 filename_upload = f"{expediente.numero_expediente}_{fecha.strftime('%Y%m%d_%H%M%S')}{ext}"
                 upload_path = os.path.join('expedientes', str(fecha.year), str(fecha.month), filename_upload)
                 
-                # Leer el contenido del archivo
-                archivo.seek(0)  # Asegurar que estamos al inicio del archivo
-                archivo_content = archivo.read()
+                # Leer el contenido del archivo (si no se leyó antes)
+                if not archivo_content:
+                    archivo.seek(0)
+                    archivo_content = archivo.read()
                 
-                # Guardar el archivo usando default_storage
+                # Guardar el archivo usando default_storage (backup local)
                 saved_path = default_storage.save(upload_path, ContentFile(archivo_content))
                 logger.info(f"Archivo guardado físicamente en: {saved_path}")
                 
@@ -885,13 +933,22 @@ def subir_documento(request, expediente_id, etapa=None):
                         'error': 'Error al guardar el archivo en el servidor'
                     }, status=500)
                 
+                # Limpiar archivo temporal si existe
+                if path_temporal and os.path.exists(path_temporal):
+                    try:
+                        os.remove(path_temporal)
+                        logger.info(f"Archivo temporal eliminado: {path_temporal}")
+                    except Exception as cleanup_error:
+                        logger.warning(f"No se pudo eliminar archivo temporal: {str(cleanup_error)}")
+                
                 # Crear una instancia del modelo con la ruta del archivo guardado
                 documento = DocumentoExpediente(
                     expediente=expediente,
                     area=area_etapa,
                     etapa=etapa_valida,  # Usamos el valor validado
                     nombre_documento=nombre_documento,
-                    archivo=saved_path,  # Usar la ruta del archivo guardado
+                    archivo=saved_path,  # Usar la ruta del archivo guardado (backup local)
+                    archivo_drive_id=drive_id,  # ID del archivo en Google Drive
                     subido_por=usuario_subida,
                     tamano_archivo=len(archivo_content),
                     tipo_archivo=archivo.content_type,

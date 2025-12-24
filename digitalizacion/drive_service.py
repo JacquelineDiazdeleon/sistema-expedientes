@@ -1,13 +1,27 @@
 import os
+from pathlib import Path
+from django.conf import settings
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 # Configuración de las credenciales
-SERVICE_ACCOUNT_FILE = 'google_keys.json' # El nombre que le pusiste al archivo
+# Buscar el archivo en la raíz del proyecto o usar variable de entorno
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+SERVICE_ACCOUNT_FILE = os.environ.get(
+    'GOOGLE_KEYS_PATH',
+    os.path.join(BASE_DIR, 'google_keys.json')
+)
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def get_drive_service():
+    """Obtiene el servicio de Google Drive"""
+    if not os.path.exists(SERVICE_ACCOUNT_FILE):
+        raise FileNotFoundError(
+            f"Archivo de credenciales no encontrado: {SERVICE_ACCOUNT_FILE}. "
+            "Asegúrate de que google_keys.json esté en la raíz del proyecto o "
+            "configura GOOGLE_KEYS_PATH como variable de entorno."
+        )
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)

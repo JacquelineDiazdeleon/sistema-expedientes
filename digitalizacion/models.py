@@ -719,6 +719,14 @@ class DocumentoExpediente(models.Model):
         help_text="Fecha en que el archivo fue descargado a la PC local"
     )
     
+    # ID de Google Drive para archivos almacenados en Drive
+    archivo_drive_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="ID del archivo en Google Drive"
+    )
+    
     class Meta:
         verbose_name = "Documento de Expediente"
         verbose_name_plural = "Documentos de Expedientes"
