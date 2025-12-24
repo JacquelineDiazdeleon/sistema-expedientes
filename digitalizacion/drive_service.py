@@ -1,69 +1,45 @@
 import os
-from google.oauth2 import service_account
+import json
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-# Mantendremos la estructura para que no rompa el resto del sistema
 def get_drive_service():
     """
-    Obtiene el servicio de Google Drive usando Service Account
-    NOTA: Para cuentas @gmail.com personales, Domain-wide Delegation NO está disponible.
-    Las Service Accounts no pueden usar el espacio de cuentas @gmail.com personales.
+    Obtiene el servicio de Google Drive usando OAuth 2.0 Token personal
+    Este método usa tu cuenta personal directamente, usando tus 15GB
     """
-    creds_path = os.environ.get('GOOGLE_KEYS_PATH', 'google_keys.json')
+    token_path = os.environ.get('GOOGLE_TOKEN_PATH', 'google_token.json')
     
-    if not os.path.exists(creds_path):
-        raise FileNotFoundError(f"Archivo de credenciales no encontrado: {creds_path}")
+    if not os.path.exists(token_path):
+        raise FileNotFoundError(f"No se encontró el token en {token_path}")
         
-    scopes = ['https://www.googleapis.com/auth/drive']
-    
-    # Para cuentas @gmail.com personales, Domain-wide Delegation NO funciona
-    # Usamos la Service Account directamente (aunque tendrá limitaciones de cuota)
-    creds = service_account.Credentials.from_service_account_file(
-        creds_path, scopes=scopes)
-    
+    with open(token_path, 'r') as f:
+        info = json.load(f)
+        
+    creds = Credentials.from_authorized_user_info(info)
     return build('drive', 'v3', credentials=creds)
 
 def upload_to_drive(file_path, file_name, folder_id):
     """
-    Sube un archivo a Google Drive
-    NOTA: Para cuentas @gmail.com personales, las Service Accounts tienen limitaciones.
-    Si falla, el sistema guardará el archivo localmente como respaldo.
+    Sube un archivo a Google Drive usando OAuth 2.0 Token personal
+    Este método usa tu cuenta personal directamente, usando tus 15GB
     """
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    try:
-        service = get_drive_service()
-    except Exception as e:
-        logger.error(f"Error al obtener servicio de Drive: {e}")
-        raise e
-
-    file_metadata = {
-        'name': file_name,
-        'parents': [folder_id]
-    }
-    
+    service = get_drive_service()
+    file_metadata = {'name': file_name, 'parents': [folder_id]}
     media = MediaFileUpload(file_path, resumable=False)
     
     try:
         file = service.files().create(
             body=file_metadata,
             media_body=media,
-            fields='id',
-            supportsAllDrives=True
+            fields='id'
         ).execute()
         return file.get('id')
     except Exception as e:
-        error_msg = str(e)
-        # Si es error de cuota, proporcionar mensaje más claro
-        if 'storageQuotaExceeded' in error_msg or 'storage quota' in error_msg.lower():
-            logger.warning(
-                "Error de cuota en Drive (Service Account sin espacio). "
-                "Para cuentas @gmail.com personales, considera deshabilitar Drive "
-                "o usar OAuth 2.0 en lugar de Service Account."
-            )
-        logger.error(f"Error crítico en Drive: {e}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error definitivo con Token: {e}")
         raise e
 
 def get_storage_usage():
