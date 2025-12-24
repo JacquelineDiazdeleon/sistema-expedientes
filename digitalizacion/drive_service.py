@@ -54,10 +54,21 @@ def upload_to_cloudinary(file_path, file_name, expediente_id=None, area_nombre=N
             file_path, 
             public_id = clean_file_name,  # Usamos el nombre limpio
             folder = folder_path,  # Carpeta organizada dinámicamente
-            resource_type = "auto"
+            resource_type = "auto",
+            # Esta bandera permite que el navegador abra el PDF directamente
+            flags = "attachment"
         )
-        # Devolvemos la URL segura (https)
-        return response.get('secure_url')
+        
+        # Obtenemos la URL segura
+        url = response.get('secure_url')
+        
+        # TRUCO: Para que el navegador lo abra directo en lugar de descargar,
+        # removemos el flag de attachment de la URL si está presente
+        # Esto permite que el navegador use su visor nativo de PDF
+        if url and "/upload/fl_attachment/" in url:
+            url = url.replace("/upload/fl_attachment/", "/upload/")
+        
+        return url
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)

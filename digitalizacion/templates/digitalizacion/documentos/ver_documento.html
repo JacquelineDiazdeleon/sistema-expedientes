@@ -121,19 +121,24 @@
                     {% with archivo_url=documento.archivo_drive_id %}
                         {% with extension=archivo_url|slice:"-4:"|lower %}
                             {% if '.pdf' in extension %}
-                                <!-- PDF desde Cloudinary: usar iframe con visor de Cloudinary -->
-                                <div style="width: 100%; height: 80vh; border: none;">
-                                    <iframe src="{{ archivo_url }}" 
-                                            style="width: 100%; height: 100%; border: none;" 
-                                            frameborder="0"
-                                            allowfullscreen>
-                                    </iframe>
-                                    <div class="mt-3 text-center">
-                                        <a href="{{ archivo_url }}" target="_blank" class="btn btn-primary">
-                                            <i class="bi bi-box-arrow-up-right me-2"></i>Abrir en nueva pestaña
+                                <!-- PDF desde Cloudinary: abrir en visor nativo del navegador -->
+                                <div class="d-flex justify-content-center align-items-center p-5" style="height: 80vh; flex-direction: column;">
+                                    <div class="text-center mb-4">
+                                        <i class="bi bi-file-pdf-fill" style="font-size: 5rem; color: #dc3545;"></i>
+                                        <h4 class="mt-3">{{ documento.nombre_documento }}</h4>
+                                        <p class="text-muted">Haz clic en el botón para abrir el PDF en el visor nativo de tu navegador</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <a href="{{ archivo_url }}" 
+                                           target="_blank" 
+                                           rel="noopener noreferrer"
+                                           class="btn btn-primary btn-lg">
+                                            <i class="bi bi-box-arrow-up-right me-2"></i>Abrir PDF en nueva pestaña
                                         </a>
-                                        <a href="{{ archivo_url }}" download class="btn btn-outline-primary ms-2">
-                                            <i class="bi bi-download me-2"></i>Descargar
+                                        <a href="{{ archivo_url }}" 
+                                           download 
+                                           class="btn btn-outline-primary btn-lg ms-2">
+                                            <i class="bi bi-download me-2"></i>Descargar PDF
                                         </a>
                                     </div>
                                 </div>
