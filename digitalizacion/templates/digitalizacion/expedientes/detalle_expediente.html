@@ -1225,19 +1225,30 @@
                                                 </div>
                                                 <div class="document-actions ms-3">
                                                     <!-- Botón de vista previa (solo vista) -->
-                                                    <button class="btn-action btn-view"
-                                                            onclick="event.preventDefault(); verDocumento('{{ documento.archivo.url }}', '{{ documento.nombre_documento|escapejs }}')"
-                                                            title="Vista previa">
-                                                        <i class="bi bi-eye-fill"></i>
-                                                    </button>
+                                                    {% if documento.archivo_drive_id %}
+                                                        <a href="{% url 'expedientes:ver_documento_drive' documento.id %}" 
+                                                           class="btn-action btn-view"
+                                                           target="_blank"
+                                                           title="Ver documento en Google Drive">
+                                                            <i class="bi bi-eye-fill"></i>
+                                                        </a>
+                                                    {% elif documento.archivo %}
+                                                        <button class="btn-action btn-view"
+                                                                onclick="event.preventDefault(); verDocumento('{{ documento.archivo.url }}', '{{ documento.nombre_documento|escapejs }}')"
+                                                                title="Vista previa">
+                                                            <i class="bi bi-eye-fill"></i>
+                                                        </button>
+                                                    {% endif %}
                                                     
                                                     <!-- Botón de descarga -->
-                                                    <a href="{{ documento.archivo.url }}" 
-                                                       class="btn-action btn-download" 
-                                                       download
-                                                       title="Descargar">
-                                                        <i class="bi bi-cloud-arrow-down-fill"></i>
-                                                    </a>
+                                                    {% if documento.archivo %}
+                                                        <a href="{{ documento.archivo.url }}" 
+                                                           class="btn-action btn-download" 
+                                                           download
+                                                           title="Descargar">
+                                                            <i class="bi bi-cloud-arrow-down-fill"></i>
+                                                        </a>
+                                                    {% endif %}
                                                     
                                                     {% if perms.digitalizacion.delete_documentoexpediente %}
                                                     <!-- Botón de eliminar -->

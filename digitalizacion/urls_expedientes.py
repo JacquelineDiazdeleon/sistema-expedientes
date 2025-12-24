@@ -9,7 +9,7 @@ from .views_expedientes import (
     marcar_notificacion_leida, crear_comentario_area, enviar_mensaje_expediente,
     obtener_mensajes_expediente, enviar_mensaje_usuario, agregar_sima,
     buscar_expedientes, obtener_mensajes_usuario, eliminar_documento_expediente,
-    ver_documento_expediente, editar_documento_expediente, descargar_documento_expediente,
+    ver_documento_expediente, ver_documento_drive, editar_documento_expediente, descargar_documento_expediente,
     descargar_expediente, generar_pdf_completo, obtener_progreso_expediente, 
     obtener_documentos_expediente_api, editar_numero_sima
 )
@@ -125,6 +125,8 @@ urlpatterns = [
          eliminar_documento_expediente, name='eliminar_documento'),
     path('documentos/<int:documento_id>/', 
          ver_documento_expediente, name='ver_documento'),
+    path('documentos/<int:documento_id>/drive/', 
+         ver_documento_drive, name='ver_documento_drive'),
     path('<int:expediente_id>/documentos/editar/<int:documento_id>/', 
          editar_documento_expediente, name='editar_documento'),
     path('<int:expediente_id>/documentos/descargar/<int:documento_id>/', 

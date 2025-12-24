@@ -1106,9 +1106,14 @@ def subir_documento(request, expediente_id, etapa=None):
                         nombre_area = getattr(area_etapa, 'titulo', getattr(area_etapa, 'nombre', 'Sin nombre'))
                     
                     # Obtener URL del archivo de forma segura
+                    # Priorizar Google Drive si tiene archivo_drive_id
                     archivo_url = ''
                     try:
-                        if documento.archivo:
+                        if documento.archivo_drive_id:
+                            # Usar la vista de Drive para ver el documento
+                            from django.urls import reverse
+                            archivo_url = reverse('expedientes:ver_documento_drive', args=[documento.id])
+                        elif documento.archivo:
                             archivo_url = documento.archivo.url
                     except Exception as url_error:
                         logger.warning(f"No se pudo obtener URL del archivo: {str(url_error)}")
@@ -3276,7 +3281,7 @@ def obtener_documentos_area(request, expediente_id, area_id):
                     'fecha_subida': fecha_subida,  # Fecha en formato YYYY-MM-DD para ordenamiento
                     'fecha_subida_completa': fecha_subida_completa,  # Fecha y hora formateada
                     'subido_por': usuario,  # Nombre del usuario que subió el documento
-                    'archivo_url': doc.archivo.url if doc.archivo and hasattr(doc.archivo, 'url') else None,
+                    'archivo_url': reverse('expedientes:ver_documento_drive', args=[doc.id]) if doc.archivo_drive_id else (doc.archivo.url if doc.archivo and hasattr(doc.archivo, 'url') else None),
                     'tipo': tipo_archivo or 'ARCHIVO',
                     'tipo_archivo': tipo_archivo or 'ARCHIVO',  # Alias para compatibilidad
                     'tamano_archivo': tamano_archivo,  # Tamaño en bytes
@@ -4367,6 +4372,46 @@ def ver_documento_expediente(request, documento_id):
         
     except Exception as e:
         logger.error(f'Error al ver documento {documento_id}: {str(e)}')
+        messages.error(request, 'Ocurrió un error al intentar ver el documento')
+        return redirect('expedientes:lista')
+
+@login_required
+def ver_documento_drive(request, documento_id):
+    """
+    Vista para ver un documento desde Google Drive
+    Redirige al usuario al visor de Google Drive
+    """
+    try:
+        # Buscamos el documento en la base de datos de Neon
+        documento = get_object_or_404(DocumentoExpediente, id=documento_id)
+        
+        # Verificar permisos básicos
+        if not puede_ver_expedientes(request.user):
+            messages.error(request, 'No tienes permiso para ver este documento')
+            return redirect('expedientes:lista')
+        
+        if documento.archivo_drive_id:
+            try:
+                from .drive_service import get_view_link
+                # Pedimos el link a Google
+                link = get_view_link(documento.archivo_drive_id)
+                # Redirigimos al usuario al visor de Google Drive
+                return redirect(link)
+            except Exception as e:
+                logger.error(f"Error al obtener enlace de Drive para documento {documento_id}: {str(e)}", exc_info=True)
+                messages.error(request, 'Error al obtener el enlace del documento desde Google Drive')
+                return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
+        else:
+            # Si no tiene ID de Drive, intentar usar el archivo local como fallback
+            if documento.archivo:
+                # Redirigir al archivo local
+                return redirect(documento.archivo.url)
+            else:
+                messages.warning(request, 'Este documento no tiene un ID de Drive asociado ni archivo local.')
+                return redirect('expedientes:detalle', expediente_id=documento.expediente.id)
+                
+    except Exception as e:
+        logger.error(f'Error al ver documento Drive {documento_id}: {str(e)}', exc_info=True)
         messages.error(request, 'Ocurrió un error al intentar ver el documento')
         return redirect('expedientes:lista')
 

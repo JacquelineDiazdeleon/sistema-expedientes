@@ -58,3 +58,12 @@ def get_storage_usage():
     
     return usage, limit
 
+def get_view_link(file_id):
+    """
+    Obtiene un enlace de visualización para el archivo de Drive.
+    """
+    service = get_drive_service()
+    # Obtenemos el enlace webViewLink
+    file = service.files().get(file_id=file_id, fields='webViewLink').execute()
+    return file.get('webViewLink')
+
