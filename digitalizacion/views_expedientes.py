@@ -906,15 +906,32 @@ def subir_documento(request, expediente_id, etapa=None):
                     
                     if FOLDER_ID:
                         # Subir a Drive
-                        drive_id = upload_to_drive(path_temporal, archivo.name, FOLDER_ID)
-                        logger.info(f"Archivo subido a Google Drive con ID: {drive_id}")
+                        # NOTA: Para cuentas @gmail.com personales, las Service Accounts tienen limitaciones de cuota
+                        # Si falla, el archivo se guardará localmente como respaldo
+                        try:
+                            drive_id = upload_to_drive(path_temporal, archivo.name, FOLDER_ID)
+                            logger.info(f"Archivo subido a Google Drive con ID: {drive_id}")
+                        except Exception as drive_upload_error:
+                            error_msg = str(drive_upload_error)
+                            if 'storageQuotaExceeded' in error_msg or 'storage quota' in error_msg.lower():
+                                logger.warning(
+                                    "Google Drive no disponible (Service Account sin cuota). "
+                                    "Para cuentas @gmail.com personales, las Service Accounts no pueden usar tu espacio. "
+                                    "El archivo se guardará solo localmente. "
+                                    "Para usar Drive, considera implementar OAuth 2.0 o usar Google Workspace."
+                                )
+                            else:
+                                logger.error(f"Error al subir a Drive: {error_msg}")
+                            # No asignar drive_id, el archivo se guardará solo localmente
+                            drive_id = None
                     else:
-                        logger.warning("GOOGLE_DRIVE_FOLDER_ID no configurado, el archivo no se subirá a Drive")
+                        logger.info("GOOGLE_DRIVE_FOLDER_ID no configurado, el archivo se guardará solo localmente")
                         
                 except Exception as drive_error:
-                    logger.error(f"Error al subir archivo a Google Drive: {str(drive_error)}", exc_info=True)
+                    logger.error(f"Error al procesar subida a Google Drive: {str(drive_error)}", exc_info=True)
                     # Continuar con el guardado local aunque falle Drive
                     # No fallar la subida completa si Drive falla
+                    drive_id = None
                 
                 # Guardar el archivo físicamente ANTES de crear el modelo (backup local)
                 # Esto asegura que el archivo exista en el disco antes de indexarlo

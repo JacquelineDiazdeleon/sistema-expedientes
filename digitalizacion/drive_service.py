@@ -5,9 +5,11 @@ from googleapiclient.http import MediaFileUpload
 
 # Mantendremos la estructura para que no rompa el resto del sistema
 def get_drive_service():
-    # Intentaremos usar la cuenta de servicio con "Impersonación"
-    # Si tienes habilitada la delegación de dominio.
-    # Si no, este bloque asegura la conexión básica.
+    """
+    Obtiene el servicio de Google Drive usando Service Account
+    NOTA: Para cuentas @gmail.com personales, Domain-wide Delegation NO está disponible.
+    Las Service Accounts no pueden usar el espacio de cuentas @gmail.com personales.
+    """
     creds_path = os.environ.get('GOOGLE_KEYS_PATH', 'google_keys.json')
     
     if not os.path.exists(creds_path):
@@ -15,26 +17,27 @@ def get_drive_service():
         
     scopes = ['https://www.googleapis.com/auth/drive']
     
-    # Aquí está el truco: le decimos que el sujeto de la subida es tu correo
+    # Para cuentas @gmail.com personales, Domain-wide Delegation NO funciona
+    # Usamos la Service Account directamente (aunque tendrá limitaciones de cuota)
     creds = service_account.Credentials.from_service_account_file(
         creds_path, scopes=scopes)
     
-    # Delegamos la autoridad a tu cuenta personal para usar tus 15GB
-    # Nota: Esto solo funciona si activaste "Domain-wide Delegation" en la consola
-    delegate_creds = creds.with_subject('leondiazdeleondiazdeleon@gmail.com')
-    
-    return build('drive', 'v3', credentials=delegate_creds)
+    return build('drive', 'v3', credentials=creds)
 
 def upload_to_drive(file_path, file_name, folder_id):
+    """
+    Sube un archivo a Google Drive
+    NOTA: Para cuentas @gmail.com personales, las Service Accounts tienen limitaciones.
+    Si falla, el sistema guardará el archivo localmente como respaldo.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         service = get_drive_service()
-    except Exception:
-        # Si la delegación falla, usamos el service normal para el intento final
-        from google.oauth2 import service_account
-        creds_path = os.environ.get('GOOGLE_KEYS_PATH', 'google_keys.json')
-        creds = service_account.Credentials.from_service_account_file(
-            creds_path, scopes=['https://www.googleapis.com/auth/drive'])
-        service = build('drive', 'v3', credentials=creds)
+    except Exception as e:
+        logger.error(f"Error al obtener servicio de Drive: {e}")
+        raise e
 
     file_metadata = {
         'name': file_name,
@@ -52,8 +55,14 @@ def upload_to_drive(file_path, file_name, folder_id):
         ).execute()
         return file.get('id')
     except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
+        error_msg = str(e)
+        # Si es error de cuota, proporcionar mensaje más claro
+        if 'storageQuotaExceeded' in error_msg or 'storage quota' in error_msg.lower():
+            logger.warning(
+                "Error de cuota en Drive (Service Account sin espacio). "
+                "Para cuentas @gmail.com personales, considera deshabilitar Drive "
+                "o usar OAuth 2.0 en lugar de Service Account."
+            )
         logger.error(f"Error crítico en Drive: {e}")
         raise e
 
