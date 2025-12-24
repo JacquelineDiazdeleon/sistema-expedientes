@@ -895,7 +895,7 @@ def subir_documento(request, expediente_id, etapa=None):
                         path_temporal = temp_file.name
                     
                     # ID de la carpeta que compartiste con el robot (configurar en settings o variable de entorno)
-                    FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID', '')
+                    FOLDER_ID = os.environ.get('GOOGLE_DRIVE_FOLDER_ID')
                     
                     if FOLDER_ID:
                         # Subir a Drive
