@@ -11,34 +11,45 @@ cloudinary.config(
     secure = True
 )
 
-def upload_to_cloudinary(file_path, file_name, expediente_id=None, area_nombre=None):
+def upload_to_cloudinary(file_path, file_name, expediente_id=None, area_nombre=None, expediente_nombre=None):
     """
     Sube un archivo a Cloudinary y devuelve la URL para acceder a él.
-    Organiza los archivos en carpetas: expedientes/expediente_ID/AREA/archivo.pdf
+    Organiza los archivos en carpetas: expedientes/NOMBRE_EXPEDIENTE/AREA/archivo.pdf
     
     Args:
         file_path: Ruta del archivo temporal a subir
         file_name: Nombre original del archivo
-        expediente_id: ID del expediente (opcional, para organización)
+        expediente_id: ID del expediente (opcional, usado como fallback si no hay nombre)
         area_nombre: Nombre del área/etapa (opcional, para organización)
+        expediente_nombre: Nombre del expediente (numero_expediente o titulo) para usar en la carpeta
     """
     try:
         # 1. Limpiamos los nombres para evitar caracteres raros en las carpetas
         clean_file_name = re.sub(r'[^a-zA-Z0-9.-]', '_', file_name)
         
-        # 2. Construir la ruta de la carpeta
-        if expediente_id and area_nombre:
-            # Organización completa: expedientes/expediente_ID/AREA/archivo.pdf
-            clean_area = re.sub(r'[^a-zA-Z0-9]', '_', str(area_nombre))
-            folder_path = f"expedientes/expediente_{expediente_id}/{clean_area}"
+        # 2. Determinar el nombre del expediente para la carpeta
+        if expediente_nombre:
+            # Usar el nombre del expediente proporcionado (numero_expediente o titulo)
+            clean_expediente_nombre = re.sub(r'[^a-zA-Z0-9]', '_', str(expediente_nombre))
         elif expediente_id:
-            # Solo expediente: expedientes/expediente_ID/archivo.pdf
-            folder_path = f"expedientes/expediente_{expediente_id}"
+            # Fallback: usar el ID si no hay nombre
+            clean_expediente_nombre = f"expediente_{expediente_id}"
+        else:
+            clean_expediente_nombre = None
+        
+        # 3. Construir la ruta de la carpeta
+        if clean_expediente_nombre and area_nombre:
+            # Organización completa: expedientes/NOMBRE_EXPEDIENTE/AREA/archivo.pdf
+            clean_area = re.sub(r'[^a-zA-Z0-9]', '_', str(area_nombre))
+            folder_path = f"expedientes/{clean_expediente_nombre}/{clean_area}"
+        elif clean_expediente_nombre:
+            # Solo expediente: expedientes/NOMBRE_EXPEDIENTE/archivo.pdf
+            folder_path = f"expedientes/{clean_expediente_nombre}"
         else:
             # Fallback: expedientes/archivo.pdf
             folder_path = "expedientes"
         
-        # 3. Subimos el archivo con el nombre limpio y la carpeta organizada
+        # 4. Subimos el archivo con el nombre limpio y la carpeta organizada
         response = cloudinary.uploader.upload(
             file_path, 
             public_id = clean_file_name,  # Usamos el nombre limpio

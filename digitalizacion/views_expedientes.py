@@ -887,11 +887,14 @@ def subir_documento(request, expediente_id, etapa=None):
                         path_temporal = temp_file.name
                     
                     # Subir a Cloudinary con organización por expediente y área
+                    # Usar numero_expediente o titulo como nombre del expediente
+                    expediente_nombre = expediente.numero_expediente or expediente.titulo or None
                     url_archivo = upload_to_cloudinary(
                         path_temporal, 
                         archivo.name, 
-                        expediente.id,   # ID del expediente actual
-                        area_etapa.nombre if area_etapa else None  # Nombre del área/etapa actual
+                        expediente.id,   # ID del expediente (fallback si no hay nombre)
+                        area_etapa.nombre if area_etapa else None,  # Nombre del área/etapa actual
+                        expediente_nombre  # Nombre del expediente para la carpeta
                     )
                     
                     if url_archivo:
